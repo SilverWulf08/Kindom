@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kindom</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ctext y='50' font-size='50'%3E👑%3C/text%3E%3C/svg%3E">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Fondamento&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div class="screen hidden" id="loadingScreen">
+        <div class="loading-container">
+            <div class="loading-castle">🏰</div>
+            <h1 class="loading-title">Kindom</h1>
+            <div class="loading-bar-container">
+                <div class="loading-bar" id="loadingBar"></div>
+            </div>
+            <p class="loading-text" id="loadingText">Forging weapons...</p>
+        </div>
+    </div>
+
+    <!-- Floating particles background -->
+    <div class="particles" id="particles"></div>
+    
+    <!-- Home Screen -->
+    <div class="screen" id="homeScreen">
+        <div class="home-container">
+            <!-- Decorative banner -->
+            <div class="banner">
+                <div class="banner-decoration left"></div>
+                <div class="banner-content">
+                    <h1 class="game-title">Kindom</h1>
+                    <p class="game-subtitle">Defend Your Castle</p>
+                </div>
+                <div class="banner-decoration right"></div>
+            </div>
+            
+            <!-- Main menu buttons -->
+            <div class="menu-buttons">
+                <button class="btn btn-play" id="playBtn">
+                    <span class="btn-icon">⚔️</span>
+                    <span class="btn-text">Play</span>
+                </button>
+                
+                <div class="secondary-buttons">
+                    <button class="btn btn-secondary" id="patchNotesBtn">
+                        <span class="btn-icon">📜</span>
+                        <span class="btn-text">Patch Notes</span>
+                    </button>
+                    
+                    <button class="btn btn-secondary" id="helpBtn">
+                        <span class="btn-icon">❓</span>
+                        <span class="btn-text">Help</span>
+                    </button>
+                </div>
+            </div>
+            
+        </div>
+        
+        <!-- Credits button (bottom left) -->
+        <button class="btn btn-credits" id="creditsBtn">
+            <span>Made by Silverwulf</span>
+            <span class="wolf-icon">🐺</span>
+        </button>
+        
+        <!-- Sound toggle button (bottom right) -->
+        <button class="btn btn-sound" id="soundToggleHome">🔊</button>
+    </div>
+    
+    <!-- Patch Notes Modal -->
+    <div class="modal" id="patchNotesModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>📜 Patch Notes</h2>
+                <button class="modal-close" id="closePatchNotes">✕</button>
+            </div>
+            <div class="modal-body" id="patchNotesContent">
+                <!-- Patch notes are loaded from JavaScript for easier management -->
+            </div>
+        </div>
+    </div>
+    
+    <!-- Help Modal -->
+    <div class="modal" id="helpModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>❓ How to Play</h2>
+                <button class="modal-close" id="closeHelp">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="help-section">
+                    <h3>🏰 Your Mission</h3>
+                    <p>Defend your castle against endless waves of enemies! Survive as long as you can and beat your wave record.</p>
+                </div>
+                <div class="help-section">
+                    <h3>⚔️ Combat</h3>
+                    <p>Your castle automatically attacks nearby enemies with arrows (or fireballs if upgraded). Enemies will attack your castle when they get close - melee enemies lunge in, while archers shoot from afar.</p>
+                </div>
+                <div class="help-section">
+                    <h3>🎁 Upgrades</h3>
+                    <p>After each wave, choose from 3 random upgrades with different rarities:</p>
+                    <p><strong style="color: #9CA3AF;">Common</strong> • <strong style="color: #22C55E;">Uncommon</strong> • <strong style="color: #3B82F6;">Rare</strong> • <strong style="color: #A855F7;">Epic</strong> • <strong style="color: #F59E0B;">Legendary</strong></p>
+                    <p>Higher rarities appear more often in later waves!</p>
+                </div>
+                <div class="help-section">
+                    <h3>🛒 Shop</h3>
+                    <p>Between waves, spend gold at the shop:</p>
+                    <p><strong>Repairs:</strong> Heal your castle for 25 HP or fully restore it</p>
+                    <p><strong>Mystery Box:</strong> Gamble for a random upgrade or action card!</p>
+                </div>
+                <div class="help-section">
+                    <h3>🃏 Action Cards</h3>
+                    <p>Collect powerful one-time-use cards! Your deck appears at the bottom of the screen. Hover to see details, click to activate. Max 5 cards.</p>
+                </div>
+                <div class="help-section">
+                    <h3>👹 Enemies</h3>
+                    <p><strong>Hordes:</strong> Larger enemy groups attack each wave</p>
+                    <p><strong>Orcs:</strong> Basic melee attackers that charge your castle</p>
+                    <p><strong>Goblin Archers:</strong> Ranged attackers that shoot from distance</p>
+                    <p><strong>Trolls:</strong> Heavy hitters with lots of health</p>
+                    <p><strong>Elite variants:</strong> Faster/stronger versions appear in later waves</p>
+                    <p><strong>Bosses:</strong> Appear every 5 waves - very dangerous!</p>
+                </div>
+                <div class="help-section">
+                    <h3>🎯 Tips</h3>
+                    <p>• Boss waves (5, 10, 15...) are extra tough - prepare!</p>
+                    <p>• Save action cards for emergencies</p>
+                    <p>• Prioritize damage early, defense later</p>
+                    <p>• The mystery box can give legendary items!</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Confetti container -->
+    <div class="confetti-container" id="confettiContainer"></div>
+    
+    <!-- Game Screen -->
+    <div class="screen hidden" id="gameScreen">
+        <!-- Game HUD -->
+        <div class="game-hud">
+            <div class="hud-left">
+                <div class="hud-item wave-display" data-tooltip="Current wave number">
+                    <span class="wave-label">Wave</span>
+                    <span class="wave-number" id="waveNumber">1</span>
+                </div>
+                <div class="hud-item enemies-remaining" id="enemiesRemaining" data-tooltip="Enemies remaining in this wave">
+                    <span>👹</span>
+                    <span id="enemyCount">0</span>
+                </div>
+            </div>
+            <div class="hud-center">
+                <div class="hud-item castle-health-container" data-tooltip="Castle health - if it reaches 0, you lose!">
+                    <div class="castle-health-bar">
+                        <div class="castle-health-fill" id="castleHealthFill"></div>
+                    </div>
+                    <span class="castle-health-text" id="castleHealthText">100/100</span>
+                </div>
+            </div>
+            <div class="hud-right">
+                <div class="hud-item gold-display" data-tooltip="Gold - spend at the shop between waves">
+                    <span>🪙</span>
+                    <span id="goldCount">0</span>
+                </div>
+                <div class="hud-item score-display" data-tooltip="Total enemies slain this run">
+                    <span>💀</span>
+                    <span id="killCount">0</span>
+                </div>
+                <button class="pause-btn" id="pauseBtn" data-tooltip="Pause game (ESC)">⏸️</button>
+            </div>
+        </div>
+        
+        <!-- Game Arena -->
+        <div class="game-arena" id="gameArena">
+            <!-- Castle -->
+            <div class="castle" id="castle">
+                <div class="castle-sprite">🏰</div>
+                <div class="castle-shield" id="castleShield"></div>
+            </div>
+            <!-- Enemies and projectiles spawn here via JS -->
+        </div>
+        
+        <!-- Wave Start Overlay -->
+        <div class="wave-overlay hidden" id="waveOverlay">
+            <div class="wave-announce">
+                <h2 id="waveAnnounceText">Wave 1</h2>
+                <p id="waveAnnounceSubtext">Prepare yourself!</p>
+            </div>
+        </div>
+        
+        <!-- Upgrade Selection Modal with Shop -->
+        <div class="upgrade-modal hidden" id="upgradeModal">
+            <div class="upgrade-modal-content">
+                <h2>Choose an Upgrade!</h2>
+                <div class="upgrade-options" id="upgradeOptions">
+                    <!-- Upgrade cards generated by JS -->
+                </div>
+                
+                <!-- Shop Section -->
+                <div class="shop-section">
+                    <h3>🛒 Shop <span class="shop-gold">🪙 <span id="shopGoldDisplay">0</span></span></h3>
+                    <div class="shop-items" id="shopItems">
+                        <!-- Shop items generated by JS -->
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Pause Menu -->
+        <div class="pause-menu hidden" id="pauseMenu">
+            <div class="pause-menu-content">
+                <h2>⏸️ Paused</h2>
+                <button class="menu-btn" id="resumeBtn">▶️ Resume</button>
+                <button class="menu-btn" id="soundTogglePause">🔊 Sound: On</button>
+                <button class="menu-btn danger" id="quitBtn">🏠 Quit to Menu</button>
+            </div>
+        </div>
+        
+        <!-- Game Over Screen -->
+        <div class="game-over hidden" id="gameOver">
+            <div class="game-over-content">
+                <h2>💀 Castle Destroyed!</h2>
+                <div class="game-over-stats">
+                    <div class="stat-row">
+                        <span>Waves Survived:</span>
+                        <span id="finalWave">0</span>
+                    </div>
+                    <div class="stat-row">
+                        <span>Enemies Slain:</span>
+                        <span id="finalKills">0</span>
+                    </div>
+                    <div class="stat-row">
+                        <span>Gold Earned:</span>
+                        <span id="finalGold">0</span>
+                    </div>
+                    <div class="stat-row record">
+                        <span>🏆 Best Wave:</span>
+                        <span id="recordWave">0</span>
+                    </div>
+                </div>
+                <button class="menu-btn" id="playAgainBtn">⚔️ Play Again</button>
+                <button class="menu-btn secondary" id="mainMenuBtn">🏠 Main Menu</button>
+            </div>
+        </div>
+    </div>
+    
+    <script src="game.js"></script>
+</body>
+</html>
