@@ -104,43 +104,53 @@
             <div class="modal-body">
                 <div class="help-section">
                     <h3>🏰 Your Mission</h3>
-                    <p>Defend your castle against endless waves of enemies! Survive as long as you can and beat your wave record.</p>
+                    <p>Defend your castle against endless waves of enemies! Survive as long as you can and beat your wave record. Adjust difficulty on the homescreen (1-10) to customize your challenge.</p>
                 </div>
                 <div class="help-section">
-                    <h3>⚔️ Combat</h3>
-                    <p>Your castle automatically attacks nearby enemies with arrows (or fireballs if upgraded). Enemies will attack your castle when they get close - melee enemies lunge in, while archers shoot from afar.</p>
+                    <h3>⚔️ Combat & Targeting</h3>
+                    <p>Your castle automatically attacks nearby enemies with arrows (or fireballs if upgraded). <strong>Manual Targeting:</strong> Click and hold on the arena to prioritize a target! Enemies will attack your castle when they get close - melee enemies lunge in, while archers shoot from afar.</p>
                 </div>
                 <div class="help-section">
-                    <h3>🎁 Upgrades</h3>
+                    <h3>🎁 Upgrades & Debuffs</h3>
                     <p>After each wave, choose from 3 random upgrades with different rarities:</p>
                     <p><strong style="color: #9CA3AF;">Common</strong> • <strong style="color: #22C55E;">Uncommon</strong> • <strong style="color: #3B82F6;">Rare</strong> • <strong style="color: #A855F7;">Epic</strong> • <strong style="color: #F59E0B;">Legendary</strong></p>
+                    <p><strong>⚠️ Beware:</strong> 5% chance per wave to face a <strong>Debuff</strong> instead! Choose which curse affects you - sometimes the lesser evil is the best choice.</p>
                     <p>Higher rarities appear more often in later waves!</p>
                 </div>
                 <div class="help-section">
-                    <h3>🛒 Shop</h3>
+                    <h3>🛒 Shop & Mystery Boxes</h3>
                     <p>Between waves, spend gold at the shop:</p>
-                    <p><strong>Repairs:</strong> Heal your castle for 25 HP or fully restore it</p>
-                    <p><strong>Mystery Box:</strong> Gamble for a random upgrade or action card!</p>
+                    <p><strong>Repairs:</strong> Heal your castle for 25 HP or fully restore it (scales every 10 waves)</p>
+                    <p><strong>Mystery Box:</strong> Gamble for a random upgrade or action card! Max 3 per wave.</p>
+                    <p><strong>💀 Cursed Mystery Box:</strong> 3% chance a mystery box contains a devastating debuff instead - pure chaos!</p>
                 </div>
                 <div class="help-section">
                     <h3>🃏 Action Cards</h3>
-                    <p>Collect powerful one-time-use cards! Your deck appears at the bottom of the screen. Hover to see details, click to activate. Max 5 cards.</p>
+                    <p>Collect powerful one-time-use cards from upgrades and mystery boxes! Your deck appears at the bottom of the screen. Hover to see details, click to activate. Max 5 cards. Includes: Fireball, Chain Lightning, Gold Rush, Battle Cry, Poison Cloud, Summon Knight, and more!</p>
                 </div>
                 <div class="help-section">
-                    <h3>👹 Enemies</h3>
-                    <p><strong>Hordes:</strong> Larger enemy groups attack each wave</p>
-                    <p><strong>Orcs:</strong> Basic melee attackers that charge your castle</p>
-                    <p><strong>Goblin Archers:</strong> Ranged attackers that shoot from distance</p>
-                    <p><strong>Trolls:</strong> Heavy hitters with lots of health</p>
-                    <p><strong>Elite variants:</strong> Faster/stronger versions appear in later waves</p>
+                    <h3>👹 Enemies & Scaling</h3>
+                    <p><strong>Basic:</strong> Orcs, Goblin Archers, Trolls</p>
+                    <p><strong>Advanced:</strong> Vampires (heal when attacking), Ghosts (take reduced damage), Demons (fire attacks), Necromancers (ranged magic), Golems (slow & tanky), Assassins (fast & deadly)</p>
+                    <p><strong>Horde Scaling:</strong> More enemies spawn every 5 waves</p>
                     <p><strong>Bosses:</strong> Appear every 5 waves - very dangerous!</p>
+                    <p><strong>Difficulty Scaling:</strong> Enemies get stronger each wave based on difficulty setting!</p>
                 </div>
                 <div class="help-section">
-                    <h3>🎯 Tips</h3>
-                    <p>• Boss waves (5, 10, 15...) are extra tough - prepare!</p>
-                    <p>• Save action cards for emergencies</p>
-                    <p>• Prioritize damage early, defense later</p>
-                    <p>• The mystery box can give legendary items!</p>
+                    <h3>📈 Game Progression</h3>
+                    <p>• Every 10 waves: Shop prices increase, scaling harder</p>
+                    <p>• Every 5 waves: More enemies spawn, waves get longer</p>
+                    <p>• Every 5 waves: Boss battles (especially tough!)</p>
+                    <p>• Later waves: Legendary upgrades appear more frequently</p>
+                </div>
+                <div class="help-section">
+                    <h3>🎯 Tips & Strategies</h3>
+                    <p>• Early game: Focus on damage upgrades to clear waves quickly</p>
+                    <p>• Mid game: Balance damage with defense as enemies get tougher</p>
+                    <p>• Late game: Prepare for devastating debuffs - sometimes avoiding them is worth the cost!</p>
+                    <p>• Use action cards strategically in tough waves</p>
+                    <p>• Higher difficulty = more challenging but potentially more rewarding!</p>
+                    <p>• Boss waves (5, 10, 15...) are extra tough - stock up on repairs!</p>
                 </div>
             </div>
         </div>
@@ -188,9 +198,25 @@
         <div class="game-arena" id="gameArena">
             <!-- Castle -->
             <div class="castle" id="castle">
-                <div class="castle-sprite">🏰</div>
+                <div class="castle-effects">
+                    <!-- Fire effects when damaged -->
+                    <div class="castle-fire fire-1" id="castleFire1">🔥</div>
+                    <div class="castle-fire fire-2" id="castleFire2">🔥</div>
+                    <div class="castle-fire fire-3" id="castleFire3">🔥</div>
+                    <!-- Smoke effects -->
+                    <div class="castle-smoke" id="castleSmoke"></div>
+                    <!-- Upgrade aura effects -->
+                    <div class="castle-aura" id="castleAura"></div>
+                    <!-- Magic orbs for upgrades -->
+                    <div class="castle-orbs" id="castleOrbs"></div>
+                </div>
+                <div class="castle-sprite" id="castleSprite">🏰</div>
+                <div class="castle-damage-overlay" id="castleDamageOverlay"></div>
+                <div class="castle-upgrade-glow" id="castleUpgradeGlow"></div>
                 <div class="castle-shield" id="castleShield"></div>
             </div>
+            <!-- Visual effects container -->
+            <div class="effects-layer" id="effectsLayer"></div>
             <!-- Enemies and projectiles spawn here via JS -->
         </div>
         

@@ -2623,11 +2623,13 @@ body::after {
     animation: meteorFall 0.8s ease-in forwards;
     pointer-events: none;
     z-index: 100;
+    filter: drop-shadow(0 0 15px #ff4500) drop-shadow(0 -10px 20px #ff6b00);
 }
 
 @keyframes meteorFall {
-    0% { transform: translateY(0) rotate(0deg); opacity: 1; }
-    100% { transform: translateY(calc(100vh)) rotate(180deg); opacity: 0; }
+    0% { transform: translateY(0) rotate(0deg) scale(0.5); opacity: 0.5; }
+    20% { opacity: 1; transform: translateY(100px) rotate(36deg) scale(1); }
+    100% { transform: translateY(500px) rotate(180deg) scale(1.2); opacity: 0.8; }
 }
 
 /* Frozen Enemy Effect */
@@ -2783,4 +2785,1400 @@ body::after {
         transform: translate(-50%, -50%) scale(1.2);
         opacity: 1;
     }
+}
+
+/* ========================================
+   DEBUFF CARDS & CURSE EFFECTS
+   ======================================== */
+
+/* Curse title - red version of "Choose an Upgrade" */
+.curse-title {
+    font-family: 'Cinzel Decorative', cursive;
+    font-size: 2.2rem;
+    color: #DC2626;
+    text-align: center;
+    margin-bottom: 0.5rem;
+    text-shadow: 0 0 30px rgba(220, 38, 38, 0.8), 0 0 10px rgba(0, 0, 0, 0.5);
+    animation: curseTitlePulse 2s ease-in-out infinite;
+}
+
+@keyframes curseTitlePulse {
+    0%, 100% { color: #DC2626; text-shadow: 0 0 30px rgba(220, 38, 38, 0.8), 0 0 10px rgba(0, 0, 0, 0.5); }
+    50% { color: #EF4444; text-shadow: 0 0 40px rgba(239, 68, 68, 1), 0 0 15px rgba(0, 0, 0, 0.7); }
+}
+
+/* Debuff wave warning */
+.debuff-warning {
+    font-family: 'Cinzel Decorative', cursive;
+    font-size: 1.8rem;
+    color: #DC2626;
+    text-align: center;
+    margin-bottom: 0.5rem;
+    text-shadow: 0 0 20px rgba(220, 38, 38, 0.5);
+    animation: debuffPulse 1s ease-in-out infinite;
+}
+
+.debuff-subtitle {
+    font-size: 1rem;
+    color: #FCA5A5;
+    text-align: center;
+    margin-bottom: 1.5rem;
+    font-style: italic;
+}
+
+@keyframes debuffPulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.7; transform: scale(1.02); }
+}
+
+/* Debuff card styling */
+.debuff-card {
+    position: relative;
+    animation: debuffHover 2s ease-in-out infinite;
+    box-shadow: 0 0 20px rgba(127, 29, 29, 0.5), inset 0 0 30px rgba(127, 29, 29, 0.2);
+}
+
+.debuff-card:hover {
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: 0 0 30px rgba(220, 38, 38, 0.6), inset 0 0 40px rgba(127, 29, 29, 0.3);
+}
+
+@keyframes debuffHover {
+    0%, 100% { box-shadow: 0 0 20px rgba(127, 29, 29, 0.5); }
+    50% { box-shadow: 0 0 35px rgba(220, 38, 38, 0.7); }
+}
+
+.debuff-skull {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    font-size: 1.2rem;
+    opacity: 0.6;
+}
+
+/* Debuff flash effect when selected */
+.debuff-flash {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(127, 29, 29, 0.4);
+    z-index: 10000;
+    animation: debuffFlash 0.5s ease-out forwards;
+    pointer-events: none;
+}
+
+@keyframes debuffFlash {
+    0% { opacity: 1; }
+    100% { opacity: 0; }
+}
+
+/* Cursed mystery box styling */
+.debuff-overlay {
+    background: rgba(15, 5, 5, 0.95);
+}
+
+.cursed-box {
+    filter: grayscale(0.5) sepia(0.3) hue-rotate(-30deg);
+}
+
+.cursed-shake {
+    animation: cursedShake 0.15s infinite;
+}
+
+@keyframes cursedShake {
+    0%, 100% { transform: translateX(-2px) rotate(-1deg); }
+    50% { transform: translateX(2px) rotate(1deg); }
+}
+
+.cursed-explode {
+    filter: brightness(0.3) sepia(1) hue-rotate(-30deg);
+}
+
+/* Debuff mystery card */
+.debuff-mystery-card {
+    position: relative;
+    overflow: hidden;
+}
+
+.debuff-aura {
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    right: -50%;
+    bottom: -50%;
+    background: radial-gradient(circle, transparent 30%, rgba(127, 29, 29, 0.3) 70%);
+    animation: auraRotate 4s linear infinite;
+    pointer-events: none;
+}
+
+@keyframes auraRotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.debuff-skull-large {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+    animation: skullBob 1.5s ease-in-out infinite;
+}
+
+@keyframes skullBob {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-5px); }
+}
+
+.cursed-reveal {
+    animation: cursedReveal 0.5s ease-out forwards;
+}
+
+@keyframes cursedReveal {
+    0% { transform: scale(0.5) rotate(-5deg); opacity: 0; }
+    50% { transform: scale(1.1) rotate(2deg); }
+    100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+/* Curse particles */
+.curse-particle {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    border-radius: 2px;
+    animation: curseParticle 1s ease-out forwards;
+}
+
+@keyframes curseParticle {
+    0% {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+    }
+    100% {
+        transform: translate(calc(-50% + var(--x)), calc(-50% + var(--y))) rotate(var(--r)) scale(0);
+        opacity: 0;
+    }
+}
+
+/* ===== ENHANCED VISUAL EFFECTS SYSTEM ===== */
+
+/* Castle visual layers */
+.castle-effects {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    z-index: 9;
+}
+
+.castle-sprite {
+    font-size: 6rem;
+    display: block;
+    text-align: center;
+    line-height: 1;
+    filter: drop-shadow(0 0 30px rgba(201, 162, 39, 0.5)) drop-shadow(0 5px 15px rgba(0, 0, 0, 0.8));
+    animation: castleIdle 3s ease-in-out infinite;
+    transition: filter 0.5s ease, transform 0.3s ease;
+}
+
+/* Castle damage overlay - cracks and damage */
+.castle-damage-overlay {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 100px;
+    height: 100px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+/* Castle damage states */
+.castle.damaged-light .castle-sprite {
+    filter: drop-shadow(0 0 20px rgba(201, 162, 39, 0.3)) drop-shadow(0 5px 15px rgba(0, 0, 0, 0.8)) brightness(0.9);
+}
+
+.castle.damaged-medium .castle-sprite {
+    filter: drop-shadow(0 0 15px rgba(255, 100, 50, 0.4)) drop-shadow(0 5px 15px rgba(0, 0, 0, 0.8)) brightness(0.8) saturate(0.8);
+}
+
+.castle.damaged-heavy .castle-sprite {
+    filter: drop-shadow(0 0 10px rgba(255, 50, 0, 0.5)) drop-shadow(0 5px 15px rgba(0, 0, 0, 0.8)) brightness(0.7) saturate(0.6);
+    animation: castleShake 0.3s ease-in-out infinite, castleIdle 3s ease-in-out infinite;
+}
+
+.castle.damaged-critical .castle-sprite {
+    filter: drop-shadow(0 0 20px rgba(255, 0, 0, 0.7)) drop-shadow(0 5px 15px rgba(0, 0, 0, 0.8)) brightness(0.5) saturate(0.4) sepia(0.3);
+    animation: castleShake 0.15s ease-in-out infinite, castleCriticalPulse 0.5s ease-in-out infinite;
+}
+
+@keyframes castleShake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-2px); }
+    75% { transform: translateX(2px); }
+}
+
+@keyframes castleCriticalPulse {
+    0%, 100% { filter: drop-shadow(0 0 20px rgba(255, 0, 0, 0.7)) brightness(0.5); }
+    50% { filter: drop-shadow(0 0 40px rgba(255, 0, 0, 0.9)) brightness(0.6); }
+}
+
+/* Castle fire effects */
+.castle-fire {
+    position: absolute;
+    font-size: 1.5rem;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.5s ease;
+    z-index: 11;
+}
+
+.castle-fire.fire-1 { top: -40px; left: -20px; }
+.castle-fire.fire-2 { top: -35px; left: 15px; }
+.castle-fire.fire-3 { top: -30px; left: 0; }
+
+.castle.damaged-heavy .castle-fire,
+.castle.damaged-critical .castle-fire {
+    opacity: 1;
+}
+
+.castle.damaged-heavy .castle-fire.fire-1,
+.castle.damaged-critical .castle-fire.fire-1 { animation: fireFlicker1 0.3s ease-in-out infinite; }
+.castle.damaged-heavy .castle-fire.fire-2,
+.castle.damaged-critical .castle-fire.fire-2 { animation: fireFlicker2 0.4s ease-in-out infinite; }
+.castle.damaged-heavy .castle-fire.fire-3,
+.castle.damaged-critical .castle-fire.fire-3 { animation: fireFlicker3 0.35s ease-in-out infinite; }
+
+.castle.damaged-heavy .castle-fire { font-size: 1.2rem; }
+.castle.damaged-critical .castle-fire { font-size: 2rem; }
+
+@keyframes fireFlicker1 {
+    0%, 100% { transform: translateY(0) scale(1) rotate(-5deg); }
+    50% { transform: translateY(-5px) scale(1.2) rotate(5deg); }
+}
+
+@keyframes fireFlicker2 {
+    0%, 100% { transform: translateY(0) scale(1.1) rotate(3deg); }
+    50% { transform: translateY(-8px) scale(0.9) rotate(-3deg); }
+}
+
+@keyframes fireFlicker3 {
+    0%, 100% { transform: translateY(0) scale(0.9) rotate(0deg); }
+    50% { transform: translateY(-4px) scale(1.3) rotate(-5deg); }
+}
+
+/* Castle smoke */
+.castle-smoke {
+    position: absolute;
+    top: -50px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 50px;
+    height: 50px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+}
+
+.castle.damaged-medium .castle-smoke,
+.castle.damaged-heavy .castle-smoke,
+.castle.damaged-critical .castle-smoke {
+    opacity: 1;
+}
+
+.castle-smoke::before,
+.castle-smoke::after {
+    content: '💨';
+    position: absolute;
+    font-size: 1.5rem;
+    animation: smokeRise 2s ease-out infinite;
+    opacity: 0.6;
+}
+
+.castle-smoke::before { left: 0; animation-delay: 0s; }
+.castle-smoke::after { left: 20px; animation-delay: 0.7s; }
+
+@keyframes smokeRise {
+    0% { transform: translateY(0) scale(1); opacity: 0.6; }
+    100% { transform: translateY(-40px) scale(1.5); opacity: 0; }
+}
+
+/* Castle upgrade glow - shows when castle has upgrades */
+.castle-upgrade-glow {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+}
+
+.castle.upgraded-tier1 .castle-upgrade-glow {
+    opacity: 0.4;
+    background: radial-gradient(circle, rgba(100, 200, 100, 0.3) 0%, transparent 70%);
+    animation: upgradeGlowPulse 3s ease-in-out infinite;
+}
+
+.castle.upgraded-tier2 .castle-upgrade-glow {
+    opacity: 0.5;
+    background: radial-gradient(circle, rgba(80, 150, 255, 0.4) 0%, transparent 70%);
+    animation: upgradeGlowPulse 2.5s ease-in-out infinite;
+}
+
+.castle.upgraded-tier3 .castle-upgrade-glow {
+    opacity: 0.6;
+    background: radial-gradient(circle, rgba(180, 100, 255, 0.5) 0%, transparent 70%);
+    animation: upgradeGlowPulse 2s ease-in-out infinite;
+}
+
+.castle.upgraded-tier4 .castle-upgrade-glow {
+    opacity: 0.7;
+    background: radial-gradient(circle, rgba(255, 180, 50, 0.6) 0%, transparent 70%);
+    animation: upgradeGlowPulse 1.5s ease-in-out infinite, upgradeGlowRotate 8s linear infinite;
+}
+
+@keyframes upgradeGlowPulse {
+    0%, 100% { transform: translate(-50%, -50%) scale(1); }
+    50% { transform: translate(-50%, -50%) scale(1.15); }
+}
+
+@keyframes upgradeGlowRotate {
+    from { filter: hue-rotate(0deg); }
+    to { filter: hue-rotate(360deg); }
+}
+
+/* Castle aura - magical effects ring */
+.castle-aura {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 140px;
+    height: 140px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+}
+
+.castle.has-magic .castle-aura {
+    opacity: 1;
+}
+
+.castle.has-magic .castle-aura::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border: 2px solid transparent;
+    border-radius: 50%;
+    background: conic-gradient(from 0deg, rgba(100, 150, 255, 0) 0%, rgba(100, 150, 255, 0.5) 25%, rgba(255, 100, 100, 0.5) 50%, rgba(255, 200, 50, 0.5) 75%, rgba(100, 150, 255, 0) 100%);
+    animation: auraRotate 4s linear infinite;
+    -webkit-mask: radial-gradient(transparent 55%, black 56%, black 70%, transparent 71%);
+    mask: radial-gradient(transparent 55%, black 56%, black 70%, transparent 71%);
+}
+
+@keyframes auraRotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* Floating orbs around castle for powerful upgrades */
+.castle-orbs {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 150px;
+    height: 150px;
+    pointer-events: none;
+}
+
+.floating-orb {
+    position: absolute;
+    font-size: 1.2rem;
+    animation: orbFloat 3s ease-in-out infinite;
+    filter: drop-shadow(0 0 8px currentColor);
+}
+
+.floating-orb.fire { color: #ff6b35; animation-delay: 0s; }
+.floating-orb.lightning { color: #4dabf7; animation-delay: 0.5s; }
+.floating-orb.ice { color: #74c0fc; animation-delay: 1s; }
+.floating-orb.meteor { color: #ff4500; animation-delay: 1.25s; }
+.floating-orb.poison { color: #8fbc8f; animation-delay: 1.5s; }
+.floating-orb.heal { color: #7cfc00; animation-delay: 1.75s; }
+
+@keyframes orbFloat {
+    0%, 100% { transform: rotate(var(--angle)) translateX(70px) translateY(0) scale(1); }
+    50% { transform: rotate(calc(var(--angle) + 180deg)) translateX(70px) translateY(-10px) scale(1.2); }
+}
+
+/* ===== ENHANCED PROJECTILE EFFECTS ===== */
+
+/* Lightning bolt chain effect */
+.lightning-chain {
+    position: absolute;
+    height: 4px;
+    background: linear-gradient(90deg, rgba(100, 150, 255, 0.3), rgba(100, 200, 255, 1), rgba(100, 150, 255, 0.3));
+    transform-origin: left center;
+    z-index: 15;
+    pointer-events: none;
+    animation: lightningFlash 0.3s ease-out forwards;
+    box-shadow: 0 0 10px rgba(100, 200, 255, 0.8), 0 0 20px rgba(100, 200, 255, 0.4);
+}
+
+.lightning-chain::before,
+.lightning-chain::after {
+    content: '';
+    position: absolute;
+    height: 2px;
+    background: rgba(200, 230, 255, 0.8);
+    left: 0;
+    right: 0;
+}
+
+.lightning-chain::before { top: -4px; transform: skewY(-5deg); }
+.lightning-chain::after { bottom: -4px; transform: skewY(5deg); }
+
+@keyframes lightningFlash {
+    0% { opacity: 1; }
+    50% { opacity: 0.3; }
+    100% { opacity: 0; }
+}
+
+/* Lightning strike from above */
+.lightning-strike {
+    position: absolute;
+    width: 6px;
+    background: linear-gradient(180deg, transparent, rgba(100, 200, 255, 0.5) 10%, rgba(255, 255, 255, 1) 50%, rgba(100, 200, 255, 0.5) 90%, transparent);
+    z-index: 20;
+    pointer-events: none;
+    animation: lightningStrike 0.4s ease-out forwards;
+}
+
+.lightning-strike::before {
+    content: '⚡';
+    position: absolute;
+    bottom: -20px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 2rem;
+}
+
+@keyframes lightningStrike {
+    0% { height: 0; top: 0; opacity: 1; }
+    30% { height: 100%; top: 0; opacity: 1; }
+    100% { height: 100%; top: 0; opacity: 0; }
+}
+
+/* Meteor/fireball impact */
+.meteor-impact {
+    position: absolute;
+    width: 100px;
+    height: 100px;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    z-index: 18;
+    animation: meteorImpact 0.6s ease-out forwards;
+}
+
+.meteor-impact::before {
+    content: '💥';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 3rem;
+    animation: meteorExplosion 0.6s ease-out forwards;
+}
+
+.meteor-impact::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255, 100, 0, 0.5) 0%, transparent 70%);
+    animation: shockwave 0.6s ease-out forwards;
+}
+
+@keyframes meteorImpact {
+    0% { opacity: 1; }
+    100% { opacity: 0; }
+}
+
+@keyframes meteorExplosion {
+    0% { transform: translate(-50%, -50%) scale(0.5); }
+    50% { transform: translate(-50%, -50%) scale(1.5); }
+    100% { transform: translate(-50%, -50%) scale(1); }
+}
+
+@keyframes shockwave {
+    0% { transform: translate(-50%, -50%) scale(0.5); opacity: 1; }
+    100% { transform: translate(-50%, -50%) scale(2); opacity: 0; }
+}
+
+/* Healing effect */
+.heal-effect {
+    position: absolute;
+    width: 120px;
+    height: 120px;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    z-index: 16;
+    animation: healPulse 1s ease-out forwards;
+}
+
+.heal-effect::before {
+    content: '✨';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 3rem;
+    animation: healSparkle 1s ease-out forwards;
+}
+
+.heal-effect::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 100%;
+    height: 100%;
+    border: 3px solid rgba(100, 255, 100, 0.6);
+    border-radius: 50%;
+    animation: healRing 1s ease-out forwards;
+}
+
+.heal-particles {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    background: rgba(100, 255, 100, 0.8);
+    border-radius: 50%;
+    animation: healParticle 1s ease-out forwards;
+}
+
+@keyframes healPulse {
+    0% { opacity: 1; }
+    100% { opacity: 0; }
+}
+
+@keyframes healSparkle {
+    0% { transform: translate(-50%, -50%) scale(0.5) rotate(0deg); opacity: 0; }
+    30% { transform: translate(-50%, -50%) scale(1.2) rotate(108deg); opacity: 1; }
+    70% { transform: translate(-50%, -50%) scale(1) rotate(252deg); opacity: 1; }
+    100% { transform: translate(-50%, -50%) scale(0.8) rotate(360deg); opacity: 0; }
+}
+
+@keyframes healRing {
+    0% { transform: translate(-50%, -50%) scale(0.5); opacity: 1; }
+    100% { transform: translate(-50%, -50%) scale(1.5); opacity: 0; }
+}
+
+@keyframes healParticle {
+    0% { transform: translateY(0); opacity: 1; }
+    100% { transform: translateY(-50px); opacity: 0; }
+}
+
+/* Divine aura effect */
+.divine-aura {
+    position: absolute;
+    width: 200px;
+    height: 200px;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    z-index: 14;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255, 230, 150, 0.3) 0%, rgba(255, 200, 100, 0.2) 30%, transparent 70%);
+    animation: divineAura 2s ease-in-out forwards;
+}
+
+.divine-aura::before {
+    content: '✝️';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 2.5rem;
+    animation: divineSymbol 2s ease-in-out forwards;
+}
+
+@keyframes divineAura {
+    0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+    30% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+    100% { transform: translate(-50%, -50%) scale(1.3); opacity: 0; }
+}
+
+@keyframes divineSymbol {
+    0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+    30% { opacity: 1; transform: translate(-50%, -50%) scale(1.2); }
+    100% { opacity: 0; transform: translate(-50%, -50%) translateY(-30px) scale(0.8); }
+}
+
+/* Freeze/ice effect */
+.freeze-effect {
+    position: absolute;
+    width: 80px;
+    height: 80px;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    z-index: 15;
+}
+
+.freeze-effect::before {
+    content: '❄️';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 2.5rem;
+    animation: freezeExpand 0.5s ease-out forwards;
+}
+
+.freeze-effect::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 100%;
+    height: 100%;
+    border: 2px solid rgba(150, 220, 255, 0.8);
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(150, 220, 255, 0.3) 0%, transparent 70%);
+    animation: freezeRing 0.5s ease-out forwards;
+}
+
+@keyframes freezeExpand {
+    0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+    30% { transform: translate(-50%, -50%) scale(1.3); opacity: 1; }
+    70% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+    100% { transform: translate(-50%, -50%) scale(1.2); opacity: 0; }
+}
+
+@keyframes freezeRing {
+    0% { transform: translate(-50%, -50%) scale(0.5); opacity: 1; }
+    70% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+    100% { transform: translate(-50%, -50%) scale(1.3); opacity: 0; }
+}
+
+/* Enemy frozen state */
+.enemy.frozen {
+    filter: brightness(1.3) saturate(0.5) hue-rotate(180deg);
+    animation: frozenShiver 0.1s ease-in-out infinite;
+}
+
+.enemy.frozen::after {
+    content: '❄️';
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    font-size: 0.8rem;
+    animation: frozenIcon 0.5s ease-in-out infinite;
+}
+
+@keyframes frozenShiver {
+    0%, 100% { transform: translateX(0); }
+    50% { transform: translateX(1px); }
+}
+
+@keyframes frozenIcon {
+    0%, 100% { opacity: 0.7; }
+    50% { opacity: 1; }
+}
+
+/* ===== ENEMY ATTACK EFFECTS ===== */
+
+/* Melee attack visual - orc slash */
+.enemy-attack-melee {
+    position: absolute;
+    width: 60px;
+    height: 60px;
+    pointer-events: none;
+    z-index: 17;
+    animation: meleeSlash 0.3s ease-out forwards;
+}
+
+.enemy-attack-melee::before {
+    content: '💥';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 2rem;
+}
+
+@keyframes meleeSlash {
+    0% { transform: scale(0.5) rotate(-45deg); opacity: 0; }
+    50% { transform: scale(1.2) rotate(0deg); opacity: 1; }
+    100% { transform: scale(1) rotate(15deg); opacity: 0; }
+}
+
+/* Ranged attack - goblin arrow */
+.enemy-projectile {
+    position: absolute;
+    font-size: 1.2rem;
+    z-index: 12;
+    pointer-events: none;
+    transition: none;
+}
+
+.enemy-projectile.arrow {
+    color: #4a4a4a;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.enemy-projectile.arrow::before {
+    content: '➳';
+}
+
+/* Troll smash effect */
+.enemy-attack-smash {
+    position: absolute;
+    width: 100px;
+    height: 100px;
+    pointer-events: none;
+    z-index: 17;
+    animation: trollSmash 0.5s ease-out forwards;
+}
+
+.enemy-attack-smash::before {
+    content: '💢';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 2.5rem;
+}
+
+.enemy-attack-smash::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 80px;
+    height: 80px;
+    border: 4px solid rgba(150, 100, 50, 0.6);
+    border-radius: 50%;
+    animation: smashWave 0.5s ease-out forwards;
+}
+
+@keyframes trollSmash {
+    0% { opacity: 0; transform: scale(0.3); }
+    30% { opacity: 1; transform: scale(1.3); }
+    100% { opacity: 0; transform: scale(1); }
+}
+
+@keyframes smashWave {
+    0% { transform: translate(-50%, -50%) scale(0.5); opacity: 1; }
+    100% { transform: translate(-50%, -50%) scale(1.5); opacity: 0; }
+}
+
+/* Vampire bite effect */
+.enemy-attack-bite {
+    position: absolute;
+    width: 50px;
+    height: 50px;
+    pointer-events: none;
+    z-index: 17;
+    animation: vampireBite 0.4s ease-out forwards;
+}
+
+.enemy-attack-bite::before {
+    content: '🩸';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 1.8rem;
+    animation: biteDrip 0.4s ease-out forwards;
+}
+
+@keyframes vampireBite {
+    0% { opacity: 0; }
+    30% { opacity: 1; }
+    100% { opacity: 0; }
+}
+
+@keyframes biteDrip {
+    0% { transform: translate(-50%, -50%) translateY(-10px); }
+    100% { transform: translate(-50%, -50%) translateY(10px); }
+}
+
+/* Ghost phase attack */
+.enemy-attack-phase {
+    position: absolute;
+    width: 70px;
+    height: 70px;
+    pointer-events: none;
+    z-index: 17;
+    animation: ghostPhase 0.5s ease-out forwards;
+}
+
+.enemy-attack-phase::before {
+    content: '👻';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 2rem;
+    filter: drop-shadow(0 0 10px rgba(200, 200, 255, 0.8));
+}
+
+@keyframes ghostPhase {
+    0% { opacity: 0; transform: scale(0.5); }
+    30% { opacity: 0.8; transform: scale(1.2); }
+    70% { opacity: 0.3; transform: scale(1); }
+    100% { opacity: 0; transform: scale(0.8); }
+}
+
+/* Demon fire attack */
+.enemy-attack-fire {
+    position: absolute;
+    width: 80px;
+    height: 80px;
+    pointer-events: none;
+    z-index: 17;
+    animation: demonFire 0.5s ease-out forwards;
+}
+
+.enemy-attack-fire::before {
+    content: '🔥';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 2.5rem;
+}
+
+.enemy-attack-fire::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255, 100, 0, 0.4) 0%, rgba(255, 50, 0, 0.2) 50%, transparent 70%);
+}
+
+@keyframes demonFire {
+    0% { opacity: 0; transform: scale(0.5); }
+    30% { opacity: 1; transform: scale(1.3); }
+    100% { opacity: 0; transform: scale(1.5); }
+}
+
+/* Necromancer dark magic */
+.enemy-attack-dark {
+    position: absolute;
+    width: 60px;
+    height: 60px;
+    pointer-events: none;
+    z-index: 17;
+    animation: darkMagic 0.6s ease-out forwards;
+}
+
+.enemy-attack-dark::before {
+    content: '💀';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 1.8rem;
+    animation: darkPulse 0.6s ease-out forwards;
+}
+
+.enemy-attack-dark::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(100, 0, 150, 0.5) 0%, transparent 70%);
+}
+
+@keyframes darkMagic {
+    0% { opacity: 0; }
+    30% { opacity: 1; }
+    100% { opacity: 0; }
+}
+
+@keyframes darkPulse {
+    0% { transform: translate(-50%, -50%) scale(0.5) rotate(0deg); }
+    50% { transform: translate(-50%, -50%) scale(1.2) rotate(180deg); }
+    100% { transform: translate(-50%, -50%) scale(1) rotate(360deg); }
+}
+
+/* Golem ground pound */
+.enemy-attack-pound {
+    position: absolute;
+    width: 120px;
+    height: 40px;
+    pointer-events: none;
+    z-index: 17;
+    animation: golemPound 0.6s ease-out forwards;
+}
+
+.enemy-attack-pound::before {
+    content: '🪨';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 2rem;
+}
+
+.enemy-attack-pound::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    height: 10px;
+    background: linear-gradient(90deg, transparent, rgba(150, 100, 50, 0.6) 20%, rgba(150, 100, 50, 0.8) 50%, rgba(150, 100, 50, 0.6) 80%, transparent);
+    animation: groundShake 0.2s ease-in-out 3;
+}
+
+@keyframes golemPound {
+    0% { opacity: 0; transform: translateY(-20px); }
+    30% { opacity: 1; transform: translateY(0); }
+    100% { opacity: 0; }
+}
+
+@keyframes groundShake {
+    0%, 100% { transform: translateX(-50%) scaleX(1); }
+    50% { transform: translateX(-50%) scaleX(1.2); }
+}
+
+/* Assassin swift strike */
+.enemy-attack-swift {
+    position: absolute;
+    width: 100px;
+    height: 30px;
+    pointer-events: none;
+    z-index: 17;
+    animation: swiftStrike 0.2s ease-out forwards;
+}
+
+.enemy-attack-swift::before {
+    content: '⚔️';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 1.5rem;
+}
+
+.enemy-attack-swift::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, rgba(200, 200, 200, 0.8), transparent);
+}
+
+@keyframes swiftStrike {
+    0% { opacity: 0; transform: translateX(-20px); }
+    50% { opacity: 1; transform: translateX(0); }
+    100% { opacity: 0; transform: translateX(20px); }
+}
+
+/* ===== ACTION CARD DRAMATIC EFFECTS ===== */
+
+/* Full screen flash for powerful cards */
+.card-flash-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    pointer-events: none;
+    z-index: 100;
+    animation: screenFlash 0.5s ease-out forwards;
+}
+
+.card-flash-screen.fire { background: rgba(255, 100, 0, 0.4); }
+.card-flash-screen.lightning { background: rgba(100, 200, 255, 0.4); }
+.card-flash-screen.heal { background: rgba(100, 255, 100, 0.3); }
+.card-flash-screen.freeze { background: rgba(150, 220, 255, 0.4); }
+.card-flash-screen.divine { background: rgba(255, 230, 150, 0.4); }
+.card-flash-screen.dark { background: rgba(80, 0, 120, 0.4); }
+
+@keyframes screenFlash {
+    0% { opacity: 1; }
+    100% { opacity: 0; }
+}
+
+/* Card activation burst */
+.card-activation-burst {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    width: 200px;
+    height: 200px;
+    pointer-events: none;
+    z-index: 50;
+    animation: activationBurst 0.8s ease-out forwards;
+}
+
+.card-activation-burst::before {
+    content: attr(data-icon);
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 4rem;
+    animation: burstIcon 0.8s ease-out forwards;
+}
+
+@keyframes activationBurst {
+    0% { opacity: 0; }
+    20% { opacity: 1; }
+    100% { opacity: 0; }
+}
+
+@keyframes burstIcon {
+    0% { transform: translate(-50%, -50%) scale(0.5) rotate(-10deg); opacity: 0; }
+    30% { transform: translate(-50%, -50%) scale(1.5) rotate(5deg); opacity: 1; }
+    100% { transform: translate(-50%, -50%) scale(2) rotate(0deg) translateY(-50px); opacity: 0; }
+}
+
+/* Energy ring for powerful abilities */
+.energy-ring {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 45;
+    animation: energyRing 0.6s ease-out forwards;
+}
+
+.energy-ring.fire {
+    border: 4px solid rgba(255, 100, 0, 0.8);
+    box-shadow: 0 0 20px rgba(255, 100, 0, 0.6), inset 0 0 20px rgba(255, 100, 0, 0.3);
+}
+
+.energy-ring.lightning {
+    border: 4px solid rgba(100, 200, 255, 0.8);
+    box-shadow: 0 0 20px rgba(100, 200, 255, 0.6), inset 0 0 20px rgba(100, 200, 255, 0.3);
+}
+
+.energy-ring.heal {
+    border: 4px solid rgba(100, 255, 100, 0.8);
+    box-shadow: 0 0 20px rgba(100, 255, 100, 0.6), inset 0 0 20px rgba(100, 255, 100, 0.3);
+}
+
+.energy-ring.freeze {
+    border: 4px solid rgba(150, 220, 255, 0.8);
+    box-shadow: 0 0 20px rgba(150, 220, 255, 0.6), inset 0 0 20px rgba(150, 220, 255, 0.3);
+}
+
+.energy-ring.divine {
+    border: 4px solid rgba(255, 215, 0, 0.8);
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.6), inset 0 0 20px rgba(255, 215, 0, 0.3);
+}
+
+@keyframes energyRing {
+    0% { width: 50px; height: 50px; opacity: 1; }
+    100% { width: 300px; height: 300px; opacity: 0; }
+}
+
+/* Dragon breath cone */
+.dragon-breath-effect {
+    position: absolute;
+    width: 0;
+    height: 0;
+    pointer-events: none;
+    z-index: 40;
+    animation: dragonBreathCone 1s ease-out forwards;
+}
+
+.dragon-breath-effect::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    width: 300px;
+    height: 200px;
+    transform: translateY(-50%);
+    background: linear-gradient(90deg, rgba(255, 200, 0, 0.8) 0%, rgba(255, 100, 0, 0.6) 30%, rgba(255, 50, 0, 0.3) 60%, transparent 100%);
+    clip-path: polygon(0% 40%, 100% 0%, 100% 100%, 0% 60%);
+    animation: breathFlicker 0.1s ease-in-out infinite;
+}
+
+@keyframes dragonBreathCone {
+    0% { opacity: 0; }
+    20% { opacity: 1; }
+    100% { opacity: 0; }
+}
+
+@keyframes breathFlicker {
+    0%, 100% { filter: brightness(1); }
+    50% { filter: brightness(1.3); }
+}
+
+/* Time warp effect */
+.time-warp-effect {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    pointer-events: none;
+    z-index: 90;
+    background: radial-gradient(ellipse at center, transparent 30%, rgba(150, 100, 255, 0.2) 100%);
+    animation: timeWarpPulse 2s ease-in-out infinite;
+}
+
+@keyframes timeWarpPulse {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 0.6; }
+}
+
+.enemy.time-warped {
+    filter: saturate(0.5) brightness(0.8);
+    animation: timeWarpedEnemy 0.5s ease-in-out infinite;
+}
+
+@keyframes timeWarpedEnemy {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+}
+
+/* Invincibility golden glow */
+.castle.invincible .castle-sprite {
+    filter: drop-shadow(0 0 30px rgba(255, 215, 0, 0.9)) 
+            drop-shadow(0 0 60px rgba(255, 180, 0, 0.6))
+            brightness(1.3);
+    animation: invinciblePulse 0.5s ease-in-out infinite;
+}
+
+.castle.invincible::before {
+    content: '🛡️';
+    position: absolute;
+    top: -30px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 2rem;
+    animation: invincibleShield 1s ease-in-out infinite;
+}
+
+@keyframes invinciblePulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+@keyframes invincibleShield {
+    0%, 100% { transform: translateX(-50%) translateY(0); opacity: 0.8; }
+    50% { transform: translateX(-50%) translateY(-5px); opacity: 1; }
+}
+
+/* Poison cloud effect */
+.poison-cloud {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    width: 150px;
+    height: 150px;
+    pointer-events: none;
+    z-index: 15;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(100, 180, 100, 0.5) 0%, rgba(50, 150, 50, 0.3) 50%, transparent 70%);
+    animation: poisonCloudPulse 3s ease-in-out infinite;
+}
+
+.poison-cloud::before {
+    content: '☠️';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 2rem;
+    opacity: 0.7;
+}
+
+@keyframes poisonCloudPulse {
+    0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.7; }
+    50% { transform: translate(-50%, -50%) scale(1.2); opacity: 0.9; }
+}
+
+/* Summoned ally glow */
+.summoned-ally {
+    position: absolute;
+    font-size: 2.5rem;
+    z-index: 10;
+    animation: allyIdle 2s ease-in-out infinite;
+    filter: drop-shadow(0 0 10px rgba(100, 150, 255, 0.6));
+}
+
+.summoned-ally::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    border: 2px solid rgba(100, 150, 255, 0.5);
+    animation: allyAura 1.5s ease-in-out infinite;
+}
+
+@keyframes allyIdle {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-5px); }
+}
+
+@keyframes allyAura {
+    0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.5; }
+    50% { transform: translate(-50%, -50%) scale(1.2); opacity: 0.8; }
+}
+
+/* Battle Cry effects */
+.battle-cry-icon {
+    position: absolute;
+    font-size: 3rem;
+    transform: translate(-50%, -50%);
+    animation: battleCryIcon 1s ease-out forwards;
+    z-index: 30;
+    pointer-events: none;
+}
+
+@keyframes battleCryIcon {
+    0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+    30% { transform: translate(-50%, -50%) scale(1.5); opacity: 1; }
+    100% { transform: translate(-50%, -50%) scale(2) translateY(-50px); opacity: 0; }
+}
+
+.castle.battle-cry-active {
+    filter: drop-shadow(0 0 20px #ff6b00) brightness(1.2);
+    animation: battleCryPulse 0.5s ease-in-out infinite alternate;
+}
+
+@keyframes battleCryPulse {
+    0% { filter: drop-shadow(0 0 15px #ff6b00) brightness(1.1); }
+    100% { filter: drop-shadow(0 0 30px #ff9500) brightness(1.3); }
+}
+
+/* Poison Cloud effects */
+.poison-cloud-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(ellipse at center, rgba(50, 200, 50, 0.2) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 10;
+    animation: poisonCloudPulse 1s ease-in-out infinite;
+}
+
+@keyframes poisonCloudPulse {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 0.8; }
+}
+
+.poison-particle {
+    position: absolute;
+    font-size: 1rem;
+    transform: translate(-50%, -50%);
+    animation: poisonFloat 0.5s ease-out forwards;
+    pointer-events: none;
+    z-index: 30;
+}
+
+@keyframes poisonFloat {
+    0% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+    100% { transform: translate(-50%, -50%) translateY(-20px) scale(0.5); opacity: 0; }
+}
+
+.card-flash-screen.poison {
+    background: radial-gradient(circle, rgba(50, 200, 50, 0.4), transparent 70%);
+}
+
+/* Summoned Knight effects */
+.summoned-knight {
+    position: absolute;
+    font-size: 2.5rem;
+    transform: translate(-50%, -50%);
+    z-index: 20;
+    pointer-events: none;
+    filter: drop-shadow(0 0 10px gold);
+    animation: knightSpawn 0.5s ease-out;
+}
+
+@keyframes knightSpawn {
+    0% { transform: translate(-50%, -50%) scale(0) rotate(-180deg); opacity: 0; }
+    100% { transform: translate(-50%, -50%) scale(1) rotate(0deg); opacity: 1; }
+}
+
+.summoned-knight.knight-attacking {
+    animation: knightAttack 0.2s ease-out;
+}
+
+@keyframes knightAttack {
+    0%, 100% { transform: translate(-50%, -50%) scale(1); }
+    50% { transform: translate(-50%, -50%) scale(1.3); }
+}
+
+.summoned-knight.knight-fade {
+    animation: knightFade 0.5s ease-out forwards;
+}
+
+@keyframes knightFade {
+    0% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+    100% { transform: translate(-50%, -50%) scale(0) rotate(180deg); opacity: 0; }
+}
+
+.knight-slash {
+    position: absolute;
+    width: 40px;
+    height: 40px;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    z-index: 25;
+}
+
+.knight-slash::before {
+    content: '💥';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 1.5rem;
+    animation: slashEffect 0.3s ease-out forwards;
+}
+
+@keyframes slashEffect {
+    0% { transform: translate(-50%, -50%) scale(0.5) rotate(0deg); opacity: 1; }
+    100% { transform: translate(-50%, -50%) scale(1.5) rotate(45deg); opacity: 0; }
+}
+
+/* Effects layer */
+.effects-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 25;
 }

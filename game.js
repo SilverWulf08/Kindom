@@ -9,19 +9,19 @@ let gameDifficulty = 5; // Default: 5 (middle of 1-10 scale) - set by slider
 function getDifficultyMultipliers(wave = 1) {
     const d = gameDifficulty;
     
-    // Wave-based exponential scaling (gets harder every wave)
-    // This creates a smooth exponential curve that compounds with base difficulty
-    const waveScaling = 1 + Math.pow(wave, 1.15) * 0.03;
+    // Wave-based scaling - gentler curve that ramps up gradually
+    // Reduced exponent from 1.15 to 1.0 (linear) with smaller multiplier
+    const waveScaling = 1 + (wave - 1) * 0.015;
     
     return {
-        // Enemy health scales from 0.5x to 2.5x base, then multiplied by wave scaling
-        enemyHealth: (0.5 + (d - 1) * 0.222) * waveScaling,
-        // Enemy damage scales from 0.4x to 2.0x base, then multiplied by wave scaling
-        enemyDamage: (0.4 + (d - 1) * 0.178) * waveScaling,
-        // Gold rewards scale from 1.5x to 0.6x (inverse - easier = more gold)
-        goldReward: 1.5 - (d - 1) * 0.1,
-        // Spawn rate multiplier (lower = faster spawns) from 1.3x to 0.7x
-        spawnRate: 1.3 - (d - 1) * 0.067,
+        // Enemy health scales from 0.3x (easy) to 2.0x (hard), then multiplied by wave scaling
+        enemyHealth: (0.3 + (d - 1) * 0.189) * waveScaling,
+        // Enemy damage scales from 0.25x (easy) to 1.5x (hard), then multiplied by wave scaling  
+        enemyDamage: (0.25 + (d - 1) * 0.139) * waveScaling,
+        // Gold rewards scale from 2.0x (easy) to 0.7x (hard) - more gold on easy
+        goldReward: 2.0 - (d - 1) * 0.144,
+        // Spawn rate multiplier (higher = slower spawns) from 1.5x (easy) to 0.8x (hard)
+        spawnRate: 1.5 - (d - 1) * 0.078,
         // Raw wave scaling for reference
         waveScaling: waveScaling
     };
@@ -229,6 +229,68 @@ function playSound(type, volume = 0.3) {
                 playTone(2500, 0.12, 'sine', volume * 0.18, 0.05, 0.05);
                 playTone(3000, 0.1, 'sine', volume * 0.15, 0.1, 0.05);
                 break;
+                
+            case 'vampireBite':
+                // Creepy bite
+                playTone(150, 0.1, 'sawtooth', volume * 0.25, 0, 0.03);
+                playTone(200, 0.15, 'sine', volume * 0.3, 0.05, 0.08);
+                break;
+                
+            case 'ghostAttack':
+                // Ethereal whoosh
+                playNoise(0.2, volume * 0.15, 3000, 500);
+                playTone(400, 0.25, 'sine', volume * 0.2, 0, 0.15);
+                playTone(350, 0.2, 'sine', volume * 0.15, 0.1, 0.1);
+                break;
+                
+            case 'demonFire':
+                // Demonic flames
+                playNoise(0.3, volume * 0.3, 600, 150);
+                playTone(120, 0.3, 'sawtooth', volume * 0.35, 0, 0.1);
+                playTone(180, 0.2, 'sawtooth', volume * 0.25, 0.1, 0.1);
+                break;
+                
+            case 'golemSmash':
+                // Heavy ground pound
+                playTone(50, 0.4, 'square', volume * 0.5, 0, 0.15);
+                playTone(40, 0.3, 'sawtooth', volume * 0.4, 0.1, 0.1);
+                playNoise(0.3, volume * 0.35, 300, 50);
+                break;
+                
+            case 'assassinStrike':
+                // Quick blade
+                playNoise(0.08, volume * 0.25, 5000, 1500);
+                playTone(800, 0.06, 'sawtooth', volume * 0.3, 0, 0.02);
+                break;
+                
+            case 'necroMagic':
+                // Dark magic
+                playTone(150, 0.3, 'sawtooth', volume * 0.3, 0, 0.1);
+                playTone(200, 0.25, 'square', volume * 0.25, 0.1, 0.1);
+                playTone(100, 0.2, 'sawtooth', volume * 0.2, 0.2, 0.1);
+                break;
+                
+            case 'divineShield':
+                // Angelic protection
+                playTone(600, 0.2, 'sine', volume * 0.3, 0, 0.08);
+                playTone(800, 0.2, 'sine', volume * 0.35, 0.1, 0.08);
+                playTone(1000, 0.3, 'sine', volume * 0.4, 0.2, 0.15);
+                playTone(1200, 0.4, 'sine', volume * 0.35, 0.3, 0.2);
+                break;
+                
+            case 'timeWarp':
+                // Time slow effect
+                playTone(400, 0.5, 'sine', volume * 0.25, 0, 0.2);
+                playTone(350, 0.4, 'sine', volume * 0.2, 0.1, 0.2);
+                playTone(300, 0.3, 'sine', volume * 0.15, 0.2, 0.15);
+                break;
+                
+            case 'powerUp':
+                // Generic power up
+                playTone(400, 0.1, 'square', volume * 0.25, 0, 0.03);
+                playTone(600, 0.1, 'square', volume * 0.3, 0.05, 0.03);
+                playTone(800, 0.15, 'square', volume * 0.35, 0.1, 0.05);
+                break;
         }
     } catch (e) {
         console.warn('Sound playback failed:', e);
@@ -313,8 +375,386 @@ function updateSoundButtons() {
     }
 }
 
+// ===== ENHANCED VISUAL EFFECTS SYSTEM =====
+
+// Castle visual state management
+function updateCastleVisuals() {
+    // Guard against null castle element
+    if (!castle) return;
+    
+    const healthPercent = (gameState.castle.health / gameState.stats.maxHealth) * 100;
+    const upgradeCount = gameState.earnedUpgrades.length;
+    
+    // Remove all damage classes
+    castle.classList.remove('damaged-light', 'damaged-medium', 'damaged-heavy', 'damaged-critical');
+    
+    // Add appropriate damage class based on health (only if below threshold)
+    if (healthPercent <= 15) {
+        castle.classList.add('damaged-critical');
+    } else if (healthPercent <= 35) {
+        castle.classList.add('damaged-heavy');
+    } else if (healthPercent <= 60) {
+        castle.classList.add('damaged-medium');
+    } else if (healthPercent <= 85) {
+        castle.classList.add('damaged-light');
+    }
+    // If healthPercent > 85, no damage class is added (healthy castle)
+    
+    // Update upgrade tier glow
+    castle.classList.remove('upgraded-tier1', 'upgraded-tier2', 'upgraded-tier3', 'upgraded-tier4');
+    if (upgradeCount >= 20) {
+        castle.classList.add('upgraded-tier4');
+    } else if (upgradeCount >= 12) {
+        castle.classList.add('upgraded-tier3');
+    } else if (upgradeCount >= 6) {
+        castle.classList.add('upgraded-tier2');
+    } else if (upgradeCount >= 3) {
+        castle.classList.add('upgraded-tier1');
+    }
+    
+    // Magic aura if has magic abilities
+    if (gameState.stats.hasFireball || gameState.stats.hasLightning || gameState.stats.hasMeteor) {
+        castle.classList.add('has-magic');
+    } else {
+        castle.classList.remove('has-magic');
+    }
+    
+    // Update floating orbs based on abilities
+    updateCastleOrbs();
+}
+
+function updateCastleOrbs() {
+    const orbsContainer = document.getElementById('castleOrbs');
+    if (!orbsContainer) return;
+    
+    orbsContainer.innerHTML = '';
+    
+    const orbs = [];
+    if (gameState.stats.hasFireball) orbs.push({ type: 'fire', icon: '🔥' });
+    if (gameState.stats.hasLightning) orbs.push({ type: 'lightning', icon: '⚡' });
+    if (gameState.stats.hasMeteor) orbs.push({ type: 'meteor', icon: '☄️' });
+    if (gameState.stats.freezeChance > 0) orbs.push({ type: 'ice', icon: '❄️' });
+    if (gameState.stats.regen > 0) orbs.push({ type: 'heal', icon: '💚' });
+    
+    orbs.forEach((orb, index) => {
+        const orbEl = document.createElement('div');
+        orbEl.className = `floating-orb ${orb.type}`;
+        orbEl.textContent = orb.icon;
+        orbEl.style.setProperty('--angle', `${(360 / orbs.length) * index}deg`);
+        orbsContainer.appendChild(orbEl);
+    });
+}
+
+// Create visual effects at position
+function createVisualEffect(x, y, type, options = {}) {
+    const effectsLayer = document.getElementById('effectsLayer') || gameArena;
+    if (!effectsLayer) return null;
+    
+    const effect = document.createElement('div');
+    
+    switch (type) {
+        case 'lightning-strike':
+            effect.className = 'lightning-strike';
+            effect.style.left = x + 'px';
+            effect.style.top = '0';
+            effect.style.height = y + 'px';
+            playSound('lightning');
+            effectsLayer.appendChild(effect);
+            setTimeout(() => effect.remove(), 500);
+            return effect;
+            
+        case 'lightning-chain':
+            // Draw line between two points
+            const x2 = options.targetX || x;
+            const y2 = options.targetY || y;
+            const dx = x2 - x;
+            const dy = y2 - y;
+            const length = Math.sqrt(dx * dx + dy * dy);
+            const angle = Math.atan2(dy, dx) * (180 / Math.PI);
+            
+            effect.className = 'lightning-chain';
+            effect.style.left = x + 'px';
+            effect.style.top = y + 'px';
+            effect.style.width = length + 'px';
+            effect.style.transform = `rotate(${angle}deg)`;
+            effectsLayer.appendChild(effect);
+            setTimeout(() => effect.remove(), 400);
+            return effect;
+            
+        case 'meteor-impact':
+            effect.className = 'meteor-impact';
+            effect.style.left = x + 'px';
+            effect.style.top = y + 'px';
+            playSound('explosion');
+            effectsLayer.appendChild(effect);
+            setTimeout(() => effect.remove(), 700);
+            return effect;
+            
+        case 'heal':
+            effect.className = 'heal-effect';
+            effect.style.left = x + 'px';
+            effect.style.top = y + 'px';
+            // Add floating particles
+            for (let i = 0; i < 8; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'heal-particles';
+                particle.style.left = (x + (Math.random() - 0.5) * 60) + 'px';
+                particle.style.top = (y + 20) + 'px';
+                particle.style.animationDelay = (i * 0.1) + 's';
+                effectsLayer.appendChild(particle);
+                setTimeout(() => particle.remove(), 1000);
+            }
+            effectsLayer.appendChild(effect);
+            setTimeout(() => effect.remove(), 1100);
+            return effect;
+            
+        case 'divine-aura':
+            effect.className = 'divine-aura';
+            effect.style.left = x + 'px';
+            effect.style.top = y + 'px';
+            effectsLayer.appendChild(effect);
+            setTimeout(() => effect.remove(), 2000);
+            return effect;
+            
+        case 'freeze':
+            effect.className = 'freeze-effect';
+            effect.style.left = x + 'px';
+            effect.style.top = y + 'px';
+            playSound('freeze');
+            effectsLayer.appendChild(effect);
+            setTimeout(() => effect.remove(), 600);
+            return effect;
+            
+        case 'poison-cloud':
+            effect.className = 'poison-cloud';
+            effect.style.left = x + 'px';
+            effect.style.top = y + 'px';
+            setTimeout(() => effect.remove(), options.duration || 3000);
+            effectsLayer.appendChild(effect);
+            return effect; // Return for poison tick management
+            
+        case 'screen-flash':
+            effect.className = `card-flash-screen ${options.color || 'fire'}`;
+            document.body.appendChild(effect);
+            setTimeout(() => effect.remove(), 500);
+            return effect;
+            
+        case 'energy-ring':
+            effect.className = `energy-ring ${options.color || 'fire'}`;
+            effect.style.left = x + 'px';
+            effect.style.top = y + 'px';
+            effectsLayer.appendChild(effect);
+            setTimeout(() => effect.remove(), 700);
+            return effect;
+            
+        case 'card-burst':
+            effect.className = 'card-activation-burst';
+            effect.style.left = x + 'px';
+            effect.style.top = y + 'px';
+            effect.setAttribute('data-icon', options.icon || '✨');
+            effectsLayer.appendChild(effect);
+            setTimeout(() => effect.remove(), 900);
+            return effect;
+            
+        case 'dragon-breath':
+            effect.className = 'dragon-breath-effect';
+            effect.style.left = x + 'px';
+            effect.style.top = y + 'px';
+            effect.style.transform = `rotate(${options.angle || 0}deg)`;
+            effectsLayer.appendChild(effect);
+            setTimeout(() => effect.remove(), 1100);
+            return effect;
+            
+        case 'time-warp':
+            effect.className = 'time-warp-effect';
+            document.body.appendChild(effect);
+            setTimeout(() => effect.remove(), options.duration || 5000);
+            return effect;
+            
+        default:
+            return null;
+    }
+    
+    effectsLayer.appendChild(effect);
+    
+    // Auto-remove after animation
+    const duration = options.duration || 1000;
+    setTimeout(() => effect.remove(), duration);
+    
+    return effect;
+}
+
+// Create enemy attack visual effects
+function createEnemyAttackEffect(enemy, castleX, castleY) {
+    const effectsLayer = document.getElementById('effectsLayer') || gameArena;
+    if (!effectsLayer) return;
+    
+    const effect = document.createElement('div');
+    
+    const enemyType = enemy.type.replace('elite_', '').replace('boss_', '');
+    
+    switch (enemyType) {
+        case 'orc':
+            effect.className = 'enemy-attack-melee';
+            effect.style.left = castleX + 'px';
+            effect.style.top = castleY + 'px';
+            break;
+            
+        case 'goblin':
+            // Goblin shoots an arrow projectile
+            createEnemyProjectile(enemy.x, enemy.y, castleX, castleY, 'arrow');
+            return;
+            
+        case 'troll':
+            effect.className = 'enemy-attack-smash';
+            effect.style.left = castleX + 'px';
+            effect.style.top = castleY + 'px';
+            playSound('explosion');
+            break;
+            
+        case 'vampire':
+            effect.className = 'enemy-attack-bite';
+            effect.style.left = castleX + 'px';
+            effect.style.top = castleY + 'px';
+            break;
+            
+        case 'ghost':
+            effect.className = 'enemy-attack-phase';
+            effect.style.left = castleX + 'px';
+            effect.style.top = castleY + 'px';
+            break;
+            
+        case 'demon':
+            effect.className = 'enemy-attack-fire';
+            effect.style.left = castleX + 'px';
+            effect.style.top = castleY + 'px';
+            playSound('fireball');
+            break;
+            
+        case 'necromancer':
+            effect.className = 'enemy-attack-dark';
+            effect.style.left = castleX + 'px';
+            effect.style.top = castleY + 'px';
+            break;
+            
+        case 'golem':
+            effect.className = 'enemy-attack-pound';
+            effect.style.left = castleX + 'px';
+            effect.style.top = castleY + 'px';
+            playSound('explosion');
+            break;
+            
+        case 'assassin':
+            effect.className = 'enemy-attack-swift';
+            effect.style.left = castleX + 'px';
+            effect.style.top = castleY + 'px';
+            break;
+            
+        default:
+            effect.className = 'enemy-attack-melee';
+            effect.style.left = castleX + 'px';
+            effect.style.top = castleY + 'px';
+    }
+    
+    effectsLayer.appendChild(effect);
+    setTimeout(() => effect.remove(), 600);
+}
+
+// Create enemy projectile (like goblin arrows)
+function createEnemyProjectile(startX, startY, targetX, targetY, type) {
+    if (!gameArena) return;
+    
+    const proj = document.createElement('div');
+    proj.className = `enemy-projectile ${type}`;
+    proj.style.left = startX + 'px';
+    proj.style.top = startY + 'px';
+    
+    // Calculate angle
+    const dx = targetX - startX;
+    const dy = targetY - startY;
+    const angle = Math.atan2(dy, dx) * (180 / Math.PI);
+    proj.style.transform = `rotate(${angle}deg)`;
+    
+    gameArena.appendChild(proj);
+    
+    // Animate projectile
+    const speed = 8;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    const duration = dist / speed * 16; // ms
+    
+    let progress = 0;
+    const animate = () => {
+        progress += 16;
+        const t = progress / duration;
+        
+        if (t >= 1) {
+            proj.remove();
+            return;
+        }
+        
+        proj.style.left = (startX + dx * t) + 'px';
+        proj.style.top = (startY + dy * t) + 'px';
+        
+        requestAnimationFrame(animate);
+    };
+    
+    requestAnimationFrame(animate);
+    playSound('arrowShoot');
+}
+
+// Enhanced action card activation effects
+function createCardActivationEffect(card, castleX, castleY) {
+    // Full screen flash based on card type
+    let flashType = 'fire';
+    if (card.id.includes('heal') || card.id.includes('regen')) flashType = 'heal';
+    else if (card.id.includes('lightning')) flashType = 'lightning';
+    else if (card.id.includes('freeze') || card.id.includes('ice')) flashType = 'freeze';
+    else if (card.id.includes('invincib') || card.id.includes('divine')) flashType = 'divine';
+    
+    createVisualEffect(0, 0, 'screen-flash', { color: flashType });
+    
+    // Card icon burst at castle
+    createVisualEffect(castleX, castleY, 'card-burst', { icon: card.icon });
+    
+    // Energy ring
+    createVisualEffect(castleX, castleY, 'energy-ring', { color: flashType });
+}
+
 // ===== PATCH NOTES DATA =====
 const PATCH_NOTES = [
+    {
+        version: "1.4.0",
+        title: "Visual Spectacle Update",
+        date: "January 9, 2026",
+        changes: [
+            "🏰 Castle now visually changes with upgrades - glowing auras, floating orbs, and tier effects!",
+            "🔥 Castle shows damage states - cracks, fire, and smoke as health drops!",
+            "⚡ Enhanced lightning effects - visible chain lightning arcs between enemies",
+            "☄️ Meteor impact effects for fireballs and explosive arrows",
+            "💚 Healing magic now shows sparkles and healing rings",
+            "✨ Divine aura effects for invincibility and shields",
+            "❄️ Freeze effects with ice crystals on frozen enemies",
+            "👹 Each enemy type now has unique attack visuals (demon fire, vampire bite, ghost phase, etc.)",
+            "🃏 Dramatic action card activation effects with screen flashes and energy bursts",
+            "🔊 New sound effects for all enemy attacks and abilities",
+            "🎇 Dragon breath cone effect and time warp visual distortion"
+        ]
+    },
+    {
+        version: "1.3.0",
+        title: "Curses & Chaos Update",
+        date: "January 9, 2026",
+        changes: [
+            "💀 New debuff card system - 15% chance per wave to face a curse instead of upgrades!",
+            "🔮 Devastating debuffs - 5% chance mystery boxes contain a powerful curse",
+            "👻 6 new enemy types: Vampire, Ghost, Demon, Necromancer, Golem, Assassin",
+            "⚔️ 15+ new upgrades across all rarities (Gold Find, Poison, Dodge, Splash, and more)",
+            "🃏 4 new action cards: Gold Rush, Battle Cry, Poison Cloud, Summon Knight",
+            "🎁 Mystery box limit reduced to 3 per wave for balanced gameplay",
+            "💀 Menacing curse animations with dark particles and skull effects",
+            "⚡ New devastating debuffs: Cursed Gold, Shattered Walls, Doom Curse, and more"
+        ]
+    },
     {
         version: "1.2.0",
         title: "Difficulty & Strategy Update",
@@ -409,7 +849,41 @@ const ACTION_CARDS = {
     
     // Legendary Action Cards
     apocalypse_l: { id: 'apocalypse_l', name: 'Apocalypse', icon: '☄️', rarity: 'legendary', desc: 'Rain meteors dealing 300 damage to all enemies', effect: () => { useApocalypse(300); } },
-    phoenix_rebirth_l: { id: 'phoenix_rebirth_l', name: 'Phoenix Rebirth', icon: '🔆', rarity: 'legendary', desc: 'Fully heal and gain 50% damage boost for 10s', effect: () => { usePhoenixRebirth(); } }
+    phoenix_rebirth_l: { id: 'phoenix_rebirth_l', name: 'Phoenix Rebirth', icon: '🔆', rarity: 'legendary', desc: 'Fully heal and gain 50% damage boost for 10s', effect: () => { usePhoenixRebirth(); } },
+    
+    // More Action Cards
+    gold_rush_c: { id: 'gold_rush_c', name: 'Gold Rush', icon: '💰', rarity: 'common', desc: 'Gain 30 gold instantly', effect: () => { gameState.gold += 30; updateGoldDisplay(); } },
+    battle_cry_u: { id: 'battle_cry_u', name: 'Battle Cry', icon: '📯', rarity: 'uncommon', desc: '+30% damage for 8 seconds', effect: () => { useBattleCry(8000, 1.3); } },
+    poison_cloud_r: { id: 'poison_cloud_r', name: 'Poison Cloud', icon: '☠️', rarity: 'rare', desc: 'All enemies take 5 damage per second for 5s', effect: () => { usePoisonCloud(5, 5000); } },
+    summon_knight_e: { id: 'summon_knight_e', name: 'Summon Knight', icon: '🗡️', rarity: 'epic', desc: 'A knight fights for you for 10 seconds', effect: () => { useSummonKnight(10000); } }
+};
+
+// ===== DEBUFF CARDS (Curses) =====
+// Regular debuffs (from wave selection)
+const DEBUFF_CARDS = {
+    // Minor debuffs
+    rusty_arrows: { id: 'rusty_arrows', name: 'Rusty Arrows', icon: '🔩', desc: '-15% arrow damage', severity: 'minor', effect: () => { gameState.stats.damage *= 0.85; } },
+    sluggish: { id: 'sluggish', name: 'Sluggish', icon: '🐌', desc: '-12% attack speed', severity: 'minor', effect: () => { gameState.stats.attackSpeed *= 0.88; } },
+    cracked_walls: { id: 'cracked_walls', name: 'Cracked Walls', icon: '🧱', desc: '-20 max health', severity: 'minor', effect: () => { gameState.stats.maxHealth = Math.max(50, gameState.stats.maxHealth - 20); gameState.castle.health = Math.min(gameState.castle.health, gameState.stats.maxHealth); updateHealthBar(); } },
+    weak_armor: { id: 'weak_armor', name: 'Weak Armor', icon: '🩹', desc: '+8% damage taken', severity: 'minor', effect: () => { gameState.stats.armor = Math.max(0, gameState.stats.armor - 0.08); } },
+    blurry_vision: { id: 'blurry_vision', name: 'Blurry Vision', icon: '👁️', desc: '-8% critical chance', severity: 'minor', effect: () => { gameState.stats.critChance = Math.max(0, gameState.stats.critChance - 0.08); } },
+    
+    // Moderate debuffs
+    enemy_haste: { id: 'enemy_haste', name: 'Enemy Haste', icon: '💨', desc: 'Enemies move 20% faster this run', severity: 'moderate', effect: () => { gameState.stats.enemySpeedDebuff = (gameState.stats.enemySpeedDebuff || 1) * 1.2; } },
+    gold_tax: { id: 'gold_tax', name: 'Gold Tax', icon: '💸', desc: 'Lose 30% of current gold', severity: 'moderate', effect: () => { gameState.gold = Math.floor(gameState.gold * 0.7); updateGoldDisplay(); } },
+    frail_castle: { id: 'frail_castle', name: 'Frail Castle', icon: '🏚️', desc: '-40 max health', severity: 'moderate', effect: () => { gameState.stats.maxHealth = Math.max(50, gameState.stats.maxHealth - 40); gameState.castle.health = Math.min(gameState.castle.health, gameState.stats.maxHealth); updateHealthBar(); } },
+    dull_blades: { id: 'dull_blades', name: 'Dull Blades', icon: '🗡️', desc: '-25% arrow damage', severity: 'moderate', effect: () => { gameState.stats.damage *= 0.75; } },
+    slow_reflexes: { id: 'slow_reflexes', name: 'Slow Reflexes', icon: '⏰', desc: '-20% attack speed', severity: 'moderate', effect: () => { gameState.stats.attackSpeed *= 0.8; } }
+};
+
+// Devastating debuffs (from mystery boxes only)
+const DEVASTATING_DEBUFFS = {
+    cursed_gold: { id: 'cursed_gold', name: 'Cursed Gold', icon: '💀', desc: 'Lose 60% of all gold', severity: 'devastating', effect: () => { gameState.gold = Math.floor(gameState.gold * 0.4); updateGoldDisplay(); } },
+    shattered_walls: { id: 'shattered_walls', name: 'Shattered Walls', icon: '💔', desc: '-80 max health immediately', severity: 'devastating', effect: () => { gameState.stats.maxHealth = Math.max(50, gameState.stats.maxHealth - 80); gameState.castle.health = Math.min(gameState.castle.health, gameState.stats.maxHealth); updateHealthBar(); } },
+    weakened_arms: { id: 'weakened_arms', name: 'Weakened Arms', icon: '😫', desc: '-40% arrow damage', severity: 'devastating', effect: () => { gameState.stats.damage *= 0.6; } },
+    broken_bow: { id: 'broken_bow', name: 'Broken Bow', icon: '🏹', desc: '-35% attack speed', severity: 'devastating', effect: () => { gameState.stats.attackSpeed *= 0.65; } },
+    enemy_fury: { id: 'enemy_fury', name: 'Enemy Fury', icon: '😡', desc: 'All enemies deal +30% damage', severity: 'devastating', effect: () => { gameState.stats.enemyDamageDebuff = (gameState.stats.enemyDamageDebuff || 1) * 1.3; } },
+    doom_curse: { id: 'doom_curse', name: 'Doom Curse', icon: '☠️', desc: 'Take 50 damage immediately', severity: 'devastating', effect: () => { gameState.castle.health = Math.max(1, gameState.castle.health - 50); updateHealthBar(); } }
 };
 
 // ===== UPGRADE DEFINITIONS =====
@@ -473,7 +947,32 @@ const UPGRADES = {
     health_l: { id: 'health_l', name: 'Eternal Fortress', icon: '🌌', type: 'defense', rarity: 'legendary', desc: '+150 max health', effect: () => { gameState.stats.maxHealth += 150; gameState.castle.health += 150; } },
     // Magic - Legendary
     meteor_l: { id: 'meteor_l', name: 'Meteor Strike', icon: '☄️', type: 'magic', rarity: 'legendary', desc: 'Meteors rain on enemies', effect: () => { gameState.stats.hasMeteor = true; } },
-    vortex_l: { id: 'vortex_l', name: 'Void Vortex', icon: '🌀', type: 'magic', rarity: 'legendary', desc: 'Pull enemies together', effect: () => { gameState.stats.hasVortex = true; } }
+    vortex_l: { id: 'vortex_l', name: 'Void Vortex', icon: '🌀', type: 'magic', rarity: 'legendary', desc: 'Pull enemies together', effect: () => { gameState.stats.hasVortex = true; } },
+    
+    // === NEW UPGRADES ===
+    // Common - new
+    gold_find_c: { id: 'gold_find_c', name: 'Gold Finder', icon: '🪙', type: 'utility', rarity: 'common', desc: '+10% gold from kills', effect: () => { gameState.stats.goldMultiplier = (gameState.stats.goldMultiplier || 1) * 1.1; }, repeatable: true },
+    range_c: { id: 'range_c', name: 'Long Bow', icon: '🎯', type: 'weapon', rarity: 'common', desc: '+10% arrow range', effect: () => { gameState.stats.arrowSpeed = (gameState.stats.arrowSpeed || 1) * 1.1; }, repeatable: true },
+    
+    // Uncommon - new
+    poison_u: { id: 'poison_u', name: 'Poison Tips', icon: '☠️', type: 'magic', rarity: 'uncommon', desc: 'Arrows deal +5 poison damage over 3s', effect: () => { gameState.stats.poisonDamage = (gameState.stats.poisonDamage || 0) + 5; }, repeatable: true },
+    dodge_u: { id: 'dodge_u', name: 'Reinforced Gates', icon: '🚪', type: 'defense', rarity: 'uncommon', desc: '5% chance to dodge attacks', effect: () => { gameState.stats.dodgeChance = (gameState.stats.dodgeChance || 0) + 0.05; }, repeatable: true },
+    gold_find_u: { id: 'gold_find_u', name: 'Treasure Hunter', icon: '💎', type: 'utility', rarity: 'uncommon', desc: '+20% gold from kills', effect: () => { gameState.stats.goldMultiplier = (gameState.stats.goldMultiplier || 1) * 1.2; }, repeatable: true },
+    
+    // Rare - new
+    splash_r: { id: 'splash_r', name: 'Splash Damage', icon: '💦', type: 'magic', rarity: 'rare', desc: 'Arrows deal 30% damage to nearby enemies', effect: () => { gameState.stats.splashDamage = (gameState.stats.splashDamage || 0) + 0.3; } },
+    execute_r: { id: 'execute_r', name: 'Execute', icon: '⚰️', type: 'weapon', rarity: 'rare', desc: 'Deal +50% damage to enemies below 25% HP', effect: () => { gameState.stats.executeDamage = (gameState.stats.executeDamage || 0) + 0.5; } },
+    reflect_r: { id: 'reflect_r', name: 'Magic Mirror', icon: '🪞', type: 'defense', rarity: 'rare', desc: 'Reflect 20% of ranged damage', effect: () => { gameState.stats.reflectDamage = (gameState.stats.reflectDamage || 0) + 0.2; } },
+    
+    // Epic - new
+    berserker_e: { id: 'berserker_e', name: 'Berserker', icon: '🔥', type: 'weapon', rarity: 'epic', desc: '+1% damage per 1% missing health', effect: () => { gameState.stats.hasBerserker = true; } },
+    guardian_e: { id: 'guardian_e', name: 'Guardian Angel', icon: '👼', type: 'defense', rarity: 'epic', desc: 'Survive lethal damage once per wave', effect: () => { gameState.stats.hasGuardian = true; } },
+    gold_rush_e: { id: 'gold_rush_e', name: 'Midas Touch', icon: '👑', type: 'utility', rarity: 'epic', desc: '+50% gold from all sources', effect: () => { gameState.stats.goldMultiplier = (gameState.stats.goldMultiplier || 1) * 1.5; } },
+    
+    // Legendary - new
+    infinity_l: { id: 'infinity_l', name: 'Infinity', icon: '♾️', type: 'weapon', rarity: 'legendary', desc: 'Every 5th arrow deals triple damage', effect: () => { gameState.stats.hasInfinity = true; } },
+    phoenix_l: { id: 'phoenix_l', name: 'Phoenix Heart', icon: '🔥', type: 'defense', rarity: 'legendary', desc: 'Revive once with 50% health when killed', effect: () => { gameState.stats.hasPhoenix = true; } },
+    time_lord_l: { id: 'time_lord_l', name: 'Time Lord', icon: '⌛', type: 'magic', rarity: 'legendary', desc: 'Enemies move 25% slower permanently', effect: () => { gameState.stats.enemySlowAura = (gameState.stats.enemySlowAura || 1) * 0.75; } }
 };
 
 // Function to get rarity weights based on wave
@@ -512,18 +1011,18 @@ const ENEMY_TYPES = {
     orc: { 
         name: 'Orc', 
         emoji: '👹', 
-        baseHealth: 25, 
-        baseDamage: 3, // Reduced from 6 - scales up with waves
+        baseHealth: 20, 
+        baseDamage: 2,
         speed: 1.2,
         value: 1,
         class: 'orc',
-        damageScalesWithWave: true // Special flag for wave-based damage scaling
+        damageScalesWithWave: true
     },
     goblin: { 
         name: 'Goblin Archer', 
         emoji: '🏹', 
-        baseHealth: 15, 
-        baseDamage: 5, 
+        baseHealth: 12, 
+        baseDamage: 3, 
         speed: 1.6,
         value: 1,
         class: 'goblin',
@@ -533,8 +1032,8 @@ const ENEMY_TYPES = {
     troll: { 
         name: 'Troll', 
         emoji: '🧌', 
-        baseHealth: 60, 
-        baseDamage: 15, 
+        baseHealth: 50, 
+        baseDamage: 8, 
         speed: 0.7,
         value: 3,
         class: 'troll'
@@ -542,8 +1041,8 @@ const ENEMY_TYPES = {
     ogre: { 
         name: 'Ogre', 
         emoji: '👺', 
-        baseHealth: 80, 
-        baseDamage: 18, 
+        baseHealth: 65, 
+        baseDamage: 10, 
         speed: 0.6,
         value: 4,
         class: 'ogre'
@@ -551,8 +1050,8 @@ const ENEMY_TYPES = {
     darkMage: { 
         name: 'Dark Mage', 
         emoji: '🧙', 
-        baseHealth: 35, 
-        baseDamage: 12, 
+        baseHealth: 28, 
+        baseDamage: 7, 
         speed: 0.9,
         value: 3,
         class: 'dark-mage',
@@ -562,8 +1061,8 @@ const ENEMY_TYPES = {
     skeleton: { 
         name: 'Skeleton Warrior', 
         emoji: '💀', 
-        baseHealth: 20, 
-        baseDamage: 8, 
+        baseHealth: 16, 
+        baseDamage: 5, 
         speed: 1.5,
         value: 2,
         class: 'skeleton'
@@ -571,8 +1070,8 @@ const ENEMY_TYPES = {
     dragon: { 
         name: 'Young Dragon', 
         emoji: '🐲', 
-        baseHealth: 150, 
-        baseDamage: 25, 
+        baseHealth: 120, 
+        baseDamage: 15, 
         speed: 0.8,
         value: 8,
         class: 'dragon'
@@ -580,11 +1079,68 @@ const ENEMY_TYPES = {
     boss: { 
         name: 'Orc Warlord', 
         emoji: '👿', 
-        baseHealth: 200, 
-        baseDamage: 20, 
+        baseHealth: 150, 
+        baseDamage: 12, 
         speed: 0.5,
         value: 10,
         class: 'boss'
+    },
+    // New enemy types
+    vampire: {
+        name: 'Vampire',
+        emoji: '🧛',
+        baseHealth: 35,
+        baseDamage: 6,
+        speed: 1.3,
+        value: 4,
+        class: 'vampire'
+    },
+    ghost: {
+        name: 'Wraith',
+        emoji: '👻',
+        baseHealth: 22,
+        baseDamage: 5,
+        speed: 1.8,
+        value: 3,
+        class: 'ghost'
+    },
+    demon: {
+        name: 'Demon',
+        emoji: '👹',
+        baseHealth: 80,
+        baseDamage: 14,
+        speed: 0.9,
+        value: 6,
+        class: 'demon'
+    },
+    necromancer: {
+        name: 'Necromancer',
+        emoji: '🧙‍♂️',
+        baseHealth: 40,
+        baseDamage: 9,
+        speed: 0.7,
+        value: 5,
+        class: 'necromancer',
+        ranged: true,
+        range: 180
+    },
+    golem: {
+        name: 'Stone Golem',
+        emoji: '🗿',
+        baseHealth: 150,
+        baseDamage: 18,
+        speed: 0.4,
+        value: 7,
+        class: 'golem'
+    },
+    assassin: {
+        name: 'Shadow Assassin',
+        emoji: '👤',
+        baseHealth: 18,
+        baseDamage: 12,
+        speed: 2.0,
+        value: 4,
+        class: 'assassin'
     }
 };
 
@@ -605,14 +1161,14 @@ let gameState = {
     gold: 0,
     totalGoldEarned: 0,
     castle: {
-        health: 100,
+        health: 150,
         x: 0,
         y: 0
     },
     stats: {
-        maxHealth: 100,
-        damage: 20,
-        attackSpeed: 1.2,
+        maxHealth: 150,
+        damage: 25,
+        attackSpeed: 1.3,
         projectiles: 1,
         critChance: 0.05,
         critDamage: 1.5,
@@ -621,6 +1177,7 @@ let gameState = {
         thorns: 0,
         hasFireball: false,
         hasLightning: false,
+        hasMeteor: false,
         freezeChance: 0,
         explosiveArrows: false,
         invincible: false,
@@ -631,6 +1188,7 @@ let gameState = {
     lastAttackTime: 0,
     lastFireballTime: 0,
     lastLightningTime: 0,
+    lastMeteorTime: 0,
     earnedUpgrades: [],
     actionCards: [], // Card deck for consumable action cards
     waveStarted: false,
@@ -918,11 +1476,11 @@ function actuallyStartGame() {
         kills: 0,
         gold: 0,
         totalGoldEarned: 0,
-        castle: { health: 100, x: 0, y: 0 },
+        castle: { health: 150, x: 0, y: 0 },
         stats: {
-            maxHealth: 100,
-            damage: 20,
-            attackSpeed: 1.2,
+            maxHealth: 150,
+            damage: 25,
+            attackSpeed: 1.3,
             projectiles: 1,
             critChance: 0.05,
             critDamage: 1.5,
@@ -931,6 +1489,7 @@ function actuallyStartGame() {
             thorns: 0,
             hasFireball: false,
             hasLightning: false,
+            hasMeteor: false,
             freezeChance: 0,
             explosiveArrows: false,
             invincible: false,
@@ -941,6 +1500,7 @@ function actuallyStartGame() {
         lastAttackTime: 0,
         lastFireballTime: 0,
         lastLightningTime: 0,
+        lastMeteorTime: 0,
         earnedUpgrades: [],
         actionCards: [],
         waveStarted: false,
@@ -1017,47 +1577,47 @@ function spawnWaveEnemies() {
     const currentWidth = arenaRect.width;
     const spawnDelayMultiplier = Math.max(1, baseWidth / currentWidth);
     
-    // Every 5 waves, waves get longer and have more enemies
-    // This stacks: wave 5 = 1.3x, wave 10 = 1.69x, wave 15 = 2.2x, etc.
+    // Every 5 waves, waves get slightly longer and have more enemies
+    // Reduced from 1.3 to 1.12 for gentler scaling
     const waveTier = Math.floor(wave / 5);
-    const waveScaleMultiplier = Math.pow(1.3, waveTier);
+    const waveScaleMultiplier = Math.pow(1.12, waveTier);
     // Spawn delay also increases every 5 waves (enemies spawn more spread out = longer wave)
-    const waveDelayMultiplier = 1 + waveTier * 0.15;
+    const waveDelayMultiplier = 1 + waveTier * 0.1;
     
     let enemies = [];
     
     if (isBossWave) {
-        // Spawn boss + some minions - more minions in later waves
+        // Spawn boss + some minions - balanced for survivability
         enemies.push({ type: 'boss', delay: 0 });
         
-        // Add extra bosses every 10 waves
-        const extraBosses = Math.floor(wave / 10);
+        // Add extra bosses every 15 waves (was 10)
+        const extraBosses = Math.floor(wave / 15);
         for (let b = 0; b < extraBosses; b++) {
-            enemies.push({ type: 'boss', delay: (800 + b * 500) * spawnDelayMultiplier * waveDelayMultiplier });
+            enemies.push({ type: 'boss', delay: (1000 + b * 600) * spawnDelayMultiplier * waveDelayMultiplier });
         }
         
-        // Add dragon on boss waves 10+
-        if (wave >= 10) {
-            const dragonCount = Math.floor(wave / 10);
+        // Add dragon on boss waves 15+ (was 10)
+        if (wave >= 15) {
+            const dragonCount = Math.floor(wave / 15);
             for (let d = 0; d < dragonCount; d++) {
-                enemies.push({ type: 'dragon', delay: (1000 + d * 600) * spawnDelayMultiplier * waveDelayMultiplier });
+                enemies.push({ type: 'dragon', delay: (1200 + d * 700) * spawnDelayMultiplier * waveDelayMultiplier });
             }
         }
         
-        // More minions scaling with wave (affected by waveScaleMultiplier)
-        const baseMinionCount = wave + Math.floor(wave / 3);
+        // Fewer minions - reduced formula
+        const baseMinionCount = Math.floor(wave * 0.6) + 2;
         const minionCount = Math.floor(baseMinionCount * waveScaleMultiplier);
         for (let i = 0; i < minionCount; i++) {
             // Mix of enemy types for boss waves
             let type = 'orc';
-            if (wave >= 10 && Math.random() > 0.6) type = 'troll';
-            if (wave >= 15 && Math.random() > 0.7) type = 'ogre';
-            enemies.push({ type, delay: (500 + i * 250) * spawnDelayMultiplier * waveDelayMultiplier });
+            if (wave >= 10 && Math.random() > 0.7) type = 'troll';
+            if (wave >= 20 && Math.random() > 0.8) type = 'ogre';
+            enemies.push({ type, delay: (600 + i * 300) * spawnDelayMultiplier * waveDelayMultiplier });
         }
     } else {
-        // Regular wave composition - more enemies per wave
-        // Base count affected by waveScaleMultiplier for every 5 wave bonus
-        const rawBaseCount = 4 + Math.floor(wave * 2.5);
+        // Regular wave composition - balanced enemy count
+        // Reduced from 2.5 to 1.5 multiplier for more manageable waves
+        const rawBaseCount = 3 + Math.floor(wave * 1.5);
         const baseCount = Math.floor(rawBaseCount * waveScaleMultiplier);
         
         for (let i = 0; i < baseCount; i++) {
@@ -1317,6 +1877,10 @@ function fireEnemyProjectile(enemy, targetX, targetY) {
 }
 
 function attackCastle(enemy) {
+    const arenaRect = gameArena.getBoundingClientRect();
+    const castleX = arenaRect.width / 2;
+    const castleY = arenaRect.height / 2;
+    
     // Check for invincibility
     if (gameState.stats.invincible) {
         showDamageNumber(gameState.castle.x, gameState.castle.y - 50, 'BLOCKED!', false, true);
@@ -1331,6 +1895,9 @@ function attackCastle(enemy) {
     
     // Play castle hit sound
     playSound('castleHit');
+    
+    // Create enemy attack visual effect based on enemy type
+    createEnemyAttackEffect(enemy, castleX, castleY);
     
     let damage = enemy.damage;
     
@@ -1365,6 +1932,9 @@ function updateHealthBar() {
     castleHealthFill.classList.remove('low', 'critical');
     if (percent <= 25) castleHealthFill.classList.add('critical');
     else if (percent <= 50) castleHealthFill.classList.add('low');
+    
+    // Update castle visual state (damage effects)
+    updateCastleVisuals();
 }
 
 // ===== COMBAT SYSTEM =====
@@ -1400,6 +1970,15 @@ function castleAttack(now) {
             gameState.lastLightningTime = now;
         }
     }
+    
+    // Meteor Strike (every 5 seconds)
+    if (gameState.stats.hasMeteor && now - gameState.lastMeteorTime > 5000) {
+        const targets = findNearestEnemies(3);
+        if (targets.length > 0) {
+            fireMeteor(targets);
+            gameState.lastMeteorTime = now;
+        }
+    }
 }
 
 function findNearestEnemies(count) {
@@ -1407,7 +1986,12 @@ function findNearestEnemies(count) {
     const castleX = arenaRect.width / 2;
     const castleY = arenaRect.height / 2;
     
-    // If manual target is set, prioritize enemies near that position
+    // Get IDs of enemies that already have projectiles targeting them
+    const enemiesWithProjectiles = new Set(
+        gameState.projectiles.map(p => p.targetId)
+    );
+    
+    // If manual target is set, prioritize enemies near that position (ignore projectile check for manual targeting)
     if (gameState.manualTarget) {
         const targetX = gameState.manualTarget.x;
         const targetY = gameState.manualTarget.y;
@@ -1423,9 +2007,16 @@ function findNearestEnemies(count) {
             .map(e => e.enemy);
     }
     
+    // Filter out enemies that already have projectiles targeting them
+    const availableEnemies = gameState.enemies.filter(e => 
+        e.health > 0 && !enemiesWithProjectiles.has(e.id)
+    );
+    
+    // If no available enemies without projectiles, fall back to all enemies
+    const enemyPool = availableEnemies.length > 0 ? availableEnemies : gameState.enemies.filter(e => e.health > 0);
+    
     // Default: target enemies nearest to castle
-    return gameState.enemies
-        .filter(e => e.health > 0)
+    return enemyPool
         .map(e => ({
             enemy: e,
             dist: Math.sqrt((e.x - castleX) ** 2 + (e.y - castleY) ** 2)
@@ -1474,6 +2065,9 @@ function fireProjectile(target, type) {
 function chainLightning(target) {
     const targets = [target];
     let lastTarget = target;
+    const arenaRect = gameArena.getBoundingClientRect();
+    const castleX = arenaRect.width / 2;
+    const castleY = arenaRect.height / 2;
     
     // Find up to 2 more nearby enemies
     for (let i = 0; i < 2; i++) {
@@ -1488,21 +2082,81 @@ function chainLightning(target) {
         }
     }
     
-    // Damage all targets
+    playSound('lightning');
+    
+    // Draw lightning from castle to first target
+    createVisualEffect(castleX, castleY, 'lightning-chain', { 
+        targetX: targets[0].x, 
+        targetY: targets[0].y 
+    });
+    
+    // Damage all targets with chain visual
     targets.forEach((t, i) => {
         setTimeout(() => {
             const damage = gameState.stats.damage * (1 - i * 0.2);
             damageEnemy(t, damage);
             
-            // Visual effect
+            // Draw chain to next target
+            if (i < targets.length - 1) {
+                createVisualEffect(t.x, t.y, 'lightning-chain', { 
+                    targetX: targets[i + 1].x, 
+                    targetY: targets[i + 1].y 
+                });
+            }
+            
+            // Visual effect on enemy
             const flash = document.createElement('div');
             flash.className = 'projectile lightning';
             flash.textContent = '⚡';
             flash.style.left = t.x + 'px';
             flash.style.top = t.y + 'px';
+            flash.style.fontSize = '2rem';
             gameArena.appendChild(flash);
-            setTimeout(() => flash.remove(), 200);
+            setTimeout(() => flash.remove(), 300);
         }, i * 100);
+    });
+}
+
+function fireMeteor(targets) {
+    playSound('explosion');
+    
+    const arenaRect = gameArena.getBoundingClientRect();
+    const meteorDamage = gameState.stats.damage * 3;
+    
+    targets.forEach((target, i) => {
+        setTimeout(() => {
+            if (!target || target.health <= 0) return;
+            
+            // Create meteor falling
+            const meteor = document.createElement('div');
+            meteor.className = 'meteor';
+            meteor.textContent = '☄️';
+            meteor.style.left = target.x + 'px';
+            meteor.style.top = '-50px';
+            gameArena.appendChild(meteor);
+            
+            // After falling, deal damage and show impact
+            setTimeout(() => {
+                meteor.remove();
+                
+                if (target && target.health > 0) {
+                    damageEnemy(target, meteorDamage * gameState.stats.damageMultiplier);
+                    createVisualEffect(target.x, target.y, 'meteor-impact');
+                    
+                    // Splash damage to nearby enemies
+                    gameState.enemies.forEach(enemy => {
+                        if (enemy.id !== target.id && enemy.health > 0) {
+                            const dx = enemy.x - target.x;
+                            const dy = enemy.y - target.y;
+                            const dist = Math.sqrt(dx * dx + dy * dy);
+                            if (dist < 80) {
+                                damageEnemy(enemy, (meteorDamage * 0.5) * gameState.stats.damageMultiplier);
+                            }
+                        }
+                    });
+                }
+            }, 800);
+        }, i * 200);
     });
 }
 
@@ -1535,6 +2189,8 @@ function updateProjectiles() {
             
             // Explosive arrows
             if (gameState.stats.explosiveArrows && proj.type === 'arrow') {
+                // Add explosion visual
+                createVisualEffect(target.x, target.y, 'meteor-impact');
                 gameState.enemies.forEach(e => {
                     if (e.id !== target.id) {
                         const d = Math.sqrt((e.x - target.x) ** 2 + (e.y - target.y) ** 2);
@@ -1545,6 +2201,8 @@ function updateProjectiles() {
             
             // Fireball explosion
             if (proj.type === 'fireball') {
+                // Add meteor impact visual
+                createVisualEffect(target.x, target.y, 'meteor-impact');
                 gameState.enemies.forEach(e => {
                     const d = Math.sqrt((e.x - target.x) ** 2 + (e.y - target.y) ** 2);
                     if (d < 100) damageEnemy(e, damage * 0.5);
@@ -1554,6 +2212,8 @@ function updateProjectiles() {
             // Freeze chance
             if (gameState.stats.freezeChance > 0 && Math.random() < gameState.stats.freezeChance) {
                 target.slowed = true;
+                // Add freeze visual
+                createVisualEffect(target.x, target.y, 'freeze');
                 setTimeout(() => { if (target) target.slowed = false; }, 2000);
             }
             
@@ -1685,6 +2345,13 @@ function checkWaveComplete() {
 
 function showUpgradeSelection() {
     const wave = gameState.wave;
+    
+    // 15% chance to get debuff selection instead of upgrades
+    if (Math.random() < 0.15) {
+        showDebuffSelection();
+        return;
+    }
+    
     const options = [];
     
     // Pick 3 options: mix of upgrades and action cards
@@ -1810,14 +2477,14 @@ function renderShop() {
     
     const isHealthFull = gameState.castle.health >= gameState.stats.maxHealth;
     const priceMultiplier = getShopPriceMultiplier(gameState.wave);
-    const mysteryBoxesRemaining = 5 - gameState.mysteryBoxesBought;
+    const mysteryBoxesRemaining = 3 - gameState.mysteryBoxesBought;
     
     shopItems.innerHTML = Object.values(SHOP_ITEMS).map(item => {
         // Calculate dynamic price based on wave
         const dynamicPrice = Math.round(item.price * priceMultiplier);
         const canAfford = gameState.gold >= dynamicPrice;
         const isRepairDisabled = item.type === 'repair' && isHealthFull;
-        const isMysteryBoxMaxed = item.id === 'mysteryUpgrade' && gameState.mysteryBoxesBought >= 5;
+        const isMysteryBoxMaxed = item.id === 'mysteryUpgrade' && gameState.mysteryBoxesBought >= 3;
         const typeClass = item.type === 'repair' ? 'repair' : 'upgrade';
         const disabled = !canAfford || isRepairDisabled || isMysteryBoxMaxed;
         
@@ -1864,9 +2531,9 @@ function purchaseShopItem(itemId, dynamicPrice) {
     }
     
     // Check mystery box limit
-    if (itemId === 'mysteryUpgrade' && gameState.mysteryBoxesBought >= 5) {
+    if (itemId === 'mysteryUpgrade' && gameState.mysteryBoxesBought >= 3) {
         playSound('error');
-        showShopMessage('Max 5 mystery boxes per wave!');
+        showShopMessage('Max 3 mystery boxes per wave!');
         return;
     }
     
@@ -1908,6 +2575,14 @@ function showShopMessage(message) {
 function openMysteryBox() {
     // Play opening sound
     playSound('mysteryBoxOpen');
+    
+    // 3% chance to get a devastating debuff from mystery box
+    const isDebuff = Math.random() < 0.05;
+    
+    if (isDebuff) {
+        openMysteryBoxDebuff();
+        return;
+    }
     
     // Get a random upgrade OR action card (30% chance for action card if deck not full)
     const includeActionCards = gameState.actionCards.length < 5 && Math.random() < 0.3;
@@ -2010,6 +2685,84 @@ function openMysteryBox() {
     });
 }
 
+// ===== MYSTERY BOX DEBUFF (Devastating) =====
+function openMysteryBoxDebuff() {
+    // Pick a random devastating debuff
+    const allDebuffs = Object.values(DEVASTATING_DEBUFFS);
+    const debuff = allDebuffs[Math.floor(Math.random() * allDebuffs.length)];
+    
+    // Create menacing overlay (no confetti, dark and ominous)
+    const overlay = document.createElement('div');
+    overlay.className = 'mystery-box-overlay debuff-overlay';
+    overlay.innerHTML = `
+        <div class="mystery-box-container">
+            <div class="mystery-box cursed-box">🎁</div>
+            <div class="mystery-card debuff-mystery-card hidden" style="border-color: #7C2D12; background: linear-gradient(180deg, rgba(127, 29, 29, 0.6) 0%, rgba(15, 5, 5, 0.98) 100%);">
+                <div class="debuff-aura"></div>
+                <div class="debuff-skull-large">💀</div>
+                <div class="upgrade-rarity" style="color: #DC2626;">CURSED!</div>
+                <div class="upgrade-icon">${debuff.icon}</div>
+                <div class="upgrade-name" style="color: #EF4444;">${debuff.name}</div>
+                <div class="upgrade-desc" style="color: #FCA5A5;">${debuff.desc}</div>
+                <div class="card-hint" style="color: #991B1B;">Click anywhere to accept your fate</div>
+            </div>
+            <div class="curse-particles"></div>
+        </div>
+    `;
+    document.body.appendChild(overlay);
+    
+    // Animation sequence
+    const box = overlay.querySelector('.mystery-box');
+    const card = overlay.querySelector('.mystery-card');
+    const curseParticles = overlay.querySelector('.curse-particles');
+    
+    // Shake the box ominously
+    setTimeout(() => box.classList.add('shaking', 'cursed-shake'), 100);
+    
+    // Dark reveal
+    setTimeout(() => {
+        // Create dark particles instead of confetti
+        for (let i = 0; i < 30; i++) {
+            const particle = document.createElement('div');
+            particle.className = 'curse-particle';
+            particle.style.left = '50%';
+            particle.style.setProperty('--x', (Math.random() - 0.5) * 300 + 'px');
+            particle.style.setProperty('--y', (Math.random() - 0.5) * 300 + 'px');
+            particle.style.setProperty('--r', Math.random() * 720 + 'deg');
+            particle.style.backgroundColor = ['#7C2D12', '#991B1B', '#450A0A', '#1C1917', '#0C0A09'][Math.floor(Math.random() * 5)];
+            particle.style.animationDelay = Math.random() * 0.3 + 's';
+            curseParticles.appendChild(particle);
+        }
+        
+        box.classList.remove('shaking', 'cursed-shake');
+        box.classList.add('explode', 'cursed-explode');
+        
+        setTimeout(() => {
+            box.classList.add('hidden');
+            card.classList.remove('hidden');
+            card.classList.add('reveal', 'cursed-reveal');
+            
+            // Play ominous sounds
+            playSound('castleHit');
+            playSound('error');
+            
+            // Apply the debuff
+            debuff.effect();
+        }, 300);
+    }, 1800);
+    
+    // Click to close
+    overlay.addEventListener('click', () => {
+        if (!card.classList.contains('hidden')) {
+            overlay.classList.add('fade-out');
+            setTimeout(() => {
+                overlay.remove();
+                renderShop();
+            }, 300);
+        }
+    });
+}
+
 function selectUpgrade(upgradeId, isActionCard = false) {
     if (isActionCard) {
         // Add action card to deck
@@ -2030,6 +2783,9 @@ function selectUpgrade(upgradeId, isActionCard = false) {
             }
             upgrade.effect();
             gameState.earnedUpgrades.push(upgradeId);
+            
+            // Update castle visuals to reflect new upgrades
+            updateCastleVisuals();
         }
     }
     
@@ -2039,6 +2795,92 @@ function selectUpgrade(upgradeId, isActionCard = false) {
     gameState.wave++;
     gameState.waveKills = 0;
     gameState.mysteryBoxesBought = 0; // Reset mystery box limit for new wave
+    gameState.isRunning = true;
+    updateWaveDisplay();
+    
+    setTimeout(() => startWave(), 500);
+}
+
+// ===== DEBUFF SELECTION =====
+function showDebuffSelection() {
+    // Pick 3 random debuffs
+    const allDebuffs = Object.values(DEBUFF_CARDS);
+    const options = [];
+    
+    while (options.length < 3 && options.length < allDebuffs.length) {
+        const debuff = allDebuffs[Math.floor(Math.random() * allDebuffs.length)];
+        if (!options.find(o => o.id === debuff.id)) {
+            options.push(debuff);
+        }
+    }
+    
+    // Play ominous sound
+    playSound('castleHit');
+    
+    // Hide the normal "Choose an Upgrade!" title
+    const modalContent = upgradeModal.querySelector('.upgrade-modal-content');
+    const normalTitle = modalContent.querySelector('h2');
+    if (normalTitle) normalTitle.style.display = 'none';
+    
+    // Render debuff options with menacing styling
+    upgradeOptions.innerHTML = `
+        <div class="curse-title">Choose a Curse!</div>
+        <div class="debuff-warning">⚠️ CURSED WAVE ⚠️</div>
+        <div class="debuff-subtitle">You must choose a curse to continue...</div>
+    ` + options.map(d => {
+        const severityColor = d.severity === 'moderate' ? '#DC2626' : '#EF4444';
+        return `
+        <div class="upgrade-card debuff-card" data-debuff="${d.id}" style="border-color: #7C2D12; background: linear-gradient(180deg, rgba(127, 29, 29, 0.4) 0%, rgba(26, 20, 16, 0.95) 100%);">
+            <div class="debuff-skull">💀</div>
+            <div class="upgrade-icon">${d.icon}</div>
+            <div class="upgrade-name" style="color: ${severityColor};">${d.name}</div>
+            <div class="upgrade-desc" style="color: #FCA5A5;">${d.desc}</div>
+        </div>
+    `}).join('');
+    
+    // Add click handlers
+    upgradeOptions.querySelectorAll('.debuff-card').forEach(card => {
+        card.addEventListener('click', () => {
+            const debuffId = card.dataset.debuff;
+            selectDebuff(debuffId);
+        });
+    });
+    
+    // Hide shop during debuff selection
+    const shopSection = document.querySelector('.shop-section');
+    if (shopSection) shopSection.style.display = 'none';
+    
+    upgradeModal.classList.remove('hidden');
+}
+
+function selectDebuff(debuffId) {
+    const debuff = DEBUFF_CARDS[debuffId];
+    if (debuff) {
+        playSound('castleHit');
+        debuff.effect();
+        
+        // Visual feedback
+        const flash = document.createElement('div');
+        flash.className = 'debuff-flash';
+        document.body.appendChild(flash);
+        setTimeout(() => flash.remove(), 500);
+    }
+    
+    // Restore normal title visibility
+    const modalContent = upgradeModal.querySelector('.upgrade-modal-content');
+    const normalTitle = modalContent.querySelector('h2');
+    if (normalTitle) normalTitle.style.display = '';
+    
+    // Show shop again
+    const shopSection = document.querySelector('.shop-section');
+    if (shopSection) shopSection.style.display = '';
+    
+    upgradeModal.classList.add('hidden');
+    
+    // Next wave
+    gameState.wave++;
+    gameState.waveKills = 0;
+    gameState.mysteryBoxesBought = 0;
     gameState.isRunning = true;
     updateWaveDisplay();
     
@@ -2186,6 +3028,10 @@ function healCastle(amount) {
     gameState.castle.health = Math.min(gameState.stats.maxHealth, gameState.castle.health + amount);
     updateHealthBar();
     showDamageNumber(gameState.castle.x, gameState.castle.y - 50, '+' + amount, false, true);
+    
+    // Add healing visual effect
+    const arenaRect = gameArena.getBoundingClientRect();
+    createVisualEffect(arenaRect.width / 2, arenaRect.height / 2, 'heal');
 }
 
 function useShieldBash() {
@@ -2234,9 +3080,17 @@ function useMultiFireball(count) {
 
 function useFreezeAll(duration) {
     playSound('freeze');
+    
+    // Screen flash for freeze effect
+    createVisualEffect(0, 0, 'screen-flash', { color: 'freeze' });
+    
     gameState.enemies.forEach(enemy => {
         enemy.slowed = true;
         if (enemy.element) enemy.element.classList.add('frozen');
+        
+        // Add freeze effect at enemy position
+        createVisualEffect(enemy.x, enemy.y, 'freeze');
+        
         setTimeout(() => {
             if (enemy) {
                 enemy.slowed = false;
@@ -2248,40 +3102,74 @@ function useFreezeAll(duration) {
 
 function useLightningStorm(count) {
     playSound('lightning');
+    
+    // Screen flash for dramatic effect
+    createVisualEffect(0, 0, 'screen-flash', { color: 'lightning' });
+    
     const targets = gameState.enemies.slice(0, count);
     targets.forEach((target, i) => {
         setTimeout(() => {
             const damage = gameState.stats.damage * 2 * gameState.stats.damageMultiplier;
             damageEnemy(target, damage);
             
-            // Visual effect
+            // Lightning strike from above
+            createVisualEffect(target.x, target.y, 'lightning-strike');
+            
+            // Visual effect on enemy
             const flash = document.createElement('div');
             flash.className = 'projectile lightning';
             flash.textContent = '⚡';
             flash.style.left = target.x + 'px';
             flash.style.top = target.y + 'px';
+            flash.style.fontSize = '2.5rem';
             gameArena.appendChild(flash);
-            setTimeout(() => flash.remove(), 300);
+            setTimeout(() => flash.remove(), 400);
         }, i * 80);
     });
 }
 
 function useDragonBreath(damage) {
     playSound('fireball');
-    // Visual effect
+    
+    // Screen flash and dramatic effect
+    createVisualEffect(0, 0, 'screen-flash', { color: 'fire' });
+    
+    const arenaRect = gameArena.getBoundingClientRect();
+    const castleX = arenaRect.width / 2;
+    const castleY = arenaRect.height / 2;
+    
+    // Dragon breath cone effect
+    createVisualEffect(castleX, castleY, 'dragon-breath', { angle: 0 });
+    
+    // Also add the emoji effect
     const breath = document.createElement('div');
     breath.className = 'dragon-breath';
     breath.innerHTML = '🔥🔥🔥';
+    breath.style.position = 'absolute';
+    breath.style.left = castleX + 'px';
+    breath.style.top = castleY + 'px';
+    breath.style.fontSize = '3rem';
+    breath.style.animation = 'dragonBreathCone 1s ease-out forwards';
     gameArena.appendChild(breath);
     setTimeout(() => breath.remove(), 1000);
     
-    gameState.enemies.forEach(enemy => {
-        damageEnemy(enemy, damage * gameState.stats.damageMultiplier);
+    // Meteor impacts on all enemies
+    gameState.enemies.forEach((enemy, i) => {
+        setTimeout(() => {
+            createVisualEffect(enemy.x, enemy.y, 'meteor-impact');
+            damageEnemy(enemy, damage * gameState.stats.damageMultiplier);
+        }, i * 50);
     });
 }
 
 function useInvincibility(duration) {
     playSound('heal');
+    
+    // Divine aura and screen flash
+    createVisualEffect(0, 0, 'screen-flash', { color: 'divine' });
+    const arenaRect = gameArena.getBoundingClientRect();
+    createVisualEffect(arenaRect.width / 2, arenaRect.height / 2, 'divine-aura');
+    
     gameState.stats.invincible = true;
     castle.classList.add('invincible');
     
@@ -2293,6 +3181,10 @@ function useInvincibility(duration) {
 
 function useTimeWarp(duration) {
     playSound('freeze');
+    
+    // Time warp screen effect
+    createVisualEffect(0, 0, 'time-warp', { duration: duration });
+    
     gameState.enemies.forEach(enemy => {
         const originalSpeed = enemy.speed;
         enemy.speed *= 0.2;
@@ -2347,6 +3239,154 @@ function usePhoenixRebirth() {
     setTimeout(() => {
         gameState.stats.damageMultiplier = 1;
     }, 10000);
+}
+
+function useBattleCry(duration, multiplier) {
+    playSound('powerUp');
+    
+    // Visual effect - battle cry aura
+    const arenaRect = gameArena.getBoundingClientRect();
+    const castleX = arenaRect.width / 2;
+    const castleY = arenaRect.height - 80;
+    
+    createVisualEffect(0, 0, 'screen-flash', { color: 'fire' });
+    
+    // Show battle cry icon
+    const cryIcon = document.createElement('div');
+    cryIcon.className = 'battle-cry-icon';
+    cryIcon.textContent = '📯';
+    cryIcon.style.left = castleX + 'px';
+    cryIcon.style.top = castleY + 'px';
+    gameArena.appendChild(cryIcon);
+    setTimeout(() => cryIcon.remove(), 1000);
+    
+    // Apply damage multiplier
+    const originalMultiplier = gameState.stats.damageMultiplier;
+    gameState.stats.damageMultiplier *= multiplier;
+    
+    // Castle glow effect
+    castle.classList.add('battle-cry-active');
+    
+    setTimeout(() => {
+        gameState.stats.damageMultiplier = originalMultiplier;
+        castle.classList.remove('battle-cry-active');
+    }, duration);
+}
+
+function usePoisonCloud(damagePerTick, duration) {
+    playSound('magic');
+    
+    const arenaRect = gameArena.getBoundingClientRect();
+    
+    // Create poison cloud visual effect
+    createVisualEffect(0, 0, 'screen-flash', { color: 'poison' });
+    
+    // Create poison cloud overlay
+    const cloud = document.createElement('div');
+    cloud.className = 'poison-cloud-overlay';
+    gameArena.appendChild(cloud);
+    
+    // Damage enemies over time
+    const tickInterval = 1000; // Damage every second
+    const ticks = duration / tickInterval;
+    let tickCount = 0;
+    
+    const poisonTick = setInterval(() => {
+        tickCount++;
+        gameState.enemies.forEach(enemy => {
+            damageEnemy(enemy, damagePerTick * gameState.stats.damageMultiplier);
+            // Add poison particle effect
+            const particle = document.createElement('div');
+            particle.className = 'poison-particle';
+            particle.textContent = '☠️';
+            particle.style.left = enemy.x + 'px';
+            particle.style.top = enemy.y + 'px';
+            gameArena.appendChild(particle);
+            setTimeout(() => particle.remove(), 500);
+        });
+        
+        if (tickCount >= ticks) {
+            clearInterval(poisonTick);
+            cloud.remove();
+        }
+    }, tickInterval);
+}
+
+function useSummonKnight(duration) {
+    playSound('powerUp');
+    
+    const arenaRect = gameArena.getBoundingClientRect();
+    const castleX = arenaRect.width / 2;
+    const castleY = arenaRect.height - 100;
+    
+    createVisualEffect(0, 0, 'screen-flash', { color: 'divine' });
+    
+    // Create the knight element
+    const knight = document.createElement('div');
+    knight.className = 'summoned-knight';
+    knight.textContent = '🗡️';
+    knight.style.left = castleX + 'px';
+    knight.style.top = castleY + 'px';
+    gameArena.appendChild(knight);
+    
+    // Knight stats
+    const knightDamage = 15 * gameState.stats.damageMultiplier;
+    const attackInterval = 800;
+    
+    // Knight attacks nearby enemies
+    const knightAttack = setInterval(() => {
+        if (gameState.enemies.length === 0) return;
+        
+        // Find closest enemy
+        let closestEnemy = null;
+        let closestDist = Infinity;
+        
+        gameState.enemies.forEach(enemy => {
+            const dx = enemy.x - parseFloat(knight.style.left);
+            const dy = enemy.y - parseFloat(knight.style.top);
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist < closestDist) {
+                closestDist = dist;
+                closestEnemy = enemy;
+            }
+        });
+        
+        if (closestEnemy) {
+            // Move towards enemy
+            const dx = closestEnemy.x - parseFloat(knight.style.left);
+            const dy = closestEnemy.y - parseFloat(knight.style.top);
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            
+            if (dist < 50) {
+                // Attack!
+                damageEnemy(closestEnemy, knightDamage);
+                knight.classList.add('knight-attacking');
+                setTimeout(() => knight.classList.remove('knight-attacking'), 200);
+                
+                // Slash effect
+                const slash = document.createElement('div');
+                slash.className = 'knight-slash';
+                slash.style.left = closestEnemy.x + 'px';
+                slash.style.top = closestEnemy.y + 'px';
+                gameArena.appendChild(slash);
+                setTimeout(() => slash.remove(), 300);
+            } else {
+                // Move towards enemy
+                const moveSpeed = 3;
+                const moveX = (dx / dist) * moveSpeed;
+                const moveY = (dy / dist) * moveSpeed;
+                knight.style.left = (parseFloat(knight.style.left) + moveX) + 'px';
+                knight.style.top = (parseFloat(knight.style.top) + moveY) + 'px';
+            }
+        }
+    }, 50);
+    
+    // Remove knight after duration
+    setTimeout(() => {
+        clearInterval(knightAttack);
+        knight.classList.add('knight-fade');
+        setTimeout(() => knight.remove(), 500);
+    }, duration);
 }
 
 // ===== CARD DECK UI =====
@@ -2405,6 +3445,14 @@ function useActionCard(index) {
     // Play card use sound
     playSound('cardUse');
     
+    // Get castle position for effects
+    const arenaRect = gameArena.getBoundingClientRect();
+    const castleX = arenaRect.width / 2;
+    const castleY = arenaRect.height / 2;
+    
+    // Create dramatic activation effects
+    createCardActivationEffect(card, castleX, castleY);
+    
     // Execute the card effect
     card.effect();
     
@@ -2414,12 +3462,13 @@ function useActionCard(index) {
     // Re-render deck
     renderCardDeck();
     
-    // Visual feedback
+    // Visual feedback - enhanced card use flash
     const flash = document.createElement('div');
     flash.className = 'card-use-flash';
     flash.textContent = card.icon;
+    flash.style.fontSize = '4rem';
     document.body.appendChild(flash);
-    setTimeout(() => flash.remove(), 500);
+    setTimeout(() => flash.remove(), 800);
 }
 
 function addActionCard(cardId) {
