@@ -1,6 +1,40 @@
 // ===== KINDOM =====
 // Main Game JavaScript
 
+// ===== DIFFICULTY SYSTEM =====
+let gameDifficulty = 5; // Default: 5 (middle of 1-10 scale) - set by slider
+
+// Difficulty multipliers (1 = very easy, 10 = impossible)
+// Wave adds exponential scaling on top of the base difficulty from slider
+function getDifficultyMultipliers(wave = 1) {
+    const d = gameDifficulty;
+    
+    // Wave-based exponential scaling (gets harder every wave)
+    // This creates a smooth exponential curve that compounds with base difficulty
+    const waveScaling = 1 + Math.pow(wave, 1.15) * 0.03;
+    
+    return {
+        // Enemy health scales from 0.5x to 2.5x base, then multiplied by wave scaling
+        enemyHealth: (0.5 + (d - 1) * 0.222) * waveScaling,
+        // Enemy damage scales from 0.4x to 2.0x base, then multiplied by wave scaling
+        enemyDamage: (0.4 + (d - 1) * 0.178) * waveScaling,
+        // Gold rewards scale from 1.5x to 0.6x (inverse - easier = more gold)
+        goldReward: 1.5 - (d - 1) * 0.1,
+        // Spawn rate multiplier (lower = faster spawns) from 1.3x to 0.7x
+        spawnRate: 1.3 - (d - 1) * 0.067,
+        // Raw wave scaling for reference
+        waveScaling: waveScaling
+    };
+}
+
+// Calculate shop price multiplier based on wave (increases every 10 waves)
+function getShopPriceMultiplier(wave = 1) {
+    // Every 10 waves, prices increase exponentially
+    // Wave 1-9: 1x, Wave 10-19: ~1.5x, Wave 20-29: ~2.25x, etc.
+    const tier = Math.floor(wave / 10);
+    return Math.pow(1.5, tier);
+}
+
 // ===== SOUND SYSTEM =====
 let audioContext = null;
 let soundEnabled = true;
@@ -282,6 +316,21 @@ function updateSoundButtons() {
 // ===== PATCH NOTES DATA =====
 const PATCH_NOTES = [
     {
+        version: "1.2.0",
+        title: "Difficulty & Strategy Update",
+        date: "January 9, 2026",
+        changes: [
+            "🎚️ New difficulty slider on homescreen (1-10 scale for balanced gameplay)",
+            "📈 Wave-based exponential difficulty scaling - enemies get stronger every wave",
+            "🎯 Manual targeting system - click and hold on the map to prioritize targets",
+            "💰 Shop prices scale exponentially every 10 waves (waves 10+, 20+, etc.)",
+            "👹 More enemies spawn every 5 waves (waves 5, 10, 15...)",
+            "⏱️ Waves take longer every 5 waves - enemies spawn more spread out",
+            "🎁 Mystery box limit: max 5 per wave (resets each wave)",
+            "🎨 Enhanced UI with pulsing target indicator and smoother animations"
+        ]
+    },
+    {
         version: "1.1.0",
         title: "Sound & Polish Update",
         date: "January 9, 2026",
@@ -464,10 +513,11 @@ const ENEMY_TYPES = {
         name: 'Orc', 
         emoji: '👹', 
         baseHealth: 25, 
-        baseDamage: 6, 
+        baseDamage: 3, // Reduced from 6 - scales up with waves
         speed: 1.2,
         value: 1,
-        class: 'orc'
+        class: 'orc',
+        damageScalesWithWave: true // Special flag for wave-based damage scaling
     },
     goblin: { 
         name: 'Goblin Archer', 
@@ -586,7 +636,11 @@ let gameState = {
     waveStarted: false,
     expectedEnemies: 0,
     waveKills: 0,
-    pendingSpawns: []
+    pendingSpawns: [],
+    // Manual targeting - when player clicks and holds on the map
+    manualTarget: null, // { x, y } or null for automatic targeting
+    // Mystery box limit per wave
+    mysteryBoxesBought: 0
 };
 
 // ===== WAVE RECORD (Persists until page refresh) =====
@@ -826,6 +880,7 @@ function initHomeScreen() {
         });
     });
 
+    // Set initial hidden state for animations
     menuButtons.style.opacity = '0';
     menuButtons.style.transform = 'translateY(30px)';
     creditsButton.style.opacity = '0';
@@ -891,7 +946,9 @@ function actuallyStartGame() {
         waveStarted: false,
         expectedEnemies: 0,
         waveKills: 0,
-        pendingSpawns: []
+        pendingSpawns: [],
+        manualTarget: null,
+        mysteryBoxesBought: 0
     };
     
     // Switch to game screen
@@ -914,6 +971,9 @@ function actuallyStartGame() {
     
     // Initialize card deck
     renderCardDeck();
+    
+    // Setup manual targeting (click and hold to aim)
+    setupManualTargeting();
     
     // Start wave
     startWave();
@@ -957,6 +1017,13 @@ function spawnWaveEnemies() {
     const currentWidth = arenaRect.width;
     const spawnDelayMultiplier = Math.max(1, baseWidth / currentWidth);
     
+    // Every 5 waves, waves get longer and have more enemies
+    // This stacks: wave 5 = 1.3x, wave 10 = 1.69x, wave 15 = 2.2x, etc.
+    const waveTier = Math.floor(wave / 5);
+    const waveScaleMultiplier = Math.pow(1.3, waveTier);
+    // Spawn delay also increases every 5 waves (enemies spawn more spread out = longer wave)
+    const waveDelayMultiplier = 1 + waveTier * 0.15;
+    
     let enemies = [];
     
     if (isBossWave) {
@@ -966,29 +1033,32 @@ function spawnWaveEnemies() {
         // Add extra bosses every 10 waves
         const extraBosses = Math.floor(wave / 10);
         for (let b = 0; b < extraBosses; b++) {
-            enemies.push({ type: 'boss', delay: (800 + b * 500) * spawnDelayMultiplier });
+            enemies.push({ type: 'boss', delay: (800 + b * 500) * spawnDelayMultiplier * waveDelayMultiplier });
         }
         
         // Add dragon on boss waves 10+
         if (wave >= 10) {
             const dragonCount = Math.floor(wave / 10);
             for (let d = 0; d < dragonCount; d++) {
-                enemies.push({ type: 'dragon', delay: (1000 + d * 600) * spawnDelayMultiplier });
+                enemies.push({ type: 'dragon', delay: (1000 + d * 600) * spawnDelayMultiplier * waveDelayMultiplier });
             }
         }
         
-        // More minions scaling with wave
-        const minionCount = wave + Math.floor(wave / 3);
+        // More minions scaling with wave (affected by waveScaleMultiplier)
+        const baseMinionCount = wave + Math.floor(wave / 3);
+        const minionCount = Math.floor(baseMinionCount * waveScaleMultiplier);
         for (let i = 0; i < minionCount; i++) {
             // Mix of enemy types for boss waves
             let type = 'orc';
             if (wave >= 10 && Math.random() > 0.6) type = 'troll';
             if (wave >= 15 && Math.random() > 0.7) type = 'ogre';
-            enemies.push({ type, delay: (500 + i * 250) * spawnDelayMultiplier });
+            enemies.push({ type, delay: (500 + i * 250) * spawnDelayMultiplier * waveDelayMultiplier });
         }
     } else {
         // Regular wave composition - more enemies per wave
-        const baseCount = 4 + Math.floor(wave * 2.5);
+        // Base count affected by waveScaleMultiplier for every 5 wave bonus
+        const rawBaseCount = 4 + Math.floor(wave * 2.5);
+        const baseCount = Math.floor(rawBaseCount * waveScaleMultiplier);
         
         for (let i = 0; i < baseCount; i++) {
             let type = 'orc';
@@ -1017,9 +1087,9 @@ function spawnWaveEnemies() {
                 if (roll > 0.85) type = 'dragon';
             }
             
-            // Faster spawn rate in later waves
+            // Faster spawn rate in later waves, but stretched by waveDelayMultiplier every 5 waves
             const spawnDelay = Math.max(150, 400 - wave * 10);
-            enemies.push({ type, delay: i * spawnDelay * spawnDelayMultiplier });
+            enemies.push({ type, delay: i * spawnDelay * spawnDelayMultiplier * waveDelayMultiplier });
         }
     }
     
@@ -1051,11 +1121,20 @@ function spawnEnemy(type) {
     const enemyDef = ENEMY_TYPES[type];
     const arenaRect = gameArena.getBoundingClientRect();
     const wave = gameState.wave;
+    const diffMult = getDifficultyMultipliers(wave);
     
     // Scale stats with wave - exponential scaling for harder late game
     // Health scales faster than damage to make fights longer
-    const healthScale = 1 + (wave - 1) * 0.15 + Math.pow(wave, 1.3) * 0.02;
-    const damageScale = 1 + (wave - 1) * 0.1 + Math.pow(wave, 1.2) * 0.015;
+    const healthScale = (1 + (wave - 1) * 0.15 + Math.pow(wave, 1.3) * 0.02) * diffMult.enemyHealth;
+    let damageScale = (1 + (wave - 1) * 0.1 + Math.pow(wave, 1.2) * 0.015) * diffMult.enemyDamage;
+    
+    // Special scaling for orcs - their damage ramps up more slowly early, faster late
+    if (enemyDef.damageScalesWithWave) {
+        // Orcs do much less damage early game (waves 1-5), ramp up to full power by wave 15+
+        const waveRamp = Math.min(1, Math.max(0.3, (wave - 1) / 14));
+        damageScale *= waveRamp;
+    }
+    
     // Speed increases slightly in later waves
     const speedScale = 1 + Math.min(wave * 0.02, 0.5);
     
@@ -1328,6 +1407,23 @@ function findNearestEnemies(count) {
     const castleX = arenaRect.width / 2;
     const castleY = arenaRect.height / 2;
     
+    // If manual target is set, prioritize enemies near that position
+    if (gameState.manualTarget) {
+        const targetX = gameState.manualTarget.x;
+        const targetY = gameState.manualTarget.y;
+        
+        return gameState.enemies
+            .filter(e => e.health > 0)
+            .map(e => ({
+                enemy: e,
+                dist: Math.sqrt((e.x - targetX) ** 2 + (e.y - targetY) ** 2)
+            }))
+            .sort((a, b) => a.dist - b.dist)
+            .slice(0, count)
+            .map(e => e.enemy);
+    }
+    
+    // Default: target enemies nearest to castle
     return gameState.enemies
         .filter(e => e.health > 0)
         .map(e => ({
@@ -1522,8 +1618,9 @@ function killEnemy(enemy) {
     }
     playSound('goldEarn');
     
-    // Award gold based on enemy value
-    const goldEarned = enemy.value * 5;
+    // Award gold based on enemy value (affected by difficulty)
+    const diffMult = getDifficultyMultipliers();
+    const goldEarned = Math.round(enemy.value * 5 * diffMult.goldReward);
     gameState.gold += goldEarned;
     gameState.totalGoldEarned += goldEarned;
     updateGoldDisplay();
@@ -1712,19 +1809,32 @@ function renderShop() {
     updateGoldDisplay();
     
     const isHealthFull = gameState.castle.health >= gameState.stats.maxHealth;
+    const priceMultiplier = getShopPriceMultiplier(gameState.wave);
+    const mysteryBoxesRemaining = 5 - gameState.mysteryBoxesBought;
     
     shopItems.innerHTML = Object.values(SHOP_ITEMS).map(item => {
-        const canAfford = gameState.gold >= item.price;
+        // Calculate dynamic price based on wave
+        const dynamicPrice = Math.round(item.price * priceMultiplier);
+        const canAfford = gameState.gold >= dynamicPrice;
         const isRepairDisabled = item.type === 'repair' && isHealthFull;
+        const isMysteryBoxMaxed = item.id === 'mysteryUpgrade' && gameState.mysteryBoxesBought >= 5;
         const typeClass = item.type === 'repair' ? 'repair' : 'upgrade';
-        const disabled = !canAfford || isRepairDisabled;
+        const disabled = !canAfford || isRepairDisabled || isMysteryBoxMaxed;
+        
+        // Custom description for mystery box showing remaining
+        let desc = item.desc;
+        if (item.id === 'mysteryUpgrade') {
+            desc = isMysteryBoxMaxed ? 'Max reached this wave!' : `${item.desc} (${mysteryBoxesRemaining} left)`;
+        } else if (isRepairDisabled) {
+            desc = 'Health is full!';
+        }
         
         return `
-        <div class="shop-item ${typeClass} ${disabled ? 'disabled' : ''}" data-shop="${item.id}" ${isRepairDisabled ? 'data-full="true"' : ''}>
+        <div class="shop-item ${typeClass} ${disabled ? 'disabled' : ''}" data-shop="${item.id}" data-price="${dynamicPrice}" ${isRepairDisabled ? 'data-full="true"' : ''} ${isMysteryBoxMaxed ? 'data-maxed="true"' : ''}>
             <div class="shop-item-icon">${item.icon}</div>
             <div class="shop-item-name">${item.name}</div>
-            <div class="shop-item-desc">${isRepairDisabled ? 'Health is full!' : item.desc}</div>
-            <div class="shop-item-price">🪙 ${item.price}</div>
+            <div class="shop-item-desc">${desc}</div>
+            <div class="shop-item-price">🪙 ${dynamicPrice}</div>
         </div>
         `;
     }).join('');
@@ -1733,14 +1843,18 @@ function renderShop() {
     shopItems.querySelectorAll('.shop-item:not(.disabled)').forEach(item => {
         item.addEventListener('click', () => {
             const itemId = item.dataset.shop;
-            purchaseShopItem(itemId);
+            const price = parseInt(item.dataset.price);
+            purchaseShopItem(itemId, price);
         });
     });
 }
 
-function purchaseShopItem(itemId) {
+function purchaseShopItem(itemId, dynamicPrice) {
     const item = SHOP_ITEMS[itemId];
     if (!item) return;
+    
+    // Use dynamic price if provided, otherwise calculate it
+    const price = dynamicPrice || Math.round(item.price * getShopPriceMultiplier(gameState.wave));
     
     // Check if repair and health is full
     if (item.type === 'repair' && gameState.castle.health >= gameState.stats.maxHealth) {
@@ -1749,9 +1863,16 @@ function purchaseShopItem(itemId) {
         return;
     }
     
-    if (gameState.gold >= item.price) {
+    // Check mystery box limit
+    if (itemId === 'mysteryUpgrade' && gameState.mysteryBoxesBought >= 5) {
+        playSound('error');
+        showShopMessage('Max 5 mystery boxes per wave!');
+        return;
+    }
+    
+    if (gameState.gold >= price) {
         playSound('purchase');
-        gameState.gold -= item.price;
+        gameState.gold -= price;
         
         if (item.type === 'repair') {
             // Apply repair
@@ -1764,6 +1885,8 @@ function purchaseShopItem(itemId) {
             updateHealthBar();
             renderShop();
         } else if (itemId === 'mysteryUpgrade') {
+            // Track mystery box purchase
+            gameState.mysteryBoxesBought++;
             // Mystery box animation
             openMysteryBox();
         }
@@ -1912,9 +2035,10 @@ function selectUpgrade(upgradeId, isActionCard = false) {
     
     upgradeModal.classList.add('hidden');
     
-    // Next wave - reset wave kill counter
+    // Next wave - reset wave kill counter and mystery box purchases
     gameState.wave++;
     gameState.waveKills = 0;
+    gameState.mysteryBoxesBought = 0; // Reset mystery box limit for new wave
     gameState.isRunning = true;
     updateWaveDisplay();
     
@@ -2309,8 +2433,110 @@ function addActionCard(cardId) {
     return true;
 }
 
+// ===== MANUAL TARGETING SYSTEM =====
+let targetIndicator = null;
+
+function setupManualTargeting() {
+    // Create target indicator element
+    if (!targetIndicator) {
+        targetIndicator = document.createElement('div');
+        targetIndicator.className = 'target-indicator';
+        targetIndicator.innerHTML = '🎯';
+        targetIndicator.style.display = 'none';
+        gameArena.appendChild(targetIndicator);
+    }
+    
+    // Get arena position for coordinate calculations
+    function getArenaCoords(e) {
+        const rect = gameArena.getBoundingClientRect();
+        let clientX, clientY;
+        
+        if (e.touches && e.touches.length > 0) {
+            clientX = e.touches[0].clientX;
+            clientY = e.touches[0].clientY;
+        } else {
+            clientX = e.clientX;
+            clientY = e.clientY;
+        }
+        
+        return {
+            x: clientX - rect.left,
+            y: clientY - rect.top
+        };
+    }
+    
+    function startTargeting(e) {
+        // Don't target if game is paused or not running
+        if (!gameState.isRunning || gameState.isPaused) return;
+        
+        // Ignore clicks on UI elements
+        if (e.target.closest('.card-deck, .game-hud, .pause-btn')) return;
+        
+        e.preventDefault();
+        const coords = getArenaCoords(e);
+        gameState.manualTarget = { x: coords.x, y: coords.y };
+        
+        // Show and position indicator
+        targetIndicator.style.display = 'block';
+        targetIndicator.style.left = coords.x + 'px';
+        targetIndicator.style.top = coords.y + 'px';
+    }
+    
+    function updateTargeting(e) {
+        if (!gameState.manualTarget) return;
+        if (!gameState.isRunning || gameState.isPaused) return;
+        
+        e.preventDefault();
+        const coords = getArenaCoords(e);
+        gameState.manualTarget = { x: coords.x, y: coords.y };
+        
+        // Update indicator position
+        targetIndicator.style.left = coords.x + 'px';
+        targetIndicator.style.top = coords.y + 'px';
+    }
+    
+    function stopTargeting(e) {
+        gameState.manualTarget = null;
+        targetIndicator.style.display = 'none';
+    }
+    
+    // Mouse events
+    gameArena.addEventListener('mousedown', startTargeting);
+    gameArena.addEventListener('mousemove', updateTargeting);
+    gameArena.addEventListener('mouseup', stopTargeting);
+    gameArena.addEventListener('mouseleave', stopTargeting);
+    
+    // Touch events for mobile
+    gameArena.addEventListener('touchstart', startTargeting, { passive: false });
+    gameArena.addEventListener('touchmove', updateTargeting, { passive: false });
+    gameArena.addEventListener('touchend', stopTargeting);
+    gameArena.addEventListener('touchcancel', stopTargeting);
+}
+
 // ===== EVENT LISTENERS =====
 function setupEventListeners() {
+    // Difficulty slider
+    const difficultySlider = document.getElementById('difficultySlider');
+    const sliderFill = document.getElementById('sliderFill');
+    
+    function updateSliderFill() {
+        if (difficultySlider && sliderFill) {
+            const percent = ((difficultySlider.value - 1) / 9) * 100;
+            sliderFill.style.width = percent + '%';
+        }
+    }
+    
+    if (difficultySlider) {
+        // Initialize fill on load
+        updateSliderFill();
+        
+        // Update on input (smooth real-time updates)
+        difficultySlider.addEventListener('input', () => {
+            gameDifficulty = parseFloat(difficultySlider.value);
+            updateSliderFill();
+        });
+    }
+    
     // Title click - special sound
     const gameTitle = document.querySelector('.game-title');
     if (gameTitle) {
@@ -2325,6 +2551,10 @@ function setupEventListeners() {
     playBtn.addEventListener('click', () => {
         initAudio();
         playSound('click');
+        // Store the difficulty value before starting
+        if (difficultySlider) {
+            gameDifficulty = parseFloat(difficultySlider.value);
+        }
         playBtn.style.transform = 'scale(0.95)';
         setTimeout(() => playBtn.style.transform = '', 100);
         runLoadingScreen();

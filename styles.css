@@ -466,6 +466,146 @@ body::after {
 }
 
 /* ========================================
+   DIFFICULTY SLIDER
+   ======================================== */
+
+.difficulty-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
+    width: 100%;
+    max-width: 280px;
+}
+
+.difficulty-label {
+    font-family: 'Cinzel Decorative', cursive;
+    font-size: 1rem;
+    color: var(--parchment);
+    letter-spacing: 2px;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.slider-wrapper {
+    position: relative;
+    width: 100%;
+    height: 24px;
+    display: flex;
+    align-items: center;
+}
+
+.slider-track {
+    position: absolute;
+    width: 100%;
+    height: 8px;
+    background: linear-gradient(180deg, 
+        var(--rustic-darker) 0%, 
+        var(--rustic-brown) 50%, 
+        var(--rustic-darker) 100%);
+    border-radius: 4px;
+    border: 1px solid var(--iron-gray);
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.4);
+}
+
+.slider-fill {
+    position: absolute;
+    height: 8px;
+    background: linear-gradient(90deg, 
+        #FBBF24 0%,     /* Easy - yellow */
+        #F59E0B 35%,    /* Medium - orange */
+        #EA580C 60%,    /* Hard - dark orange */
+        #DC2626 85%,    /* Very hard - red */
+        #991B1B 100%    /* Impossible - dark red */
+    );
+    border-radius: 4px 0 0 4px;
+    width: 50%; /* Will be updated by JS */
+    pointer-events: none;
+    transition: width 0.05s ease-out;
+    box-shadow: 0 0 8px rgba(245, 158, 11, 0.3);
+}
+
+.difficulty-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 24px;
+    background: transparent;
+    cursor: pointer;
+    position: relative;
+    z-index: 2;
+}
+
+.difficulty-slider:focus {
+    outline: none;
+}
+
+/* Thumb styling - Webkit (Chrome, Safari, Edge) */
+.difficulty-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 24px;
+    height: 24px;
+    background: linear-gradient(180deg, 
+        var(--aged-gold) 0%, 
+        var(--rustic-leather) 50%, 
+        var(--rustic-wood) 100%);
+    border-radius: 50%;
+    border: 2px solid var(--aged-gold);
+    box-shadow: 
+        0 2px 8px rgba(0, 0, 0, 0.5),
+        0 0 12px rgba(201, 162, 39, 0.3),
+        inset 0 1px 2px rgba(255, 255, 255, 0.2);
+    cursor: grab;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.difficulty-slider::-webkit-slider-thumb:hover {
+    transform: scale(1.15);
+    box-shadow: 
+        0 4px 12px rgba(0, 0, 0, 0.6),
+        0 0 20px rgba(201, 162, 39, 0.5),
+        inset 0 1px 2px rgba(255, 255, 255, 0.3);
+}
+
+.difficulty-slider::-webkit-slider-thumb:active {
+    cursor: grabbing;
+    transform: scale(1.1);
+}
+
+/* Thumb styling - Firefox */
+.difficulty-slider::-moz-range-thumb {
+    width: 24px;
+    height: 24px;
+    background: linear-gradient(180deg, 
+        var(--aged-gold) 0%, 
+        var(--rustic-leather) 50%, 
+        var(--rustic-wood) 100%);
+    border-radius: 50%;
+    border: 2px solid var(--aged-gold);
+    box-shadow: 
+        0 2px 8px rgba(0, 0, 0, 0.5),
+        0 0 12px rgba(201, 162, 39, 0.3),
+        inset 0 1px 2px rgba(255, 255, 255, 0.2);
+    cursor: grab;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.difficulty-slider::-moz-range-thumb:hover {
+    transform: scale(1.15);
+    box-shadow: 
+        0 4px 12px rgba(0, 0, 0, 0.6),
+        0 0 20px rgba(201, 162, 39, 0.5),
+        inset 0 1px 2px rgba(255, 255, 255, 0.3);
+}
+
+.difficulty-slider::-moz-range-track {
+    background: transparent;
+    border: none;
+}
+
+/* ========================================
    MENU BUTTONS - Dark Rustic
    ======================================== */
 
@@ -2597,5 +2737,50 @@ body::after {
 @media (max-width: 400px) {
     .celebration-text {
         font-size: 1rem;
+    }
+    
+    /* Difficulty slider mobile adjustments */
+    .difficulty-container {
+        max-width: 250px;
+    }
+    
+    .difficulty-label {
+        font-size: 0.9rem;
+    }
+    
+    .difficulty-slider::-webkit-slider-thumb {
+        width: 28px;
+        height: 28px;
+    }
+    
+    .difficulty-slider::-moz-range-thumb {
+        width: 28px;
+        height: 28px;
+    }
+}
+
+/* ========================================
+   TARGET INDICATOR
+   ======================================== */
+
+.target-indicator {
+    position: absolute;
+    font-size: 2rem;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    z-index: 100;
+    animation: targetPulse 0.6s ease-in-out infinite;
+    filter: drop-shadow(0 0 8px rgba(255, 200, 50, 0.8));
+    opacity: 0.9;
+}
+
+@keyframes targetPulse {
+    0%, 100% {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 0.9;
+    }
+    50% {
+        transform: translate(-50%, -50%) scale(1.2);
+        opacity: 1;
     }
 }
