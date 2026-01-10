@@ -423,24 +423,55 @@ function updateCastleVisuals() {
     updateCastleOrbs();
 }
 
+// Track current orb types to avoid recreating on every update
+let currentOrbTypes = '';
+
 function updateCastleOrbs() {
     const orbsContainer = document.getElementById('castleOrbs');
     if (!orbsContainer) return;
     
+    // Collect unique orb types (no duplicates)
+    const orbTypes = new Set();
+    if (gameState.stats.hasFireball) orbTypes.add('fire');
+    if (gameState.stats.hasLightning) orbTypes.add('lightning');
+    if (gameState.stats.hasMeteor) orbTypes.add('meteor');
+    if (gameState.stats.freezeChance > 0) orbTypes.add('ice');
+    if (gameState.stats.regen > 0) orbTypes.add('heal');
+    
+    // Create a string key to compare with current state
+    const newOrbKey = Array.from(orbTypes).sort().join(',');
+    
+    // Only recreate orbs if the set of abilities changed
+    if (newOrbKey === currentOrbTypes) return;
+    currentOrbTypes = newOrbKey;
+    
     orbsContainer.innerHTML = '';
     
-    const orbs = [];
-    if (gameState.stats.hasFireball) orbs.push({ type: 'fire', icon: '🔥' });
-    if (gameState.stats.hasLightning) orbs.push({ type: 'lightning', icon: '⚡' });
-    if (gameState.stats.hasMeteor) orbs.push({ type: 'meteor', icon: '☄️' });
-    if (gameState.stats.freezeChance > 0) orbs.push({ type: 'ice', icon: '❄️' });
-    if (gameState.stats.regen > 0) orbs.push({ type: 'heal', icon: '💚' });
+    const orbData = {
+        fire: '🔥',
+        lightning: '⚡',
+        meteor: '☄️',
+        ice: '❄️',
+        heal: '💚'
+    };
+    
+    const orbs = Array.from(orbTypes).map(type => ({ type, icon: orbData[type] }));
+    const count = orbs.length;
     
     orbs.forEach((orb, index) => {
         const orbEl = document.createElement('div');
         orbEl.className = `floating-orb ${orb.type}`;
-        orbEl.textContent = orb.icon;
-        orbEl.style.setProperty('--angle', `${(360 / orbs.length) * index}deg`);
+        
+        // Wrap icon in span for counter-rotation
+        const iconSpan = document.createElement('span');
+        iconSpan.className = 'orb-icon';
+        iconSpan.textContent = orb.icon;
+        orbEl.appendChild(iconSpan);
+        
+        // Calculate starting angle for even spacing
+        const startAngle = (360 / count) * index;
+        orbEl.style.setProperty('--start-angle', `${startAngle}deg`);
+        
         orbsContainer.appendChild(orbEl);
     });
 }
@@ -723,6 +754,25 @@ function createCardActivationEffect(card, castleX, castleY) {
 // ===== PATCH NOTES DATA =====
 const PATCH_NOTES = [
     {
+        version: "1.5.0",
+        title: "Mythic Power & Golden Rewards",
+        date: "January 10, 2026",
+        changes: [
+            "✨ New MYTHIC rarity tier - the most powerful upgrades in the game!",
+            "🎁 Golden Mystery Box - appears on boss waves (5, 10, 15...) with guaranteed legendary+ rewards!",
+            "💎 6 Mythic upgrades: Godslayer, Immortal, Archmage, Golden God, Omega, World Ender",
+            "⚡ Mythic upgrades have unique powerful effects (double magic damage, death explosions, etc.)",
+            "🃏 Card deck expanded to 6 slots (was 5)",
+            "🔄 New card swap system - when deck is full, swap with existing cards or discard",
+            "🛡️ Early game protection - no cursed waves or mystery box debuffs for first 5 waves",
+            "🎨 Fixed buff indicator orbs",
+            "🃏 Fixed 6-card deck fan effect for proper visual display",
+            "🧟 Added new enemy types: Vampire, Ghost, Demon, Necromancer, Golem, Assassin",
+            "🔥 Various bug fixes and performance improvements",
+            "👔 Added new bosses"
+        ]
+    },
+    {
         version: "1.4.0",
         title: "Visual Spectacle Update",
         date: "January 9, 2026",
@@ -823,7 +873,8 @@ const RARITIES = {
     uncommon: { name: 'Uncommon', color: '#22C55E', bgColor: 'rgba(34, 197, 94, 0.2)', borderColor: '#16A34A' },
     rare: { name: 'Rare', color: '#3B82F6', bgColor: 'rgba(59, 130, 246, 0.2)', borderColor: '#2563EB' },
     epic: { name: 'Epic', color: '#A855F7', bgColor: 'rgba(168, 85, 247, 0.2)', borderColor: '#9333EA' },
-    legendary: { name: 'Legendary', color: '#F59E0B', bgColor: 'rgba(245, 158, 11, 0.2)', borderColor: '#D97706' }
+    legendary: { name: 'Legendary', color: '#F59E0B', bgColor: 'rgba(245, 158, 11, 0.2)', borderColor: '#D97706' },
+    mythic: { name: 'MYTHIC', color: '#FF1493', bgColor: 'rgba(255, 20, 147, 0.25)', borderColor: '#FF69B4' }
 };
 
 // ===== ACTION CARDS (Consumable) =====
@@ -893,7 +944,7 @@ const UPGRADES = {
     damage_c: { id: 'damage_c', name: 'Sharp Arrows', icon: '🏹', type: 'weapon', rarity: 'common', desc: '+10% arrow damage', effect: () => { gameState.stats.damage *= 1.1; }, repeatable: true },
     attackSpeed_c: { id: 'attackSpeed_c', name: 'Quick Hands', icon: '✋', type: 'weapon', rarity: 'common', desc: '+8% attack speed', effect: () => { gameState.stats.attackSpeed *= 1.08; }, repeatable: true },
     // Defense - Common
-    health_c: { id: 'health_c', name: 'Wooden Planks', icon: '🪵', type: 'defense', rarity: 'common', desc: '+15 max health', effect: () => { gameState.stats.maxHealth += 15; gameState.castle.health += 15; }, repeatable: true },
+    health_c: { id: 'health_c', name: 'Wooden Planks', icon: '🪵', type: 'defense', rarity: 'common', desc: '+15 max health', effect: () => { gameState.stats.maxHealth += 15; }, repeatable: true },
     armor_c: { id: 'armor_c', name: 'Leather Padding', icon: '🧥', type: 'defense', rarity: 'common', desc: '-5% damage taken', effect: () => { gameState.stats.armor += 0.05; }, repeatable: true },
     // Magic - Common  
     slow_c: { id: 'slow_c', name: 'Chilling Touch', icon: '🌬️', type: 'magic', rarity: 'common', desc: '10% chance to slow enemies', effect: () => { gameState.stats.freezeChance = Math.min(0.5, gameState.stats.freezeChance + 0.1); }, repeatable: true },
@@ -904,7 +955,7 @@ const UPGRADES = {
     attackSpeed_u: { id: 'attackSpeed_u', name: 'Quick Draw', icon: '⚡', type: 'weapon', rarity: 'uncommon', desc: '+15% attack speed', effect: () => { gameState.stats.attackSpeed *= 1.15; }, repeatable: true },
     critChance_u: { id: 'critChance_u', name: 'Keen Eye', icon: '👁️', type: 'weapon', rarity: 'uncommon', desc: '+5% critical chance', effect: () => { gameState.stats.critChance += 0.05; }, repeatable: true },
     // Defense - Uncommon
-    health_u: { id: 'health_u', name: 'Fortify Walls', icon: '🧱', type: 'defense', rarity: 'uncommon', desc: '+30 max health', effect: () => { gameState.stats.maxHealth += 30; gameState.castle.health += 30; }, repeatable: true },
+    health_u: { id: 'health_u', name: 'Fortify Walls', icon: '🧱', type: 'defense', rarity: 'uncommon', desc: '+30 max health', effect: () => { gameState.stats.maxHealth += 30; }, repeatable: true },
     armor_u: { id: 'armor_u', name: 'Iron Plates', icon: '🛡️', type: 'defense', rarity: 'uncommon', desc: '-10% damage taken', effect: () => { gameState.stats.armor += 0.10; }, repeatable: true },
     regen_u: { id: 'regen_u', name: 'Healing Moss', icon: '🌿', type: 'defense', rarity: 'uncommon', desc: 'Regenerate 0.5 HP/sec', effect: () => { gameState.stats.regen += 0.5; }, repeatable: true },
     // Magic - Uncommon
@@ -918,7 +969,7 @@ const UPGRADES = {
     critDamage_r: { id: 'critDamage_r', name: 'Brutal Force', icon: '💥', type: 'weapon', rarity: 'rare', desc: '+40% critical damage', effect: () => { gameState.stats.critDamage += 0.4; }, repeatable: true },
     multishot_r: { id: 'multishot_r', name: 'Multi-Shot', icon: '🎯', type: 'weapon', rarity: 'rare', desc: 'Fire +1 arrow at once', effect: () => { gameState.stats.projectiles += 1; }, repeatable: true },
     // Defense - Rare
-    health_r: { id: 'health_r', name: 'Stone Walls', icon: '🏯', type: 'defense', rarity: 'rare', desc: '+50 max health', effect: () => { gameState.stats.maxHealth += 50; gameState.castle.health += 50; }, repeatable: true },
+    health_r: { id: 'health_r', name: 'Stone Walls', icon: '🏯', type: 'defense', rarity: 'rare', desc: '+50 max health', effect: () => { gameState.stats.maxHealth += 50; }, repeatable: true },
     armor_r: { id: 'armor_r', name: 'Steel Fortress', icon: '🏰', type: 'defense', rarity: 'rare', desc: '-15% damage taken', effect: () => { gameState.stats.armor += 0.15; }, repeatable: true },
     regen_r: { id: 'regen_r', name: 'Healing Aura', icon: '💚', type: 'defense', rarity: 'rare', desc: 'Regenerate 1 HP/sec', effect: () => { gameState.stats.regen += 1; }, repeatable: true },
     thorns_r: { id: 'thorns_r', name: 'Thorns', icon: '🌹', type: 'defense', rarity: 'rare', desc: 'Deal 15 damage when hit', effect: () => { gameState.stats.thorns += 15; }, repeatable: true },
@@ -932,7 +983,7 @@ const UPGRADES = {
     critChance_e: { id: 'critChance_e', name: 'Assassin\'s Mark', icon: '🗡️', type: 'weapon', rarity: 'epic', desc: '+15% critical chance', effect: () => { gameState.stats.critChance += 0.15; }, repeatable: true },
     critDamage_e: { id: 'critDamage_e', name: 'Executioner', icon: '⚔️', type: 'weapon', rarity: 'epic', desc: '+75% critical damage', effect: () => { gameState.stats.critDamage += 0.75; }, repeatable: true },
     // Defense - Epic
-    health_e: { id: 'health_e', name: 'Titan Walls', icon: '🗿', type: 'defense', rarity: 'epic', desc: '+80 max health', effect: () => { gameState.stats.maxHealth += 80; gameState.castle.health += 80; }, repeatable: true },
+    health_e: { id: 'health_e', name: 'Titan Walls', icon: '🗿', type: 'defense', rarity: 'epic', desc: '+80 max health', effect: () => { gameState.stats.maxHealth += 80; }, repeatable: true },
     lifeSteal_e: { id: 'lifeSteal_e', name: 'Vampiric Arrows', icon: '🧛', type: 'defense', rarity: 'epic', desc: 'Heal 5% of damage dealt', effect: () => { gameState.stats.lifeSteal = (gameState.stats.lifeSteal || 0) + 0.05; } },
     // Magic - Epic
     lightning_e: { id: 'lightning_e', name: 'Chain Lightning', icon: '⚡', type: 'magic', rarity: 'epic', desc: 'Lightning chains to 3 enemies', effect: () => { gameState.stats.hasLightning = true; } },
@@ -944,7 +995,7 @@ const UPGRADES = {
     multishot_l: { id: 'multishot_l', name: 'Arrow Storm', icon: '🌪️', type: 'weapon', rarity: 'legendary', desc: 'Fire +3 arrows at once', effect: () => { gameState.stats.projectiles += 3; } },
     // Defense - Legendary
     invincible_l: { id: 'invincible_l', name: 'Divine Shield', icon: '👼', type: 'defense', rarity: 'legendary', desc: '20% chance to block all damage', effect: () => { gameState.stats.blockChance = (gameState.stats.blockChance || 0) + 0.2; } },
-    health_l: { id: 'health_l', name: 'Eternal Fortress', icon: '🌌', type: 'defense', rarity: 'legendary', desc: '+150 max health', effect: () => { gameState.stats.maxHealth += 150; gameState.castle.health += 150; } },
+    health_l: { id: 'health_l', name: 'Eternal Fortress', icon: '🌌', type: 'defense', rarity: 'legendary', desc: '+150 max health', effect: () => { gameState.stats.maxHealth += 150; } },
     // Magic - Legendary
     meteor_l: { id: 'meteor_l', name: 'Meteor Strike', icon: '☄️', type: 'magic', rarity: 'legendary', desc: 'Meteors rain on enemies', effect: () => { gameState.stats.hasMeteor = true; } },
     vortex_l: { id: 'vortex_l', name: 'Void Vortex', icon: '🌀', type: 'magic', rarity: 'legendary', desc: 'Pull enemies together', effect: () => { gameState.stats.hasVortex = true; } },
@@ -972,7 +1023,15 @@ const UPGRADES = {
     // Legendary - new
     infinity_l: { id: 'infinity_l', name: 'Infinity', icon: '♾️', type: 'weapon', rarity: 'legendary', desc: 'Every 5th arrow deals triple damage', effect: () => { gameState.stats.hasInfinity = true; } },
     phoenix_l: { id: 'phoenix_l', name: 'Phoenix Heart', icon: '🔥', type: 'defense', rarity: 'legendary', desc: 'Revive once with 50% health when killed', effect: () => { gameState.stats.hasPhoenix = true; } },
-    time_lord_l: { id: 'time_lord_l', name: 'Time Lord', icon: '⌛', type: 'magic', rarity: 'legendary', desc: 'Enemies move 25% slower permanently', effect: () => { gameState.stats.enemySlowAura = (gameState.stats.enemySlowAura || 1) * 0.75; } }
+    time_lord_l: { id: 'time_lord_l', name: 'Time Lord', icon: '⌛', type: 'magic', rarity: 'legendary', desc: 'Enemies move 25% slower permanently', effect: () => { gameState.stats.enemySlowAura = (gameState.stats.enemySlowAura || 1) * 0.75; } },
+    
+    // === MYTHIC UPGRADES (Golden Box Only) ===
+    godslayer_m: { id: 'godslayer_m', name: 'Godslayer', icon: '⚔️', type: 'weapon', rarity: 'mythic', desc: '+200% damage, +50% crit chance', effect: () => { gameState.stats.damage *= 3; gameState.stats.critChance = (gameState.stats.critChance || 0.05) + 0.5; } },
+    immortal_m: { id: 'immortal_m', name: 'Immortal', icon: '👼', type: 'defense', rarity: 'mythic', desc: '+300 max HP, regenerate 5 HP per second', effect: () => { gameState.stats.maxHealth += 300; gameState.stats.regen += 5; } },
+    archmage_m: { id: 'archmage_m', name: 'Archmage', icon: '🧙', type: 'magic', rarity: 'mythic', desc: 'All magic effects deal double damage', effect: () => { gameState.stats.magicDamageMultiplier = (gameState.stats.magicDamageMultiplier || 1) * 2; } },
+    golden_god_m: { id: 'golden_god_m', name: 'Golden God', icon: '👑', type: 'utility', rarity: 'mythic', desc: '+100% gold, enemies drop bonus gold on death', effect: () => { gameState.stats.goldMultiplier = (gameState.stats.goldMultiplier || 1) * 2; gameState.stats.bonusGoldOnKill = (gameState.stats.bonusGoldOnKill || 0) + 10; } },
+    omega_m: { id: 'omega_m', name: 'Omega', icon: 'Ω', type: 'weapon', rarity: 'mythic', desc: 'Fire 5 extra projectiles, +100% fire rate', effect: () => { gameState.stats.projectiles += 5; gameState.stats.fireRate *= 2; } },
+    world_ender_m: { id: 'world_ender_m', name: 'World Ender', icon: '🌋', type: 'magic', rarity: 'mythic', desc: 'Enemies explode on death dealing 50% of their max HP to nearby', effect: () => { gameState.stats.deathExplosion = true; } }
 };
 
 // Function to get rarity weights based on wave
@@ -1141,6 +1200,153 @@ const ENEMY_TYPES = {
         speed: 2.0,
         value: 4,
         class: 'assassin'
+    },
+    // NEW ENEMIES - More variety
+    witch: {
+        name: 'Swamp Witch',
+        emoji: '🧙‍♀️',
+        baseHealth: 32,
+        baseDamage: 8,
+        speed: 0.85,
+        value: 4,
+        class: 'witch',
+        ranged: true,
+        range: 170
+    },
+    zombie: {
+        name: 'Undead Horde',
+        emoji: '🧟',
+        baseHealth: 25,
+        baseDamage: 4,
+        speed: 0.6,
+        value: 2,
+        class: 'zombie'
+    },
+    bat: {
+        name: 'Giant Bat',
+        emoji: '🦇',
+        baseHealth: 14,
+        baseDamage: 3,
+        speed: 2.2,
+        value: 2,
+        class: 'bat'
+    },
+    spider: {
+        name: 'Giant Spider',
+        emoji: '🕷️',
+        baseHealth: 20,
+        baseDamage: 6,
+        speed: 1.7,
+        value: 3,
+        class: 'spider'
+    },
+    wolf: {
+        name: 'Dire Wolf',
+        emoji: '🐺',
+        baseHealth: 35,
+        baseDamage: 7,
+        speed: 1.8,
+        value: 3,
+        class: 'wolf'
+    },
+    bear: {
+        name: 'Cave Bear',
+        emoji: '🐻',
+        baseHealth: 90,
+        baseDamage: 12,
+        speed: 0.7,
+        value: 5,
+        class: 'bear'
+    },
+    snake: {
+        name: 'Serpent',
+        emoji: '🐍',
+        baseHealth: 18,
+        baseDamage: 10,
+        speed: 1.5,
+        value: 3,
+        class: 'snake'
+    },
+    // BOSS ENEMIES - Strong and bigger
+    orcChampion: {
+        name: 'Orc Champion',
+        emoji: '👹',
+        baseHealth: 250,
+        baseDamage: 18,
+        speed: 0.55,
+        value: 15,
+        class: 'boss orc-champion',
+        isBoss: true,
+        size: 1.5
+    },
+    trollKing: {
+        name: 'Troll King',
+        emoji: '👑',
+        baseHealth: 400,
+        baseDamage: 25,
+        speed: 0.45,
+        value: 25,
+        class: 'boss troll-king',
+        isBoss: true,
+        size: 1.8
+    },
+    elderDragon: {
+        name: 'Elder Dragon',
+        emoji: '🐲',
+        baseHealth: 600,
+        baseDamage: 35,
+        speed: 0.5,
+        value: 40,
+        class: 'boss elder-dragon',
+        isBoss: true,
+        size: 2.2
+    },
+    lichLord: {
+        name: 'Lich Lord',
+        emoji: '💀',
+        baseHealth: 350,
+        baseDamage: 20,
+        speed: 0.4,
+        value: 30,
+        class: 'boss lich-lord',
+        isBoss: true,
+        size: 1.6,
+        ranged: true,
+        range: 200
+    },
+    demonLord: {
+        name: 'Demon Lord',
+        emoji: '😈',
+        baseHealth: 800,
+        baseDamage: 40,
+        speed: 0.35,
+        value: 50,
+        class: 'boss demon-lord',
+        isBoss: true,
+        size: 2.5
+    },
+    // HUGE BOSSES - Very rare, very dangerous
+    titan: {
+        name: 'Ancient Titan',
+        emoji: '🗿',
+        baseHealth: 1500,
+        baseDamage: 60,
+        speed: 0.25,
+        value: 100,
+        class: 'boss titan',
+        isBoss: true,
+        size: 3.0
+    },
+    worldEater: {
+        name: 'World Eater',
+        emoji: '🐉',
+        baseHealth: 2000,
+        baseDamage: 80,
+        speed: 0.3,
+        value: 150,
+        class: 'boss world-eater',
+        isBoss: true,
+        size: 3.5
     }
 };
 
@@ -1149,7 +1355,8 @@ const SHOP_ITEMS = {
     smallRepair: { id: 'smallRepair', name: 'Small Repair', icon: '🔧', desc: 'Restore +25 HP', price: 25, type: 'repair', healAmount: 25 },
     mediumRepair: { id: 'mediumRepair', name: 'Medium Repair', icon: '🔩', desc: 'Restore +50 HP', price: 50, type: 'repair', healAmount: 50 },
     fullRepair: { id: 'fullRepair', name: 'Full Repair', icon: '⚒️', desc: 'Restore to full HP', price: 100, type: 'repair', healAmount: 'full' },
-    mysteryUpgrade: { id: 'mysteryUpgrade', name: 'Mystery Box', icon: '🎁', desc: 'Random upgrade', price: 75, type: 'upgrade' }
+    mysteryUpgrade: { id: 'mysteryUpgrade', name: 'Mystery Box', icon: '🎁', desc: 'Random upgrade', price: 75, type: 'upgrade' },
+    goldenBox: { id: 'goldenBox', name: 'Golden Box', icon: '✨', desc: 'Guaranteed legendary!', price: 300, type: 'golden', everyNWaves: 5 }
 };
 
 // ===== GAME STATE =====
@@ -1190,7 +1397,8 @@ let gameState = {
     lastLightningTime: 0,
     lastMeteorTime: 0,
     earnedUpgrades: [],
-    actionCards: [], // Card deck for consumable action cards
+    actionCards: [], // Card deck for consumable action cards (max 6)
+    pendingActionCard: null, // For card swap when deck is full
     waveStarted: false,
     expectedEnemies: 0,
     waveKills: 0,
@@ -1198,7 +1406,9 @@ let gameState = {
     // Manual targeting - when player clicks and holds on the map
     manualTarget: null, // { x, y } or null for automatic targeting
     // Mystery box limit per wave
-    mysteryBoxesBought: 0
+    mysteryBoxesBought: 0,
+    // Golden box purchased this wave (only 1 per wave, only on waves divisible by 5)
+    goldenBoxBought: false
 };
 
 // ===== WAVE RECORD (Persists until page refresh) =====
@@ -1503,12 +1713,14 @@ function actuallyStartGame() {
         lastMeteorTime: 0,
         earnedUpgrades: [],
         actionCards: [],
+        pendingActionCard: null,
         waveStarted: false,
         expectedEnemies: 0,
         waveKills: 0,
         pendingSpawns: [],
         manualTarget: null,
-        mysteryBoxesBought: 0
+        mysteryBoxesBought: 0,
+        goldenBoxBought: false
     };
     
     // Switch to game screen
@@ -1587,20 +1799,34 @@ function spawnWaveEnemies() {
     let enemies = [];
     
     if (isBossWave) {
-        // Spawn boss + some minions - balanced for survivability
-        enemies.push({ type: 'boss', delay: 0 });
+        // Progressive boss types based on wave
+        let bossType = 'boss';
+        if (wave >= 10) bossType = 'orcChampion';
+        if (wave >= 20) bossType = 'trollKing';
+        if (wave >= 30) bossType = 'elderDragon';
+        if (wave >= 40) bossType = 'lichLord';
+        if (wave >= 50) bossType = 'demonLord';
+        if (wave >= 75) bossType = 'titan';
+        if (wave >= 100) bossType = 'worldEater';
         
-        // Add extra bosses every 15 waves (was 10)
+        enemies.push({ type: bossType, delay: 0 });
+        
+        // Add extra bosses every 15 waves
         const extraBosses = Math.floor(wave / 15);
         for (let b = 0; b < extraBosses; b++) {
-            enemies.push({ type: 'boss', delay: (1000 + b * 600) * spawnDelayMultiplier * waveDelayMultiplier });
+            // Earlier boss types as adds
+            let addBoss = 'boss';
+            if (wave >= 30) addBoss = 'orcChampion';
+            if (wave >= 45) addBoss = 'trollKing';
+            enemies.push({ type: addBoss, delay: (1000 + b * 600) * spawnDelayMultiplier * waveDelayMultiplier });
         }
         
-        // Add dragon on boss waves 15+ (was 10)
+        // Add dragon/elder dragon on boss waves 15+
         if (wave >= 15) {
             const dragonCount = Math.floor(wave / 15);
             for (let d = 0; d < dragonCount; d++) {
-                enemies.push({ type: 'dragon', delay: (1200 + d * 700) * spawnDelayMultiplier * waveDelayMultiplier });
+                const dragonType = wave >= 40 ? 'elderDragon' : 'dragon';
+                enemies.push({ type: dragonType, delay: (1200 + d * 700) * spawnDelayMultiplier * waveDelayMultiplier });
             }
         }
         
@@ -1610,8 +1836,11 @@ function spawnWaveEnemies() {
         for (let i = 0; i < minionCount; i++) {
             // Mix of enemy types for boss waves
             let type = 'orc';
-            if (wave >= 10 && Math.random() > 0.7) type = 'troll';
-            if (wave >= 20 && Math.random() > 0.8) type = 'ogre';
+            const roll = Math.random();
+            if (wave >= 10 && roll > 0.7) type = 'troll';
+            if (wave >= 15 && roll > 0.75) type = 'ogre';
+            if (wave >= 20 && roll > 0.8) type = 'demon';
+            if (wave >= 25 && roll > 0.85) type = 'golem';
             enemies.push({ type, delay: (600 + i * 300) * spawnDelayMultiplier * waveDelayMultiplier });
         }
     } else {
@@ -1624,27 +1853,48 @@ function spawnWaveEnemies() {
             let type = 'orc';
             const roll = Math.random();
             
-            // Progressive enemy unlocks with higher spawn rates
+            // Progressive enemy unlocks with variety - includes new enemies
             if (wave >= 2 && roll > 0.65) type = 'goblin';
+            if (wave >= 3 && roll > 0.7) type = 'zombie';
             if (wave >= 4 && roll > 0.75) type = 'troll';
-            if (wave >= 6 && roll > 0.8) type = 'ogre';
+            if (wave >= 5 && roll > 0.72) type = 'bat';
+            if (wave >= 6 && roll > 0.78) type = 'spider';
+            if (wave >= 7 && roll > 0.8) type = 'ogre';
             if (wave >= 8 && roll > 0.82) type = 'darkMage';
+            if (wave >= 9 && roll > 0.76) type = 'wolf';
             if (wave >= 10 && roll > 0.7) type = 'skeleton';
+            if (wave >= 11 && roll > 0.84) type = 'witch';
             if (wave >= 12 && roll > 0.88) type = 'dragon';
+            if (wave >= 13 && roll > 0.79) type = 'snake';
+            if (wave >= 14 && roll > 0.83) type = 'bear';
             
             // Late game: more dangerous enemies become common
             if (wave >= 15) {
                 if (roll > 0.5) type = 'skeleton';
+                if (roll > 0.6) type = 'wolf';
                 if (roll > 0.7) type = 'ogre';
+                if (roll > 0.8) type = 'vampire';
                 if (roll > 0.85) type = 'darkMage';
-                if (roll > 0.92) type = 'dragon';
+                if (roll > 0.9) type = 'necromancer';
+                if (roll > 0.95) type = 'dragon';
             }
             
             if (wave >= 20) {
                 if (roll > 0.4) type = 'troll';
+                if (roll > 0.5) type = 'bear';
                 if (roll > 0.6) type = 'ogre';
-                if (roll > 0.75) type = 'darkMage';
-                if (roll > 0.85) type = 'dragon';
+                if (roll > 0.7) type = 'ghost';
+                if (roll > 0.75) type = 'demon';
+                if (roll > 0.8) type = 'golem';
+                if (roll > 0.88) type = 'dragon';
+            }
+            
+            if (wave >= 30) {
+                if (roll > 0.35) type = 'demon';
+                if (roll > 0.5) type = 'golem';
+                if (roll > 0.65) type = 'necromancer';
+                if (roll > 0.8) type = 'dragon';
+                if (roll > 0.9) type = 'assassin';
             }
             
             // Faster spawn rate in later waves, but stretched by waveDelayMultiplier every 5 waves
@@ -1724,6 +1974,8 @@ function spawnEnemy(type) {
         range: enemyDef.range || 0,
         lastAttack: 0,
         slowed: false,
+        isBoss: enemyDef.isBoss || false,
+        size: enemyDef.size || 1,
         element: null
     };
     
@@ -1734,6 +1986,13 @@ function spawnEnemy(type) {
     el.style.left = x + 'px';
     el.style.top = y + 'px';
     el.id = `enemy-${enemy.id}`;
+    
+    // Apply size scaling for bosses
+    if (enemyDef.size && enemyDef.size > 1) {
+        el.style.transform = `translate(-50%, -50%) scale(${enemyDef.size})`;
+        el.classList.add('boss-enemy');
+    }
+    
     gameArena.appendChild(el);
     
     enemy.element = el;
@@ -2039,6 +2298,7 @@ function fireProjectile(target, type) {
     }
     
     const baseDamage = type === 'fireball' ? gameState.stats.damage * 2 : gameState.stats.damage;
+    const magicMult = type === 'fireball' ? (gameState.stats.magicDamageMultiplier || 1) : 1;
     
     const projectile = {
         id: Date.now() + Math.random(),
@@ -2047,7 +2307,7 @@ function fireProjectile(target, type) {
         targetId: target.id,
         type: type,
         speed: type === 'fireball' ? 6 : 10,
-        damage: baseDamage * (gameState.stats.damageMultiplier || 1),
+        damage: baseDamage * (gameState.stats.damageMultiplier || 1) * magicMult,
         element: null
     };
     
@@ -2127,15 +2387,15 @@ function fireMeteor(targets) {
         setTimeout(() => {
             if (!target || target.health <= 0) return;
             
-            // Create meteor falling
+            // Create meteor striking diagonally - position at target, animation handles the approach
             const meteor = document.createElement('div');
             meteor.className = 'meteor';
             meteor.textContent = '☄️';
             meteor.style.left = target.x + 'px';
-            meteor.style.top = '-50px';
+            meteor.style.top = target.y + 'px';
             gameArena.appendChild(meteor);
             
-            // After falling, deal damage and show impact
+            // After striking, deal damage and show impact (600ms matches animation)
             setTimeout(() => {
                 meteor.remove();
                 
@@ -2155,7 +2415,7 @@ function fireMeteor(targets) {
                         }
                     });
                 }
-            }, 800);
+            }, 600);
         }, i * 200);
     });
 }
@@ -2280,13 +2540,46 @@ function killEnemy(enemy) {
     
     // Award gold based on enemy value (affected by difficulty)
     const diffMult = getDifficultyMultipliers();
-    const goldEarned = Math.round(enemy.value * 5 * diffMult.goldReward);
+    let goldEarned = Math.round(enemy.value * 5 * diffMult.goldReward);
+    
+    // Apply gold multiplier
+    if (gameState.stats.goldMultiplier) {
+        goldEarned = Math.round(goldEarned * gameState.stats.goldMultiplier);
+    }
+    
+    // Bonus gold on kill (Golden God mythic)
+    if (gameState.stats.bonusGoldOnKill) {
+        goldEarned += gameState.stats.bonusGoldOnKill;
+    }
+    
     gameState.gold += goldEarned;
     gameState.totalGoldEarned += goldEarned;
     updateGoldDisplay();
     
     // Show gold earned floating text
     showDamageNumber(enemy.x, enemy.y - 40, '+' + goldEarned + '🪙', false, true);
+    
+    // Death explosion (World Ender mythic)
+    if (gameState.stats.deathExplosion) {
+        const explosionDamage = Math.round(enemy.maxHealth * 0.5);
+        const magicMult = gameState.stats.magicDamageMultiplier || 1;
+        const finalDamage = Math.round(explosionDamage * magicMult);
+        
+        // Create explosion visual
+        createVisualEffect(enemy.x, enemy.y, 'explosion', { radius: 80 });
+        
+        // Damage nearby enemies
+        gameState.enemies.forEach(e => {
+            if (e.id !== enemy.id) {
+                const dx = e.x - enemy.x;
+                const dy = e.y - enemy.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                if (dist < 80) {
+                    damageEnemy(e, finalDamage, false);
+                }
+            }
+        });
+    }
     
     if (enemy.element) {
         enemy.element.remove();
@@ -2347,7 +2640,11 @@ function showUpgradeSelection() {
     const wave = gameState.wave;
     
     // 15% chance to get debuff selection instead of upgrades
-    if (Math.random() < 0.15) {
+    // BUT never on golden box waves (waves divisible by 5)
+    // AND never in the first 5 waves (to make early game easier)
+    const isGoldenBoxWave = wave % 5 === 0;
+    const isEarlyGame = wave <= 5;
+    if (!isGoldenBoxWave && !isEarlyGame && Math.random() < 0.15) {
         showDebuffSelection();
         return;
     }
@@ -2357,7 +2654,7 @@ function showUpgradeSelection() {
     // Pick 3 options: mix of upgrades and action cards
     // 25% chance each slot is an action card (if deck isn't full)
     for (let i = 0; i < 3; i++) {
-        const isActionCard = gameState.actionCards.length < 5 && Math.random() < 0.25;
+        const isActionCard = Math.random() < 0.25;
         const targetRarity = pickRarity(wave);
         
         if (isActionCard) {
@@ -2478,26 +2775,47 @@ function renderShop() {
     const isHealthFull = gameState.castle.health >= gameState.stats.maxHealth;
     const priceMultiplier = getShopPriceMultiplier(gameState.wave);
     const mysteryBoxesRemaining = 3 - gameState.mysteryBoxesBought;
+    const isGoldenBoxWave = gameState.wave % 5 === 0;
+    
+    // Golden box price increases every 10 waves
+    const goldenBoxPriceMultiplier = 1 + Math.floor(gameState.wave / 10) * 0.5;
     
     shopItems.innerHTML = Object.values(SHOP_ITEMS).map(item => {
+        // Skip golden box on non-eligible waves
+        if (item.id === 'goldenBox' && !isGoldenBoxWave) {
+            return '';
+        }
+        
         // Calculate dynamic price based on wave
-        const dynamicPrice = Math.round(item.price * priceMultiplier);
+        let dynamicPrice;
+        if (item.id === 'goldenBox') {
+            dynamicPrice = Math.round(item.price * goldenBoxPriceMultiplier);
+        } else {
+            dynamicPrice = Math.round(item.price * priceMultiplier);
+        }
+        
         const canAfford = gameState.gold >= dynamicPrice;
         const isRepairDisabled = item.type === 'repair' && isHealthFull;
         const isMysteryBoxMaxed = item.id === 'mysteryUpgrade' && gameState.mysteryBoxesBought >= 3;
-        const typeClass = item.type === 'repair' ? 'repair' : 'upgrade';
-        const disabled = !canAfford || isRepairDisabled || isMysteryBoxMaxed;
+        const isGoldenBoxBought = item.id === 'goldenBox' && gameState.goldenBoxBought;
+        
+        let typeClass = item.type === 'repair' ? 'repair' : 'upgrade';
+        if (item.id === 'goldenBox') typeClass = 'golden';
+        
+        const disabled = !canAfford || isRepairDisabled || isMysteryBoxMaxed || isGoldenBoxBought;
         
         // Custom description for mystery box showing remaining
         let desc = item.desc;
         if (item.id === 'mysteryUpgrade') {
             desc = isMysteryBoxMaxed ? 'Max reached this wave!' : `${item.desc} (${mysteryBoxesRemaining} left)`;
+        } else if (item.id === 'goldenBox') {
+            desc = isGoldenBoxBought ? 'Already purchased!' : item.desc;
         } else if (isRepairDisabled) {
             desc = 'Health is full!';
         }
         
         return `
-        <div class="shop-item ${typeClass} ${disabled ? 'disabled' : ''}" data-shop="${item.id}" data-price="${dynamicPrice}" ${isRepairDisabled ? 'data-full="true"' : ''} ${isMysteryBoxMaxed ? 'data-maxed="true"' : ''}>
+        <div class="shop-item ${typeClass} ${disabled ? 'disabled' : ''}" data-shop="${item.id}" data-price="${dynamicPrice}" ${isRepairDisabled ? 'data-full="true"' : ''} ${isMysteryBoxMaxed ? 'data-maxed="true"' : ''} ${isGoldenBoxBought ? 'data-bought="true"' : ''}>
             <div class="shop-item-icon">${item.icon}</div>
             <div class="shop-item-name">${item.name}</div>
             <div class="shop-item-desc">${desc}</div>
@@ -2521,7 +2839,15 @@ function purchaseShopItem(itemId, dynamicPrice) {
     if (!item) return;
     
     // Use dynamic price if provided, otherwise calculate it
-    const price = dynamicPrice || Math.round(item.price * getShopPriceMultiplier(gameState.wave));
+    let price = dynamicPrice;
+    if (!price) {
+        if (itemId === 'goldenBox') {
+            const goldenBoxPriceMultiplier = 1 + Math.floor(gameState.wave / 10) * 0.5;
+            price = Math.round(item.price * goldenBoxPriceMultiplier);
+        } else {
+            price = Math.round(item.price * getShopPriceMultiplier(gameState.wave));
+        }
+    }
     
     // Check if repair and health is full
     if (item.type === 'repair' && gameState.castle.health >= gameState.stats.maxHealth) {
@@ -2534,6 +2860,13 @@ function purchaseShopItem(itemId, dynamicPrice) {
     if (itemId === 'mysteryUpgrade' && gameState.mysteryBoxesBought >= 3) {
         playSound('error');
         showShopMessage('Max 3 mystery boxes per wave!');
+        return;
+    }
+    
+    // Check golden box limit
+    if (itemId === 'goldenBox' && gameState.goldenBoxBought) {
+        playSound('error');
+        showShopMessage('Golden box already purchased this wave!');
         return;
     }
     
@@ -2556,6 +2889,11 @@ function purchaseShopItem(itemId, dynamicPrice) {
             gameState.mysteryBoxesBought++;
             // Mystery box animation
             openMysteryBox();
+        } else if (itemId === 'goldenBox') {
+            // Track golden box purchase
+            gameState.goldenBoxBought = true;
+            // Golden box animation - guaranteed legendary with 2% devastating debuff chance
+            openGoldenBox();
         }
         
         updateGoldDisplay();
@@ -2576,27 +2914,30 @@ function openMysteryBox() {
     // Play opening sound
     playSound('mysteryBoxOpen');
     
-    // 3% chance to get a devastating debuff from mystery box
-    const isDebuff = Math.random() < 0.05;
+    // 5% chance to get a devastating debuff from mystery box (but not in first 5 waves)
+    const isDebuff = gameState.wave > 5 && Math.random() < 0.05;
     
     if (isDebuff) {
         openMysteryBoxDebuff();
         return;
     }
     
-    // Get a random upgrade OR action card (30% chance for action card if deck not full)
-    const includeActionCards = gameState.actionCards.length < 5 && Math.random() < 0.3;
+    // Get a random upgrade OR action card (30% chance for action card, or always offer if deck has room)
+    // EXCLUDE mythic rarity - mythics only come from golden boxes
+    const includeActionCards = Math.random() < 0.3;
     
     let reward, isActionCard = false;
     
     if (includeActionCards) {
-        // Pick random action card
+        // Pick random action card (no mythic action cards exist)
         const availableCards = Object.values(ACTION_CARDS);
         reward = availableCards[Math.floor(Math.random() * availableCards.length)];
         isActionCard = true;
     } else {
-        // Pick random upgrade
-        const available = Object.values(UPGRADES).filter(u => u.repeatable || !gameState.earnedUpgrades.includes(u.id));
+        // Pick random upgrade - EXCLUDE mythic rarity
+        const available = Object.values(UPGRADES).filter(u => 
+            u.rarity !== 'mythic' && (u.repeatable || !gameState.earnedUpgrades.includes(u.id))
+        );
         if (available.length === 0) return;
         reward = available[Math.floor(Math.random() * available.length)];
     }
@@ -2610,9 +2951,9 @@ function openMysteryBox() {
         <div class="mystery-box-container">
             <div class="mystery-box">🎁</div>
             <div class="mystery-card hidden" style="border-color: ${rarityInfo.borderColor}; background: linear-gradient(180deg, ${rarityInfo.bgColor} 0%, rgba(26, 20, 16, 0.95) 100%);">
-                <div class="card-shine"></div>
-                <div class="upgrade-rarity" style="color: ${rarityInfo.color};">${rarityInfo.name}</div>
+                <div class="card-shine-container"><div class="card-shine"></div></div>
                 ${isActionCard ? '<div class="action-card-badge">⚡ ACTION</div>' : ''}
+                <div class="upgrade-rarity" style="color: ${rarityInfo.color};">${rarityInfo.name}</div>
                 <div class="upgrade-icon">${reward.icon}</div>
                 <div class="upgrade-name" style="color: ${rarityInfo.color};">${reward.name}</div>
                 <div class="upgrade-desc">${reward.desc}</div>
@@ -2665,7 +3006,7 @@ function openMysteryBox() {
             
             // Apply reward
             if (isActionCard) {
-                addActionCard(reward.id);
+                addActionCard(reward.id, 'mystery-box');
             } else {
                 reward.effect();
                 gameState.earnedUpgrades.push(reward.id);
@@ -2673,9 +3014,9 @@ function openMysteryBox() {
         }, 300);
     }, 1500);
     
-    // Click to close
+    // Click to close (but not if swap modal is open)
     overlay.addEventListener('click', () => {
-        if (!card.classList.contains('hidden')) {
+        if (!card.classList.contains('hidden') && !document.querySelector('.card-swap-overlay')) {
             overlay.classList.add('fade-out');
             setTimeout(() => {
                 overlay.remove();
@@ -2763,13 +3104,275 @@ function openMysteryBoxDebuff() {
     });
 }
 
+// ===== GOLDEN BOX (Guaranteed Legendary with 2% devastating debuff chance) =====
+function openGoldenBox() {
+    // Play opening sound
+    playSound('mysteryBoxOpen');
+    
+    // 5% chance to get a devastating debuff that wipes half upgrades or sets HP to 1
+    const isDevastating = Math.random() < 0.05;
+    
+    if (isDevastating) {
+        openGoldenBoxDevastating();
+        return;
+    }
+    
+    // 20% chance for MYTHIC tier (only from golden boxes)
+    const isMythic = Math.random() < 0.20;
+    const targetRarity = isMythic ? 'mythic' : 'legendary';
+    
+    // Get a random upgrade or action card of target rarity
+    const includeActionCards = Math.random() < 0.3;
+    
+    let reward, isActionCard = false;
+    
+    if (includeActionCards && !isMythic) {
+        // Pick legendary action card (no mythic action cards)
+        const legendaryCards = Object.values(ACTION_CARDS).filter(c => c.rarity === 'legendary');
+        if (legendaryCards.length > 0) {
+            reward = legendaryCards[Math.floor(Math.random() * legendaryCards.length)];
+            isActionCard = true;
+        }
+    }
+    
+    if (!reward) {
+        // Pick upgrade of target rarity
+        const targetUpgrades = Object.values(UPGRADES).filter(u => 
+            u.rarity === targetRarity && (u.repeatable || !gameState.earnedUpgrades.includes(u.id))
+        );
+        if (targetUpgrades.length > 0) {
+            reward = targetUpgrades[Math.floor(Math.random() * targetUpgrades.length)];
+        } else if (isMythic) {
+            // Fallback to legendary if no mythic available
+            const legendaryUpgrades = Object.values(UPGRADES).filter(u => 
+                u.rarity === 'legendary' && (u.repeatable || !gameState.earnedUpgrades.includes(u.id))
+            );
+            reward = legendaryUpgrades[Math.floor(Math.random() * legendaryUpgrades.length)];
+        } else {
+            // Fallback to epic if no legendary available
+            const epicUpgrades = Object.values(UPGRADES).filter(u => 
+                u.rarity === 'epic' && (u.repeatable || !gameState.earnedUpgrades.includes(u.id))
+            );
+            reward = epicUpgrades[Math.floor(Math.random() * epicUpgrades.length)];
+        }
+    }
+    
+    if (!reward) return;
+    
+    const rarityInfo = RARITIES[reward.rarity];
+    
+    // Create golden box overlay
+    const overlay = document.createElement('div');
+    overlay.className = 'mystery-box-overlay golden-box-overlay';
+    overlay.innerHTML = `
+        <div class="mystery-box-container">
+            <div class="golden-box-icon">🎁</div>
+            <div class="mystery-card golden-reward-card ${reward.rarity === 'mythic' ? 'mythic-card' : ''} hidden" style="border-color: ${rarityInfo.borderColor}; background: linear-gradient(180deg, ${rarityInfo.bgColor} 0%, rgba(26, 20, 16, 0.95) 100%);">
+                <div class="card-shine-container"><div class="card-shine ${reward.rarity === 'mythic' ? 'mythic-card-shine' : 'golden-card-shine'}"></div></div>
+                ${isActionCard ? '<div class="action-card-badge">⚡ ACTION</div>' : ''}
+                <div class="upgrade-rarity" style="color: ${rarityInfo.color};">${rarityInfo.name}</div>
+                <div class="upgrade-icon">${reward.icon}</div>
+                <div class="upgrade-name" style="color: ${rarityInfo.color};">${reward.name}</div>
+                <div class="upgrade-desc">${reward.desc}</div>
+                ${isActionCard ? '<div class="action-card-note">Added to card deck!</div>' : ''}
+                <div class="card-hint">Click anywhere to continue</div>
+            </div>
+            <div class="golden-rain-confetti"></div>
+        </div>
+    `;
+    document.body.appendChild(overlay);
+    
+    // Animation sequence
+    const box = overlay.querySelector('.golden-box-icon');
+    const card = overlay.querySelector('.mystery-card');
+    const rainContainer = overlay.querySelector('.golden-rain-confetti');
+    
+    // Start rain confetti immediately
+    for (let i = 0; i < 100; i++) {
+        const confetti = document.createElement('div');
+        confetti.className = 'golden-rain-piece';
+        confetti.style.left = Math.random() * 100 + '%';
+        confetti.style.animationDelay = Math.random() * 3 + 's';
+        confetti.style.animationDuration = (2 + Math.random() * 2) + 's';
+        confetti.style.backgroundColor = ['#FFD700', '#FFA500', '#FFEC8B', '#DAA520', '#FFF8DC'][Math.floor(Math.random() * 5)];
+        rainContainer.appendChild(confetti);
+    }
+    
+    // Play anticipation sound
+    playSound('mysteryBoxOpen');
+    
+    // Shake the box with golden glow
+    setTimeout(() => box.classList.add('golden-box-shaking'), 100);
+    
+    // Explode and show card
+    setTimeout(() => {
+        // Create golden burst explosion
+        for (let i = 0; i < 60; i++) {
+            const burst = document.createElement('div');
+            burst.className = 'golden-burst-piece';
+            burst.style.left = '50%';
+            burst.style.top = '50%';
+            burst.style.setProperty('--angle', (i * 6) + 'deg');
+            burst.style.setProperty('--distance', (100 + Math.random() * 200) + 'px');
+            burst.style.backgroundColor = ['#FFD700', '#FFA500', '#FFEC8B', '#DAA520', '#FFF'][Math.floor(Math.random() * 5)];
+            rainContainer.appendChild(burst);
+        }
+        
+        box.classList.remove('golden-box-shaking');
+        box.classList.add('golden-box-explode');
+        
+        // Play epic sounds
+        playSound('legendaryUpgrade');
+        
+        setTimeout(() => {
+            box.classList.add('hidden');
+            card.classList.remove('hidden');
+            card.classList.add('reveal', 'golden-card-reveal');
+            
+            // Play reveal sounds
+            playSound('mysteryBoxReveal');
+            playSound('legendaryUpgrade');
+            
+            // Apply reward
+            if (isActionCard) {
+                addActionCard(reward.id, 'golden-box');
+            } else {
+                reward.effect();
+                gameState.earnedUpgrades.push(reward.id);
+                updateCastleVisuals();
+                updateHealthBar();
+            }
+        }, 300);
+    }, 1500);
+    
+    // Click to close (but not if swap modal is open)
+    overlay.addEventListener('click', () => {
+        if (!card.classList.contains('hidden') && !document.querySelector('.card-swap-overlay')) {
+            overlay.classList.add('fade-out');
+            setTimeout(() => {
+                overlay.remove();
+                renderShop();
+            }, 300);
+        }
+    });
+}
+
+// ===== GOLDEN BOX DEVASTATING DEBUFF =====
+function openGoldenBoxDevastating() {
+    // Two possible devastating effects:
+    // 1. Wipe half of all upgrades
+    // 2. Set HP to 1 immediately
+    const effect = Math.random() < 0.5 ? 'wipeUpgrades' : 'instantDeath';
+    
+    const debuffInfo = effect === 'wipeUpgrades' 
+        ? { icon: '💔', name: 'Shattered Dreams', desc: 'Half of your upgrades have been destroyed!' }
+        : { icon: '☠️', name: 'Death\'s Touch', desc: 'Your health drops to 1!' };
+    
+    // Create devastating overlay
+    const overlay = document.createElement('div');
+    overlay.className = 'mystery-box-overlay devastating-overlay';
+    overlay.innerHTML = `
+        <div class="mystery-box-container">
+            <div class="golden-box-icon cursed-golden-box">🎁</div>
+            <div class="mystery-card devastating-card hidden">
+                <div class="devastating-aura"></div>
+                <div class="devastating-cracks"></div>
+                <div class="upgrade-rarity devastating-title">DEVASTATING CURSE!</div>
+                <div class="upgrade-icon devastating-icon">${debuffInfo.icon}</div>
+                <div class="upgrade-name devastating-name">${debuffInfo.name}</div>
+                <div class="upgrade-desc devastating-desc">${debuffInfo.desc}</div>
+                <div class="card-hint devastating-hint">Click anywhere to accept your fate</div>
+            </div>
+            <div class="devastating-particles"></div>
+        </div>
+    `;
+    document.body.appendChild(overlay);
+    
+    const box = overlay.querySelector('.golden-box-icon');
+    const card = overlay.querySelector('.mystery-card');
+    const particlesContainer = overlay.querySelector('.devastating-particles');
+    
+    // Play ominous sound
+    playSound('castleHit');
+    
+    // Start with calm golden glow, then corrupt
+    setTimeout(() => box.classList.add('golden-box-shaking'), 100);
+    setTimeout(() => box.classList.add('corrupting'), 800);
+    
+    // Dark reveal
+    setTimeout(() => {
+        // Create dark shatter particles
+        for (let i = 0; i < 80; i++) {
+            const particle = document.createElement('div');
+            particle.className = 'devastating-particle';
+            particle.style.left = '50%';
+            particle.style.top = '40%';
+            particle.style.setProperty('--x', (Math.random() - 0.5) * 600 + 'px');
+            particle.style.setProperty('--y', (Math.random() - 0.5) * 600 + 'px');
+            particle.style.setProperty('--r', Math.random() * 1080 + 'deg');
+            particle.style.backgroundColor = ['#7C2D12', '#991B1B', '#450A0A', '#DC2626', '#000'][Math.floor(Math.random() * 5)];
+            particle.style.animationDelay = Math.random() * 0.2 + 's';
+            particlesContainer.appendChild(particle);
+        }
+        
+        box.classList.remove('golden-box-shaking', 'corrupting');
+        box.classList.add('devastating-explode');
+        
+        // Play devastating sounds
+        playSound('castleHit');
+        playSound('error');
+        
+        setTimeout(() => {
+            box.classList.add('hidden');
+            card.classList.remove('hidden');
+            card.classList.add('reveal', 'devastating-reveal');
+            
+            // Screen shake effect
+            overlay.classList.add('screen-shake');
+            setTimeout(() => overlay.classList.remove('screen-shake'), 500);
+            
+            // Play more devastating sounds
+            playSound('castleHit');
+            
+            // Apply the devastating effect
+            if (effect === 'wipeUpgrades') {
+                // Remove half of upgrades
+                const upgradeCount = gameState.earnedUpgrades.length;
+                const toRemove = Math.floor(upgradeCount / 2);
+                for (let i = 0; i < toRemove; i++) {
+                    const randomIndex = Math.floor(Math.random() * gameState.earnedUpgrades.length);
+                    gameState.earnedUpgrades.splice(randomIndex, 1);
+                }
+            } else {
+                // Set HP to 1
+                gameState.castle.health = 1;
+                updateHealthBar();
+            }
+        }, 400);
+    }, 2000);
+    
+    overlay.addEventListener('click', () => {
+        if (!card.classList.contains('hidden')) {
+            overlay.classList.add('fade-out');
+            setTimeout(() => {
+                overlay.remove();
+                renderShop();
+            }, 300);
+        }
+    });
+}
+
 function selectUpgrade(upgradeId, isActionCard = false) {
     if (isActionCard) {
         // Add action card to deck
         const card = ACTION_CARDS[upgradeId];
         if (card) {
             playSound('upgrade');
-            addActionCard(upgradeId);
+            const result = addActionCard(upgradeId, 'upgrade-selection');
+            // If card is pending swap, don't continue with wave transition yet
+            if (result === 'pending') {
+                return;
+            }
         }
     } else {
         // Apply passive upgrade
@@ -2786,6 +3389,9 @@ function selectUpgrade(upgradeId, isActionCard = false) {
             
             // Update castle visuals to reflect new upgrades
             updateCastleVisuals();
+            
+            // Update health bar immediately (for max health upgrades)
+            updateHealthBar();
         }
     }
     
@@ -2795,6 +3401,7 @@ function selectUpgrade(upgradeId, isActionCard = false) {
     gameState.wave++;
     gameState.waveKills = 0;
     gameState.mysteryBoxesBought = 0; // Reset mystery box limit for new wave
+    gameState.goldenBoxBought = false; // Reset golden box for new wave
     gameState.isRunning = true;
     updateWaveDisplay();
     
@@ -2822,21 +3429,26 @@ function showDebuffSelection() {
     const normalTitle = modalContent.querySelector('h2');
     if (normalTitle) normalTitle.style.display = 'none';
     
-    // Render debuff options with menacing styling
+    // Render debuff options with upgrade-style layout
     upgradeOptions.innerHTML = `
-        <div class="curse-title">Choose a Curse!</div>
-        <div class="debuff-warning">⚠️ CURSED WAVE ⚠️</div>
-        <div class="debuff-subtitle">You must choose a curse to continue...</div>
-    ` + options.map(d => {
-        const severityColor = d.severity === 'moderate' ? '#DC2626' : '#EF4444';
-        return `
-        <div class="upgrade-card debuff-card" data-debuff="${d.id}" style="border-color: #7C2D12; background: linear-gradient(180deg, rgba(127, 29, 29, 0.4) 0%, rgba(26, 20, 16, 0.95) 100%);">
-            <div class="debuff-skull">💀</div>
-            <div class="upgrade-icon">${d.icon}</div>
-            <div class="upgrade-name" style="color: ${severityColor};">${d.name}</div>
-            <div class="upgrade-desc" style="color: #FCA5A5;">${d.desc}</div>
+        <div class="curse-header">
+            <div class="curse-wave-title">CURSED WAVE</div>
+            <div class="curse-subtitle">You must choose a curse to continue...</div>
         </div>
-    `}).join('');
+        <div class="curse-cards-container">
+            ${options.map(d => {
+                const severityColor = d.severity === 'moderate' ? '#DC2626' : '#EF4444';
+                return `
+                <div class="upgrade-card debuff-card" data-debuff="${d.id}" style="border-color: #7C2D12; background: linear-gradient(180deg, rgba(127, 29, 29, 0.4) 0%, rgba(26, 20, 16, 0.95) 100%);">
+                    <div class="debuff-skull">💀</div>
+                    <div class="upgrade-icon">${d.icon}</div>
+                    <div class="upgrade-name" style="color: ${severityColor};">${d.name}</div>
+                    <div class="upgrade-desc" style="color: #FCA5A5;">${d.desc}</div>
+                </div>
+                `;
+            }).join('')}
+        </div>
+    `;
     
     // Add click handlers
     upgradeOptions.querySelectorAll('.debuff-card').forEach(card => {
@@ -2881,6 +3493,7 @@ function selectDebuff(debuffId) {
     gameState.wave++;
     gameState.waveKills = 0;
     gameState.mysteryBoxesBought = 0;
+    gameState.goldenBoxBought = false;
     gameState.isRunning = true;
     updateWaveDisplay();
     
@@ -2951,16 +3564,27 @@ function togglePause() {
 }
 
 function renderPauseMenu() {
-    // Build upgrades list sorted by rarity
-    const rarityOrder = ['legendary', 'epic', 'rare', 'uncommon', 'common'];
-    const earnedByRarity = {};
+    // Build upgrades list sorted by rarity, counting duplicates
+    const rarityOrder = ['mythic', 'legendary', 'epic', 'rare', 'uncommon', 'common'];
+    const upgradeCounts = {};
     
+    // Count each upgrade
+    gameState.earnedUpgrades.forEach(id => {
+        upgradeCounts[id] = (upgradeCounts[id] || 0) + 1;
+    });
+    
+    // Group unique upgrades by rarity
+    const earnedByRarity = {};
     rarityOrder.forEach(r => earnedByRarity[r] = []);
     
-    gameState.earnedUpgrades.forEach(id => {
+    Object.keys(upgradeCounts).forEach(id => {
         const upgrade = UPGRADES[id];
         if (upgrade) {
-            earnedByRarity[upgrade.rarity].push(upgrade);
+            earnedByRarity[upgrade.rarity].push({
+                ...upgrade,
+                id: id,
+                count: upgradeCounts[id]
+            });
         }
     });
     
@@ -2975,9 +3599,10 @@ function renderPauseMenu() {
                 <div class="pause-rarity-title" style="color: ${rarityInfo.color};">${rarityInfo.name}</div>
                 <div class="pause-upgrades-list">
                     ${earnedByRarity[rarity].map(u => `
-                        <div class="pause-upgrade-item has-tooltip" style="border-color: ${rarityInfo.borderColor};" data-tooltip="${u.desc}">
+                        <div class="pause-upgrade-item" style="border-color: ${rarityInfo.borderColor};" data-upgrade-id="${u.id}">
                             <span class="pause-upgrade-icon">${u.icon}</span>
                             <span class="pause-upgrade-name">${u.name}</span>
+                            ${u.count > 1 ? `<span class="pause-upgrade-count">${u.count}x</span>` : ''}
                         </div>
                     `).join('')}
                 </div>
@@ -3006,6 +3631,47 @@ function renderPauseMenu() {
     // Re-attach event listeners
     pauseContent.querySelector('#resumeBtn').addEventListener('click', togglePause);
     pauseContent.querySelector('#quitBtn').addEventListener('click', returnToMenu);
+    
+    // Add click handlers to show upgrade details
+    pauseContent.querySelectorAll('.pause-upgrade-item').forEach(item => {
+        item.addEventListener('click', () => {
+            const upgradeId = item.dataset.upgradeId;
+            showUpgradeDetailPopup(upgradeId, upgradeCounts[upgradeId]);
+        });
+    });
+}
+
+function showUpgradeDetailPopup(upgradeId, count) {
+    const upgrade = UPGRADES[upgradeId];
+    if (!upgrade) return;
+    
+    const rarityInfo = RARITIES[upgrade.rarity];
+    
+    const overlay = document.createElement('div');
+    overlay.className = 'upgrade-detail-overlay';
+    overlay.innerHTML = `
+        <div class="upgrade-detail-card" style="border-color: ${rarityInfo.borderColor};">
+            <div class="detail-icon" style="color: ${rarityInfo.color};">${upgrade.icon}</div>
+            <div class="detail-name" style="color: ${rarityInfo.color};">${upgrade.name}</div>
+            <div class="detail-rarity" style="color: ${rarityInfo.color};">${rarityInfo.name}</div>
+            <div class="detail-desc">${upgrade.desc}</div>
+            <div class="detail-type">${upgrade.type === 'stat' ? '📊 Stat Upgrade' : '⚡ Ability Upgrade'}</div>
+            ${count > 1 ? `<div class="detail-count">Collected: ${count}x</div>` : ''}
+            <div class="detail-hint">Click anywhere to close</div>
+        </div>
+    `;
+    
+    // Close on click anywhere
+    overlay.addEventListener('click', () => {
+        overlay.remove();
+    });
+    
+    // Prevent closing when clicking the card itself (optional - remove if you want any click to close)
+    overlay.querySelector('.upgrade-detail-card').addEventListener('click', (e) => {
+        e.stopPropagation();
+    });
+    
+    document.body.appendChild(overlay);
 }
 
 // ===== ACTION CARD EFFECTS =====
@@ -3106,10 +3772,11 @@ function useLightningStorm(count) {
     // Screen flash for dramatic effect
     createVisualEffect(0, 0, 'screen-flash', { color: 'lightning' });
     
+    const magicMult = gameState.stats.magicDamageMultiplier || 1;
     const targets = gameState.enemies.slice(0, count);
     targets.forEach((target, i) => {
         setTimeout(() => {
-            const damage = gameState.stats.damage * 2 * gameState.stats.damageMultiplier;
+            const damage = gameState.stats.damage * 2 * gameState.stats.damageMultiplier * magicMult;
             damageEnemy(target, damage);
             
             // Lightning strike from above
@@ -3154,10 +3821,11 @@ function useDragonBreath(damage) {
     setTimeout(() => breath.remove(), 1000);
     
     // Meteor impacts on all enemies
+    const magicMult = gameState.stats.magicDamageMultiplier || 1;
     gameState.enemies.forEach((enemy, i) => {
         setTimeout(() => {
             createVisualEffect(enemy.x, enemy.y, 'meteor-impact');
-            damageEnemy(enemy, damage * gameState.stats.damageMultiplier);
+            damageEnemy(enemy, damage * gameState.stats.damageMultiplier * magicMult);
         }, i * 50);
     });
 }
@@ -3209,18 +3877,20 @@ function useApocalypse(damage) {
             const meteor = document.createElement('div');
             meteor.className = 'meteor';
             meteor.textContent = '☄️';
+            // Random position on arena - animation handles diagonal approach
             meteor.style.left = (Math.random() * arenaRect.width) + 'px';
-            meteor.style.top = '-50px';
+            meteor.style.top = (Math.random() * arenaRect.height * 0.7 + arenaRect.height * 0.15) + 'px';
             gameArena.appendChild(meteor);
             
-            setTimeout(() => meteor.remove(), 800);
+            setTimeout(() => meteor.remove(), 600);
         }, i * 100);
     }
     
     // Damage all enemies after meteors land
     setTimeout(() => {
+        const magicMult = gameState.stats.magicDamageMultiplier || 1;
         gameState.enemies.forEach(enemy => {
-            damageEnemy(enemy, damage * gameState.stats.damageMultiplier);
+            damageEnemy(enemy, damage * gameState.stats.damageMultiplier * magicMult);
         });
     }, 600);
 }
@@ -3275,6 +3945,7 @@ function useBattleCry(duration, multiplier) {
 
 function usePoisonCloud(damagePerTick, duration) {
     playSound('magic');
+    const magicMult = gameState.stats.magicDamageMultiplier || 1;
     
     const arenaRect = gameArena.getBoundingClientRect();
     
@@ -3294,7 +3965,7 @@ function usePoisonCloud(damagePerTick, duration) {
     const poisonTick = setInterval(() => {
         tickCount++;
         gameState.enemies.forEach(enemy => {
-            damageEnemy(enemy, damagePerTick * gameState.stats.damageMultiplier);
+            damageEnemy(enemy, damagePerTick * gameState.stats.damageMultiplier * magicMult);
             // Add poison particle effect
             const particle = document.createElement('div');
             particle.className = 'poison-particle';
@@ -3471,15 +4142,151 @@ function useActionCard(index) {
     setTimeout(() => flash.remove(), 800);
 }
 
-function addActionCard(cardId) {
-    // Max 5 cards in deck
-    if (gameState.actionCards.length >= 5) {
-        showShopMessage('Card deck is full! (max 5)');
-        return false;
+function addActionCard(cardId, context = 'direct') {
+    // Max 6 cards in deck
+    if (gameState.actionCards.length >= 6) {
+        // Store pending card info and show swap modal
+        gameState.pendingActionCard = { cardId, context };
+        showCardSwapModal(cardId, context);
+        return 'pending';
     }
     gameState.actionCards.push(cardId);
     renderCardDeck();
     return true;
+}
+
+// ===== CARD SWAP MODAL =====
+function showCardSwapModal(newCardId, context = 'direct') {
+    const newCard = ACTION_CARDS[newCardId];
+    if (!newCard) return;
+    
+    const newRarityInfo = RARITIES[newCard.rarity];
+    
+    // Helper function to proceed after swap/discard for upgrade selection
+    const proceedToNextWave = () => {
+        if (context === 'upgrade-selection') {
+            upgradeModal.classList.add('hidden');
+            gameState.wave++;
+            gameState.waveKills = 0;
+            gameState.mysteryBoxesBought = 0;
+            gameState.goldenBoxBought = false;
+            gameState.isRunning = true;
+            updateWaveDisplay();
+            setTimeout(() => startWave(), 500);
+        }
+    };
+    
+    // Create overlay
+    const overlay = document.createElement('div');
+    overlay.className = 'card-swap-overlay';
+    overlay.innerHTML = `
+        <div class="card-swap-modal">
+            <div class="card-swap-title">⚠️ Deck Full!</div>
+            <div class="card-swap-subtitle">Your action deck is full (6/6). Choose an option:</div>
+            
+            <div class="card-swap-new-card-section">
+                <div class="card-swap-label">New Card:</div>
+                <div class="card-swap-new-card ${newCard.rarity}" style="border-color: ${newRarityInfo.borderColor}; background: linear-gradient(180deg, ${newRarityInfo.bgColor} 0%, rgba(26, 20, 16, 0.95) 100%);">
+                    <div class="deck-card-rarity" style="color: ${newRarityInfo.color};">${newRarityInfo.name}</div>
+                    <div class="deck-card-icon-large">${newCard.icon}</div>
+                    <div class="deck-card-name" style="color: ${newRarityInfo.color};">${newCard.name}</div>
+                    <div class="deck-card-desc">${newCard.desc}</div>
+                </div>
+            </div>
+            
+            <div class="card-swap-label">Swap with one of your cards:</div>
+            <div class="card-swap-current-deck">
+                ${gameState.actionCards.map((cardId, index) => {
+                    const card = ACTION_CARDS[cardId];
+                    if (!card) return '';
+                    const rarityInfo = RARITIES[card.rarity];
+                    return `
+                        <div class="card-swap-deck-card ${card.rarity}" data-swap-index="${index}" style="border-color: ${rarityInfo.borderColor}; background: linear-gradient(180deg, ${rarityInfo.bgColor} 0%, rgba(26, 20, 16, 0.95) 100%);">
+                            <div class="deck-card-rarity" style="color: ${rarityInfo.color};">${rarityInfo.name}</div>
+                            <div class="deck-card-icon">${card.icon}</div>
+                            <div class="deck-card-name" style="color: ${rarityInfo.color};">${card.name}</div>
+                            <div class="swap-card-hint">Click to swap</div>
+                        </div>
+                    `;
+                }).join('')}
+            </div>
+            
+            <div class="card-swap-buttons">
+                <button class="card-swap-discard-btn">🗑️ Discard New Card</button>
+                ${context === 'upgrade-selection' ? '<button class="card-swap-back-btn">↩️ Choose Different Card</button>' : ''}
+            </div>
+        </div>
+    `;
+    document.body.appendChild(overlay);
+    
+    // Add click handlers for swap cards
+    overlay.querySelectorAll('.card-swap-deck-card').forEach(cardEl => {
+        cardEl.addEventListener('click', () => {
+            const swapIndex = parseInt(cardEl.dataset.swapIndex);
+            swapActionCard(swapIndex, newCardId);
+            playSound('upgrade');
+            overlay.classList.add('fade-out');
+            setTimeout(() => {
+                overlay.remove();
+                proceedToNextWave();
+            }, 300);
+        });
+        
+        cardEl.addEventListener('mouseenter', () => {
+            playSound('cardHover');
+        });
+    });
+    
+    // Discard button
+    const discardBtn = overlay.querySelector('.card-swap-discard-btn');
+    discardBtn.addEventListener('click', () => {
+        playSound('cardHover');
+        showShopMessage('Card discarded');
+        gameState.pendingActionCard = null;
+        overlay.classList.add('fade-out');
+        setTimeout(() => {
+            overlay.remove();
+            proceedToNextWave();
+        }, 300);
+    });
+    
+    // Back button (only for upgrade selection context)
+    const backBtn = overlay.querySelector('.card-swap-back-btn');
+    if (backBtn) {
+        backBtn.addEventListener('click', () => {
+            playSound('cardHover');
+            gameState.pendingActionCard = null;
+            overlay.classList.add('fade-out');
+            setTimeout(() => {
+                overlay.remove();
+                // Don't close the upgrade modal - let user pick something else
+            }, 300);
+        });
+    }
+    
+    // Click outside to close (only for upgrade selection)
+    if (context === 'upgrade-selection') {
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) {
+                playSound('cardHover');
+                gameState.pendingActionCard = null;
+                overlay.classList.add('fade-out');
+                setTimeout(() => overlay.remove(), 300);
+            }
+        });
+    }
+}
+
+function swapActionCard(swapIndex, newCardId) {
+    if (swapIndex >= 0 && swapIndex < gameState.actionCards.length) {
+        const oldCardId = gameState.actionCards[swapIndex];
+        const oldCard = ACTION_CARDS[oldCardId];
+        const newCard = ACTION_CARDS[newCardId];
+        gameState.actionCards[swapIndex] = newCardId;
+        renderCardDeck();
+        showShopMessage(`Swapped ${oldCard?.name || 'card'} for ${newCard?.name || 'new card'}!`);
+    }
+    gameState.pendingActionCard = null;
 }
 
 // ===== MANUAL TARGETING SYSTEM =====
