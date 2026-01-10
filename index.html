@@ -77,9 +77,130 @@
             <span class="wolf-icon">🐺</span>
         </button>
         
+        <!-- Debug mode toggle button (top left, subtle) -->
+        <button class="btn btn-debug" id="debugBtn">🛠️ Debug</button>
+        
         <!-- Sound toggle button (bottom right) -->
         <button class="btn btn-sound" id="soundToggleHome">🔊</button>
     </div>
+    
+    <!-- Debug Sidebar (slides in from right) -->
+    <div class="debug-sidebar" id="debugSidebar">
+        <div class="debug-sidebar-header">
+            <h2>🛠️ Debug Panel</h2>
+            <button class="debug-sidebar-close" id="closeDebugSidebar">◀</button>
+        </div>
+        <div class="debug-sidebar-content">
+            <!-- Toggle Section -->
+            <div class="debug-section">
+                <h3>⚙️ Toggles</h3>
+                <div class="debug-toggles">
+                    <label class="debug-toggle">
+                        <input type="checkbox" id="debugInfiniteGold">
+                        <span>💰 Infinite Gold</span>
+                    </label>
+                    <label class="debug-toggle">
+                        <input type="checkbox" id="debugInfiniteHealth">
+                        <span>❤️ Infinite Health</span>
+                    </label>
+                    <label class="debug-toggle">
+                        <input type="checkbox" id="debugNoEnemies">
+                        <span>🚫 Disable Enemy Spawns</span>
+                    </label>
+                    <label class="debug-toggle">
+                        <input type="checkbox" id="debugFastWaves">
+                        <span>⚡ Instant Spawn</span>
+                    </label>
+                    <label class="debug-toggle">
+                        <input type="checkbox" id="debugManualWaveEnd">
+                        <span>🎯 Manual Wave End</span>
+                    </label>
+                </div>
+            </div>
+            
+            <!-- Screen Navigation -->
+            <div class="debug-section">
+                <h3>📺 Screens</h3>
+                <div class="debug-buttons">
+                    <button class="debug-btn" id="debugShowUpgrade">Upgrade & Shop</button>
+                    <button class="debug-btn" id="debugShowShop">Shop + Golden Box</button>
+                    <button class="debug-btn" id="debugShowGameOver">Game Over</button>
+                    <button class="debug-btn" id="debugStartGame">Start Game</button>
+                </div>
+            </div>
+            
+            <!-- Enemy Spawner -->
+            <div class="debug-section">
+                <h3>👹 Spawn Enemies</h3>
+                <h4 class="debug-subsection">Regular Enemies</h4>
+                <div class="debug-enemy-grid" id="debugEnemyGrid">
+                    <!-- Populated by JS -->
+                </div>
+                <h4 class="debug-subsection">Bosses</h4>
+                <div class="debug-enemy-grid" id="debugBossGrid">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+            
+            <!-- Upgrade Manager -->
+            <div class="debug-section">
+                <h3>⬆️ Upgrades</h3>
+                <select id="debugUpgradeSelect" class="debug-select">
+                    <option value="">-- Select Upgrade --</option>
+                </select>
+                <div class="debug-btn-row">
+                    <button class="debug-btn" id="debugAddUpgrade">Add</button>
+                    <button class="debug-btn danger" id="debugRemoveUpgrade">Remove</button>
+                </div>
+                <div class="debug-btn-row">
+                    <button class="debug-btn small" id="debugAddAllUpgrades">Add All</button>
+                    <button class="debug-btn danger small" id="debugRemoveAllUpgrades">Remove All</button>
+                </div>
+            </div>
+            
+            <!-- Debuff Manager -->
+            <div class="debug-section">
+                <h3>⬇️ Debuffs</h3>
+                <select id="debugDebuffSelect" class="debug-select">
+                    <option value="">-- Select Debuff --</option>
+                </select>
+                <div class="debug-btn-row">
+                    <button class="debug-btn" id="debugAddDebuff">Apply</button>
+                    <button class="debug-btn danger" id="debugRemoveDebuff">Remove</button>
+                </div>
+                <div class="debug-btn-row">
+                    <button class="debug-btn small" id="debugApplyAllDebuffs">Apply All</button>
+                    <button class="debug-btn danger small" id="debugRemoveAllDebuffs">Remove All</button>
+                </div>
+            </div>
+            
+            <!-- Quick Actions -->
+            <div class="debug-section">
+                <h3>🎮 Quick Actions</h3>
+                <div class="debug-buttons">
+                    <button class="debug-btn" id="debugAddGold">+1000 Gold</button>
+                    <button class="debug-btn" id="debugNextWave">Skip to Next Wave</button>
+                    <button class="debug-btn" id="debugKillAll">Kill All Enemies</button>
+                    <button class="debug-btn" id="debugResetStats">Reset Stats</button>
+                    <button class="debug-btn" id="debugMaxStats">Max All Stats</button>
+                </div>
+            </div>
+            
+            <!-- Current Stats Display -->
+            <div class="debug-section">
+                <h3>📊 Current Stats</h3>
+                <div class="debug-stats" id="debugStatsDisplay">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Debug Sidebar Toggle Button (visible when debug mode is on) -->
+    <button class="debug-sidebar-toggle hidden" id="debugSidebarToggle">🛠️</button>
+    
+    <!-- Debug End Wave Button (visible when manual wave end is enabled) -->
+    <button class="debug-end-wave-btn hidden" id="debugEndWaveBtn">⏭️ End Wave</button>
     
     <!-- Patch Notes Modal -->
     <div class="modal" id="patchNotesModal">
@@ -107,8 +228,13 @@
                     <p>Defend your castle against endless waves of enemies! Survive as long as you can and beat your wave record. Adjust difficulty on the homescreen (1-10) to customize your challenge.</p>
                 </div>
                 <div class="help-section">
-                    <h3>⚔️ Combat & Targeting</h3>
+                    <h3>⚔️ Castle Power</h3>
+                    <p>Your <strong>Castle Power</strong> (shown in the HUD with ⚔️) represents your overall combat strength. It increases as you collect upgrades and reflects how powerful your castle has become. Enemies dynamically scale based on both your power level AND the current wave - so strategic upgrade choices matter!</p>
+                </div>
+                <div class="help-section">
+                    <h3>🏹 Combat & Targeting</h3>
                     <p>Your castle automatically attacks nearby enemies with arrows (or fireballs if upgraded). <strong>Manual Targeting:</strong> Click and hold on the arena to prioritize a target! Enemies will attack your castle when they get close - melee enemies lunge in, while archers shoot from afar.</p>
+                    <p><strong>🔄 Ricochet:</strong> With ricochet upgrades, your arrows bounce to additional enemies! Each bounce targets the enemy closest to your castle, creating deadly chain attacks.</p>
                 </div>
                 <div class="help-section">
                     <h3>🎁 Upgrades & Rarities</h3>
@@ -152,11 +278,11 @@
                 <div class="help-section">
                     <h3>🎯 Tips & Strategies</h3>
                     <p>• <strong>Early game:</strong> Focus on damage upgrades - no curses in first 5 waves!</p>
-                    <p>• <strong>Boss waves:</strong> Save the Golden Mystery Box for a chance at Mythic upgrades!</p>
-                    <p>• <strong>Mythic hunting:</strong> Golden God doubles gold, Archmage doubles magic damage, World Ender chains explosions!</p>
+                    <p>• <strong>Boss waves:</strong> Save gold for the Golden Mystery Box for a chance at Mythic upgrades!</p>
+                    <p>• <strong>Mythic hunting:</strong> Golden God card doubles gold, Archmage card doubles magic damage, World Ender card chains explosions!</p>
                     <p>• <strong>Card management:</strong> Keep your best cards - swap out weaker ones when deck is full</p>
                     <p>• <strong>Curse strategy:</strong> Sometimes picking a lesser debuff is better than a devastating one!</p>
-                    <p>• <strong>Manual targeting:</strong> Click and hold to focus dangerous enemies like Necromancers or Assassins</p>
+                    <p>• <strong>Manual targeting:</strong> Click and hold and let your castle focus on dangerous enemies</p>
                 </div>
             </div>
         </div>
@@ -188,6 +314,10 @@
                 </div>
             </div>
             <div class="hud-right">
+                <div class="hud-item power-display" data-tooltip="Castle Power - your overall strength">
+                    <span>⚔️</span>
+                    <span id="powerCount">130</span>
+                </div>
                 <div class="hud-item gold-display" data-tooltip="Gold - spend at the shop between waves">
                     <span>🪙</span>
                     <span id="goldCount">0</span>
