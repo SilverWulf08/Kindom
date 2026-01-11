@@ -4949,6 +4949,31 @@ body::after {
     100% { transform: translate(-50%, -50%) scale(1.5) rotate(45deg); opacity: 0; }
 }
 
+/* Garrison Guard (permanent defender) */
+.garrison-guard {
+    position: absolute;
+    font-size: 2.2rem;
+    transform: translate(-50%, -50%);
+    z-index: 18;
+    pointer-events: none;
+    filter: drop-shadow(0 0 8px #6699ff);
+    animation: garrisonSpawn 0.5s ease-out;
+}
+
+@keyframes garrisonSpawn {
+    0% { transform: translate(-50%, -50%) scale(0) rotate(-180deg); opacity: 0; }
+    100% { transform: translate(-50%, -50%) scale(1) rotate(0deg); opacity: 1; }
+}
+
+.garrison-guard.garrison-attacking {
+    animation: garrisonAttack 0.2s ease-out;
+}
+
+@keyframes garrisonAttack {
+    0%, 100% { transform: translate(-50%, -50%) scale(1); }
+    50% { transform: translate(-50%, -50%) scale(1.25); filter: drop-shadow(0 0 12px #99bbff); }
+}
+
 /* ===== CARD SWAP MODAL ===== */
 .card-swap-overlay {
     position: fixed;

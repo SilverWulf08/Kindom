@@ -869,6 +869,18 @@ function createCardActivationEffect(card, castleX, castleY) {
 // ===== PATCH NOTES DATA =====
 const PATCH_NOTES = [
     {
+        version: "1.7.0",
+        title: "Garrison & Knights Update",
+        date: "January 11, 2026",
+        changes: [
+            "🛡️ New Epic Upgrade: Castle Garrison - summon a permanent guard to defend your castle!",
+            "⚔️ Garrison guards are slower but stay forever, patrolling near the castle",
+            "🗡️ Summon Knight buffed - now stronger (25 damage) and faster (speed 5)",
+            "🔧 Multiple garrisons can be stacked for an army of defenders!",
+            "🃏 Debug Panel updated",
+        ]
+    },
+    {
         version: "1.6.0",
         title: "Ricochet & Polish Update",
         date: "January 11, 2026",
@@ -1151,6 +1163,7 @@ const UPGRADES = {
     berserker_e: { id: 'berserker_e', name: 'Berserker', icon: '🔥', type: 'weapon', rarity: 'epic', desc: '+1.5% damage per 1% missing health', effect: () => { gameState.stats.hasBerserker = true; } },
     guardian_e: { id: 'guardian_e', name: 'Guardian Angel', icon: '👼', type: 'defense', rarity: 'epic', desc: 'Survive lethal damage once per wave', effect: () => { gameState.stats.hasGuardian = true; } },
     gold_rush_e: { id: 'gold_rush_e', name: 'Midas Touch', icon: '👑', type: 'utility', rarity: 'epic', desc: '+65% gold from all sources', effect: () => { gameState.stats.goldMultiplier = (gameState.stats.goldMultiplier || 1) * 1.65; } },
+    garrison_e: { id: 'garrison_e', name: 'Castle Garrison', icon: '🛡️', type: 'defense', rarity: 'epic', desc: 'A guard permanently defends your castle', effect: () => { gameState.stats.garrisonCount = (gameState.stats.garrisonCount || 0) + 1; spawnGarrison(); }, repeatable: true },
     
     // Legendary - new
     infinity_l: { id: 'infinity_l', name: 'Infinity', icon: '♾️', type: 'weapon', rarity: 'legendary', desc: 'Every 4th arrow deals triple damage', effect: () => { gameState.stats.hasInfinity = true; } },
@@ -3883,6 +3896,9 @@ function clearEntities() {
     document.querySelectorAll('.enemy, .projectile, .damage-number').forEach(el => el.remove());
     gameState.enemies = [];
     gameState.projectiles = [];
+    
+    // Clear garrisons
+    clearGarrisons();
 }
 
 function returnToMenu() {
@@ -4357,8 +4373,8 @@ function useSummonKnight(duration) {
     gameArena.appendChild(knight);
     
     // Knight stats
-    const knightDamage = 15 * gameState.stats.damageMultiplier;
-    const attackInterval = 800;
+    const knightDamage = 25 * gameState.stats.damageMultiplier;
+    const attackInterval = 600;
     
     // Knight attacks nearby enemies
     const knightAttack = setInterval(() => {
@@ -4399,7 +4415,7 @@ function useSummonKnight(duration) {
                 setTimeout(() => slash.remove(), 300);
             } else {
                 // Move towards enemy
-                const moveSpeed = 3;
+                const moveSpeed = 5;
                 const moveX = (dx / dist) * moveSpeed;
                 const moveY = (dy / dist) * moveSpeed;
                 knight.style.left = (parseFloat(knight.style.left) + moveX) + 'px';
@@ -4414,6 +4430,127 @@ function useSummonKnight(duration) {
         knight.classList.add('knight-fade');
         setTimeout(() => knight.remove(), 500);
     }, duration);
+}
+
+// ===== GARRISON (Permanent Castle Guard) =====
+function spawnGarrison() {
+    playSound('powerUp');
+    
+    const arenaRect = gameArena.getBoundingClientRect();
+    const castleX = arenaRect.width / 2;
+    const castleY = arenaRect.height / 2;
+    
+    // Spawn garrison slightly offset from castle center
+    const garrisonCount = gameState.stats.garrisonCount || 1;
+    const angle = (garrisonCount - 1) * (Math.PI / 3); // Spread around castle
+    const offsetX = Math.cos(angle) * 60;
+    const offsetY = Math.sin(angle) * 60;
+    
+    createVisualEffect(castleX + offsetX, castleY + offsetY, 'screen-flash', { color: 'divine' });
+    
+    // Create the garrison element
+    const garrison = document.createElement('div');
+    garrison.className = 'garrison-guard';
+    garrison.textContent = '🛡️';
+    garrison.style.left = (castleX + offsetX) + 'px';
+    garrison.style.top = (castleY + offsetY) + 'px';
+    garrison.dataset.garrisonId = Date.now() + Math.random();
+    gameArena.appendChild(garrison);
+    
+    // Store garrison reference
+    if (!gameState.garrisons) gameState.garrisons = [];
+    
+    const garrisonData = {
+        id: garrison.dataset.garrisonId,
+        element: garrison,
+        x: castleX + offsetX,
+        y: castleY + offsetY,
+        homeX: castleX + offsetX,
+        homeY: castleY + offsetY,
+        damage: 18 * gameState.stats.damageMultiplier,
+        attackInterval: null
+    };
+    
+    gameState.garrisons.push(garrisonData);
+    
+    // Garrison attack loop
+    garrisonData.attackInterval = setInterval(() => {
+        if (!gameState || !gameState.enemies || gameState.enemies.length === 0) {
+            // Return to home position when no enemies
+            const dx = garrisonData.homeX - parseFloat(garrison.style.left);
+            const dy = garrisonData.homeY - parseFloat(garrison.style.top);
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist > 5) {
+                const moveSpeed = 2;
+                garrison.style.left = (parseFloat(garrison.style.left) + (dx / dist) * moveSpeed) + 'px';
+                garrison.style.top = (parseFloat(garrison.style.top) + (dy / dist) * moveSpeed) + 'px';
+            }
+            return;
+        }
+        
+        // Find closest enemy
+        let closestEnemy = null;
+        let closestDist = Infinity;
+        
+        gameState.enemies.forEach(enemy => {
+            const dx = enemy.x - parseFloat(garrison.style.left);
+            const dy = enemy.y - parseFloat(garrison.style.top);
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist < closestDist) {
+                closestDist = dist;
+                closestEnemy = enemy;
+            }
+        });
+        
+        if (closestEnemy) {
+            const dx = closestEnemy.x - parseFloat(garrison.style.left);
+            const dy = closestEnemy.y - parseFloat(garrison.style.top);
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            
+            if (dist < 50) {
+                // Attack!
+                damageEnemy(closestEnemy, garrisonData.damage);
+                garrison.classList.add('garrison-attacking');
+                setTimeout(() => garrison.classList.remove('garrison-attacking'), 200);
+                
+                // Slash effect
+                const slash = document.createElement('div');
+                slash.className = 'knight-slash';
+                slash.style.left = closestEnemy.x + 'px';
+                slash.style.top = closestEnemy.y + 'px';
+                gameArena.appendChild(slash);
+                setTimeout(() => slash.remove(), 300);
+            } else if (dist < 200) {
+                // Move towards enemy (slower than knight)
+                const moveSpeed = 3;
+                const moveX = (dx / dist) * moveSpeed;
+                const moveY = (dy / dist) * moveSpeed;
+                garrison.style.left = (parseFloat(garrison.style.left) + moveX) + 'px';
+                garrison.style.top = (parseFloat(garrison.style.top) + moveY) + 'px';
+            } else {
+                // Return home if enemy too far
+                const homeX = garrisonData.homeX - parseFloat(garrison.style.left);
+                const homeY = garrisonData.homeY - parseFloat(garrison.style.top);
+                const homeDist = Math.sqrt(homeX * homeX + homeY * homeY);
+                if (homeDist > 5) {
+                    const moveSpeed = 2;
+                    garrison.style.left = (parseFloat(garrison.style.left) + (homeX / homeDist) * moveSpeed) + 'px';
+                    garrison.style.top = (parseFloat(garrison.style.top) + (homeY / homeDist) * moveSpeed) + 'px';
+                }
+            }
+        }
+    }, 50);
+}
+
+// Clear all garrisons (called on game reset)
+function clearGarrisons() {
+    if (gameState.garrisons) {
+        gameState.garrisons.forEach(g => {
+            if (g.attackInterval) clearInterval(g.attackInterval);
+            if (g.element) g.element.remove();
+        });
+        gameState.garrisons = [];
+    }
 }
 
 // ===== CARD DECK UI =====
@@ -5244,6 +5381,59 @@ function initDebugPanel() {
             playSound('click');
         }
     });
+    
+    // ===== ACTION CARDS DEBUG =====
+    // Add action card button
+    document.getElementById('debugAddActionCard')?.addEventListener('click', () => {
+        const select = document.getElementById('debugActionCardSelect');
+        const cardId = select?.value;
+        if (cardId && ACTION_CARDS[cardId] && gameState) {
+            if (gameState.actionCards.length < 6) {
+                gameState.actionCards.push(cardId); // Push ID string, not object
+                renderCardDeck();
+                playSound('upgrade');
+            } else {
+                playSound('click');
+            }
+        }
+    });
+    
+    // Remove action card button
+    document.getElementById('debugRemoveActionCard')?.addEventListener('click', () => {
+        const select = document.getElementById('debugActionCardSelect');
+        const cardId = select?.value;
+        if (cardId && gameState) {
+            const idx = gameState.actionCards.indexOf(cardId); // Use indexOf for ID strings
+            if (idx > -1) {
+                gameState.actionCards.splice(idx, 1);
+                renderCardDeck();
+                playSound('click');
+            }
+        }
+    });
+    
+    // Fill deck with 6 random action cards
+    document.getElementById('debugAddAllActionCards')?.addEventListener('click', () => {
+        if (gameState) {
+            const cardKeys = Object.keys(ACTION_CARDS);
+            gameState.actionCards = []; // Clear deck first
+            for (let i = 0; i < 6; i++) {
+                const randomCard = cardKeys[Math.floor(Math.random() * cardKeys.length)];
+                gameState.actionCards.push(randomCard);
+            }
+            renderCardDeck();
+            playSound('legendaryUpgrade');
+        }
+    });
+    
+    // Clear deck button
+    document.getElementById('debugClearDeck')?.addEventListener('click', () => {
+        if (gameState) {
+            gameState.actionCards = [];
+            renderCardDeck();
+            playSound('click');
+        }
+    });
 }
 
 // Force end the current wave
@@ -5357,6 +5547,22 @@ function populateDebugPanel() {
             option.value = id;
             option.textContent = `[Devastating] ${debuff.icon} ${debuff.name}`;
             debuffSelect.appendChild(option);
+        });
+    }
+    
+    // Populate action cards select
+    const actionCardSelect = document.getElementById('debugActionCardSelect');
+    if (actionCardSelect && actionCardSelect.options.length <= 1) {
+        const rarityOrder = ['common', 'uncommon', 'rare', 'epic', 'legendary', 'mythic'];
+        const sortedCards = Object.entries(ACTION_CARDS).sort((a, b) => {
+            return rarityOrder.indexOf(a[1].rarity) - rarityOrder.indexOf(b[1].rarity);
+        });
+        
+        sortedCards.forEach(([id, card]) => {
+            const option = document.createElement('option');
+            option.value = id;
+            option.textContent = `[${card.rarity.toUpperCase()}] ${card.icon} ${card.name}`;
+            actionCardSelect.appendChild(option);
         });
     }
     
