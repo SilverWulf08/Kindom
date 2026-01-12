@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kindom</title>
+    <link rel="icon" type="image/png" href="crown logo.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Fondamento&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div class="screen hidden" id="loadingScreen">
+        <div class="loading-container">
+            <div class="loading-castle">🏰</div>
+            <h1 class="loading-title">Kindom</h1>
+            <div class="loading-bar-container">
+                <div class="loading-bar" id="loadingBar"></div>
+            </div>
+            <p class="loading-text" id="loadingText">Forging weapons...</p>
+        </div>
+    </div>
+
+    <!-- Floating particles background -->
+    <div class="particles" id="particles"></div>
+    
+    <!-- Home Screen -->
+    <div class="screen" id="homeScreen">
+        <div class="home-container">
+            <!-- Decorative banner -->
+            <div class="banner">
+                <div class="banner-decoration left"></div>
+                <div class="banner-content">
+                    <h1 class="game-title">Kindom</h1>
+                    <p class="game-subtitle">Defend Your Castle</p>
+                </div>
+                <div class="banner-decoration right"></div>
+            </div>
+            
+            <!-- Main menu buttons -->
+            <div class="menu-buttons">
+                <button class="btn btn-play" id="playBtn">
+                    <span class="btn-icon">⚔️</span>
+                    <span class="btn-text">Play</span>
+                </button>
+                
+                <!-- Difficulty Slider -->
+                <div class="difficulty-container">
+                    <label class="difficulty-label">Difficulty</label>
+                    <div class="slider-wrapper">
+                        <input type="range" id="difficultySlider" class="difficulty-slider" min="1" max="10" value="5" step="0.1">
+                        <div class="slider-track"></div>
+                        <div class="slider-fill" id="sliderFill"></div>
+                    </div>
+                </div>
+                
+                <div class="secondary-buttons">
+                    <button class="btn btn-secondary" id="patchNotesBtn">
+                        <span class="btn-icon">📜</span>
+                        <span class="btn-text">Patch Notes</span>
+                    </button>
+                    
+                    <button class="btn btn-secondary" id="helpBtn">
+                        <span class="btn-icon">❓</span>
+                        <span class="btn-text">Help</span>
+                    </button>
+                </div>
+            </div>
+            
+        </div>
+        
+        <!-- Credits button (bottom left) -->
+        <button class="btn btn-credits" id="creditsBtn">
+            <span>Made by Silverwulf</span>
+            <span class="music-credit">Music by César da Rocha</span>
+            <span class="wolf-icon">🐺</span>
+        </button>
+        
+        <!-- Debug mode toggle button (top left, subtle) -->
+        <button class="btn btn-debug" id="debugBtn">🛠️ Debug</button>
+        
+        <!-- Volume control (bottom right) -->
+        <div class="volume-control-home" id="volumeControlHome">
+            <button class="volume-mute-btn" id="homeMuteBtn">🔊</button>
+            <input type="range" class="volume-slider" id="homeVolumeSlider" min="0" max="100" value="50">
+        </div>
+    </div>
+    
+    <!-- Debug Sidebar (slides in from right) -->
+    <div class="debug-sidebar" id="debugSidebar">
+        <div class="debug-sidebar-header">
+            <h2>🛠️ Debug Panel</h2>
+            <button class="debug-sidebar-close" id="closeDebugSidebar">◀</button>
+        </div>
+        <div class="debug-sidebar-content">
+            <!-- Toggle Section -->
+            <div class="debug-section">
+                <h3>⚙️ Toggles</h3>
+                <div class="debug-toggles">
+                    <label class="debug-toggle">
+                        <input type="checkbox" id="debugInfiniteGold">
+                        <span>💰 Infinite Gold</span>
+                    </label>
+                    <label class="debug-toggle">
+                        <input type="checkbox" id="debugInfiniteHealth">
+                        <span>❤️ Infinite Health</span>
+                    </label>
+                    <label class="debug-toggle">
+                        <input type="checkbox" id="debugNoEnemies">
+                        <span>🚫 Disable Enemy Spawns</span>
+                    </label>
+                    <label class="debug-toggle">
+                        <input type="checkbox" id="debugFastWaves">
+                        <span>⚡ Instant Spawn</span>
+                    </label>
+                    <label class="debug-toggle">
+                        <input type="checkbox" id="debugManualWaveEnd">
+                        <span>🎯 Manual Wave End</span>
+                    </label>
+                </div>
+            </div>
+            
+            <!-- Screen Navigation -->
+            <div class="debug-section">
+                <h3>📺 Screens</h3>
+                <div class="debug-buttons">
+                    <button class="debug-btn" id="debugShowUpgrade">Upgrade & Shop</button>
+                    <button class="debug-btn" id="debugShowShop">Shop + Golden Box</button>
+                    <button class="debug-btn" id="debugShowGameOver">Game Over</button>
+                    <button class="debug-btn" id="debugStartGame">Start Game</button>
+                </div>
+            </div>
+            
+            <!-- Enemy Spawner -->
+            <div class="debug-section">
+                <h3>👹 Spawn Enemies</h3>
+                <h4 class="debug-subsection">Regular Enemies</h4>
+                <div class="debug-enemy-grid" id="debugEnemyGrid">
+                    <!-- Populated by JS -->
+                </div>
+                <h4 class="debug-subsection">Bosses</h4>
+                <div class="debug-enemy-grid" id="debugBossGrid">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+            
+            <!-- Upgrade Manager -->
+            <div class="debug-section">
+                <h3>⬆️ Upgrades</h3>
+                <select id="debugUpgradeSelect" class="debug-select">
+                    <option value="">-- Select Upgrade --</option>
+                </select>
+                <div class="debug-btn-row">
+                    <button class="debug-btn" id="debugAddUpgrade">Add</button>
+                    <button class="debug-btn danger" id="debugRemoveUpgrade">Remove</button>
+                </div>
+                <div class="debug-btn-row">
+                    <button class="debug-btn small" id="debugAddAllUpgrades">Add All</button>
+                    <button class="debug-btn danger small" id="debugRemoveAllUpgrades">Remove All</button>
+                </div>
+            </div>
+            
+            <!-- Debuff Manager -->
+            <div class="debug-section">
+                <h3>⬇️ Debuffs</h3>
+                <select id="debugDebuffSelect" class="debug-select">
+                    <option value="">-- Select Debuff --</option>
+                </select>
+                <div class="debug-btn-row">
+                    <button class="debug-btn" id="debugAddDebuff">Apply</button>
+                    <button class="debug-btn danger" id="debugRemoveDebuff">Remove</button>
+                </div>
+                <div class="debug-btn-row">
+                    <button class="debug-btn small" id="debugApplyAllDebuffs">Apply All</button>
+                    <button class="debug-btn danger small" id="debugRemoveAllDebuffs">Remove All</button>
+                </div>
+            </div>
+            
+            <!-- Action Cards Manager -->
+            <div class="debug-section">
+                <h3>🃏 Action Cards</h3>
+                <select id="debugActionCardSelect" class="debug-select">
+                    <option value="">-- Select Action Card --</option>
+                </select>
+                <div class="debug-btn-row">
+                    <button class="debug-btn" id="debugAddActionCard">Add to Deck</button>
+                    <button class="debug-btn danger" id="debugRemoveActionCard">Remove from Deck</button>
+                </div>
+                <div class="debug-btn-row">
+                    <button class="debug-btn small" id="debugAddAllActionCards">Fill Deck</button>
+                    <button class="debug-btn danger small" id="debugClearDeck">Clear Deck</button>
+                </div>
+            </div>
+            
+            <!-- Quick Actions -->
+            <div class="debug-section">
+                <h3>🎮 Quick Actions</h3>
+                <div class="debug-buttons">
+                    <button class="debug-btn" id="debugAddGold">+1000 Gold</button>
+                    <button class="debug-btn" id="debugNextWave">Skip to Next Wave</button>
+                    <button class="debug-btn" id="debugKillAll">Kill All Enemies</button>
+                    <button class="debug-btn" id="debugResetStats">Reset Stats</button>
+                    <button class="debug-btn" id="debugMaxStats">Max All Stats</button>
+                </div>
+            </div>
+            
+            <!-- Current Stats Display -->
+            <div class="debug-section">
+                <h3>📊 Current Stats</h3>
+                <div class="debug-stats" id="debugStatsDisplay">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Debug Sidebar Toggle Button (visible when debug mode is on) -->
+    <button class="debug-sidebar-toggle hidden" id="debugSidebarToggle">🛠️</button>
+    
+    <!-- Debug End Wave Button (visible when manual wave end is enabled) -->
+    <button class="debug-end-wave-btn hidden" id="debugEndWaveBtn">⏭️ End Wave</button>
+    
+    <!-- Patch Notes Modal -->
+    <div class="modal" id="patchNotesModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>📜 Patch Notes</h2>
+                <button class="modal-close" id="closePatchNotes">✕</button>
+            </div>
+            <div class="modal-body" id="patchNotesContent">
+                <!-- Patch notes are loaded from JavaScript for easier management -->
+            </div>
+        </div>
+    </div>
+    
+    <!-- Help Modal -->
+    <div class="modal" id="helpModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>❓ How to Play</h2>
+                <button class="modal-close" id="closeHelp">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="help-section">
+                    <h3>🏰 Goal</h3>
+                    <p>Defend your castle against endless waves of enemies. Survive as long as you can!</p>
+                </div>
+                <div class="help-section">
+                    <h3>⚔️ Combat</h3>
+                    <p>Your castle attacks automatically. <strong>Click & hold</strong> on enemies to prioritize targets. Collect upgrades to become stronger - enemies scale with your power and wave number.</p>
+                </div>
+                <div class="help-section">
+                    <h3>🎁 Between Waves</h3>
+                    <p><strong>Upgrades:</strong> Choose 1 of 3 random upgrades after each wave. Rarity ranges from Common to Mythic.</p>
+                    <p><strong>Shop:</strong> Spend gold on repairs or mystery boxes for random rewards.</p>
+                    <p><strong>Curses:</strong> Sometimes you'll face curses instead - pick the lesser evil! Curses are temporary and expire after a few waves.</p>
+                </div>
+                <div class="help-section">
+                    <h3>🃏 Action Cards</h3>
+                    <p>Collect powerful one-time abilities in your card deck (bottom of screen). Click to use during combat. Max 6 cards - swap or discard when full.</p>
+                </div>
+                <div class="help-section">
+                    <h3>👹 Enemies & Bosses</h3>
+                    <p>Various enemy types with different abilities attack your castle. <strong>Bosses</strong> appear every 5 waves with massive HP. <strong>Golden Mystery Boxes</strong> appear on boss waves with guaranteed rare rewards!</p>
+                </div>
+                <div class="help-section">
+                    <h3>⏸️ Controls</h3>
+                    <p><strong>ESC / P (on keyboard):</strong> Pause game & view your collection</p>
+                    <p><strong>Click & Hold:</strong> Manual target priority</p>
+                    <p><strong>Card Click:</strong> Activate action card</p>
+                </div>
+                <div class="help-section">
+                    <h3>💡 Tips</h3>
+                    <p>• First 5 waves are curse-free so you have a good start</p>
+                    <p>• Save gold for Golden Mystery Boxes on boss waves</p>
+                    <p>• Check the pause menu to see your upgrades and active curses</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Confetti container -->
+    <div class="confetti-container" id="confettiContainer"></div>
+    
+    <!-- Game Screen -->
+    <div class="screen hidden" id="gameScreen">
+        <!-- Game HUD -->
+        <div class="game-hud">
+            <div class="hud-left">
+                <div class="hud-item wave-display" data-tooltip="Current wave number">
+                    <span class="wave-label">Wave</span>
+                    <span class="wave-number" id="waveNumber">1</span>
+                </div>
+                <div class="hud-item enemies-remaining" id="enemiesRemaining" data-tooltip="Enemies remaining in this wave">
+                    <span>👹</span>
+                    <span id="enemyCount">0</span>
+                </div>
+            </div>
+            <div class="hud-center">
+                <div class="hud-item castle-health-container" data-tooltip="Castle health - if it reaches 0, you lose!">
+                    <div class="castle-health-bar">
+                        <div class="castle-health-fill" id="castleHealthFill"></div>
+                    </div>
+                    <span class="castle-health-text" id="castleHealthText">100/100</span>
+                </div>
+            </div>
+            <div class="hud-right">
+                <div class="hud-item power-display" data-tooltip="Castle Power - your overall strength">
+                    <span>⚔️</span>
+                    <span id="powerCount">130</span>
+                </div>
+                <div class="hud-item gold-display" data-tooltip="Gold - spend at the shop between waves">
+                    <span>🪙</span>
+                    <span id="goldCount">0</span>
+                </div>
+                <div class="hud-item score-display" data-tooltip="Total enemies slain this run">
+                    <span>💀</span>
+                    <span id="killCount">0</span>
+                </div>
+                <button class="pause-btn" id="pauseBtn" data-tooltip="Pause game (ESC)">⏸️</button>
+            </div>
+        </div>
+        
+        <!-- Game Arena -->
+        <div class="game-arena" id="gameArena">
+            <!-- Castle -->
+            <div class="castle" id="castle">
+                <div class="castle-effects">
+                    <!-- Fire effects when damaged -->
+                    <div class="castle-fire fire-1" id="castleFire1">🔥</div>
+                    <div class="castle-fire fire-2" id="castleFire2">🔥</div>
+                    <div class="castle-fire fire-3" id="castleFire3">🔥</div>
+                    <!-- Smoke effects -->
+                    <div class="castle-smoke" id="castleSmoke"></div>
+                    <!-- Upgrade aura effects -->
+                    <div class="castle-aura" id="castleAura"></div>
+                    <!-- Magic orbs for upgrades -->
+                    <div class="castle-orbs" id="castleOrbs"></div>
+                </div>
+                <div class="castle-sprite" id="castleSprite">🏰</div>
+                <div class="castle-damage-overlay" id="castleDamageOverlay"></div>
+                <div class="castle-upgrade-glow" id="castleUpgradeGlow"></div>
+                <div class="castle-shield" id="castleShield"></div>
+            </div>
+            <!-- Visual effects container -->
+            <div class="effects-layer" id="effectsLayer"></div>
+            <!-- Enemies and projectiles spawn here via JS -->
+        </div>
+        
+        <!-- Wave Start Overlay -->
+        <div class="wave-overlay hidden" id="waveOverlay">
+            <div class="wave-announce">
+                <h2 id="waveAnnounceText">Wave 1</h2>
+                <p id="waveAnnounceSubtext">Prepare yourself!</p>
+            </div>
+        </div>
+        
+        <!-- Upgrade Selection Modal with Shop -->
+        <div class="upgrade-modal hidden" id="upgradeModal">
+            <div class="upgrade-modal-content">
+                <h2>Choose an Upgrade!</h2>
+                <div class="upgrade-options" id="upgradeOptions">
+                    <!-- Upgrade cards generated by JS -->
+                </div>
+                
+                <!-- Shop Section -->
+                <div class="shop-section">
+                    <h3>🛒 Shop <span class="shop-gold">🪙 <span id="shopGoldDisplay">0</span></span></h3>
+                    <div class="shop-items" id="shopItems">
+                        <!-- Shop items generated by JS -->
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Pause Menu -->
+        <div class="pause-menu hidden" id="pauseMenu">
+            <div class="pause-menu-content">
+                <h2>⏸️ Paused</h2>
+                <button class="menu-btn" id="resumeBtn">▶️ Resume</button>
+                <button class="menu-btn" id="soundTogglePause">🔊 Sound: On</button>
+                <button class="menu-btn danger" id="quitBtn">🏠 Quit to Menu</button>
+            </div>
+        </div>
+        
+        <!-- Game Over Screen -->
+        <div class="game-over hidden" id="gameOver">
+            <div class="game-over-content">
+                <h2>💀 Castle Destroyed!</h2>
+                <div class="game-over-stats">
+                    <div class="stat-row">
+                        <span>Waves Survived:</span>
+                        <span id="finalWave">0</span>
+                    </div>
+                    <div class="stat-row">
+                        <span>Enemies Slain:</span>
+                        <span id="finalKills">0</span>
+                    </div>
+                    <div class="stat-row">
+                        <span>Gold Earned:</span>
+                        <span id="finalGold">0</span>
+                    </div>
+                    <div class="stat-row record">
+                        <span>🏆 Best Wave:</span>
+                        <span id="recordWave">0</span>
+                    </div>
+                </div>
+                <button class="menu-btn" id="playAgainBtn">⚔️ Play Again</button>
+                <button class="menu-btn secondary" id="mainMenuBtn">🏠 Main Menu</button>
+            </div>
+        </div>
+    </div>
+    
+    <script src="game.js"></script>
+</body>
+</html>
