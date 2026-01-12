@@ -1074,6 +1074,7 @@ const PATCH_NOTES = [
             "⚡ Shop reliability improved with better click handling",
             "🐛 Fixed various edge cases with shop item purchases",
             "🌊 Now the first 10 waves have no cursed waves instead of the first 5 for a smoother early game experience",
+            "👑 Updated app icon",
             "📖 Updated Help screen with new shop and card collection info"
         ]
     },
