@@ -23,7 +23,7 @@ function calculateRawCastlePower() {
     power += stats.freezeChance * 80;
     power += stats.explosiveArrows ? 40 : 0;
     power += (stats.splashDamage || 0) * 60;
-    power += (stats.magicDamageMultiplier || 1 - 1) * 150;
+    power += ((stats.magicDamageMultiplier || 1) - 1) * 150;
     power += (stats.deathExplosion || 0) * 100;
     
     // Defensive power
@@ -37,14 +37,14 @@ function calculateRawCastlePower() {
     power += (stats.shield || 0) * 0.8;
     
     // Economy power
-    power += (stats.goldMultiplier || 1 - 1) * 30;
+    power += ((stats.goldMultiplier || 1) - 1) * 30;
     power += (stats.bonusGoldOnKill || 0) * 15;
     
     // Range power
     power += ((stats.attackRange || 1) - 1) * 40;
     
-    // Action cards add power
-    power += gameState.actionCards.length * 15;
+    // Note: Action cards are excluded from castle power calculation
+    // Only permanent upgrades affect castle power
     
     // Earned upgrades add power weighted by tier
     // Common: 3, Uncommon: 6, Rare: 12, Epic: 20, Legendary: 35, Mythic: 60
@@ -750,6 +750,32 @@ function updateCastleOrbs() {
     });
 }
 
+// Update magic visuals based on magicDisabled state
+function updateMagicVisuals() {
+    const orbsContainer = document.getElementById('castleOrbs');
+    const castle = document.getElementById('castle');
+    
+    if (gameState.stats.magicDisabled) {
+        // Gray out all magic elements
+        if (orbsContainer) orbsContainer.classList.add('magic-disabled');
+        if (castle) castle.classList.add('magic-disabled');
+        
+        // Gray out all vortexes
+        gameState.vortexes?.forEach(v => {
+            if (v && v.element) v.element.classList.add('magic-disabled');
+        });
+    } else {
+        // Restore magic elements
+        if (orbsContainer) orbsContainer.classList.remove('magic-disabled');
+        if (castle) castle.classList.remove('magic-disabled');
+        
+        // Restore vortexes
+        gameState.vortexes?.forEach(v => {
+            if (v && v.element) v.element.classList.remove('magic-disabled');
+        });
+    }
+}
+
 // Create visual effects at position
 function createVisualEffect(x, y, type, options = {}) {
     const effectsLayer = document.getElementById('effectsLayer') || gameArena;
@@ -1028,6 +1054,30 @@ function createCardActivationEffect(card, castleX, castleY) {
 // ===== PATCH NOTES DATA =====
 const PATCH_NOTES = [
     {
+        version: "2.0.0",
+        title: "Shop Overhaul & Card Collection Update",
+        date: "January 12, 2026",
+        changes: [
+            "🛒 Complete Shop Overhaul - now organized into 3 tabs: Loot Boxes, Repairs, and Cards!",
+            "🃏 New Cards Tab - purchase copies of common/uncommon cards you've collected before",
+            "📚 Card Collection Memory - cards you've obtained stay in the shop even if you lose them all",
+            "💰 Dynamic Shop Updates - shop now instantly updates when your gold or health changes",
+            "🔄 Real-time Affordability - items gray out/enable as your resources change",
+            "🌀 Void Vortex fully implemented - orbiting pull fields that group enemies together",
+            "💠 Ricochet upgraded to Rare rarity (was Uncommon)",
+            "🎁 Golden Box Fix - now guaranteed to give Legendary or Mythic rewards only",
+            "🔮 Curse Stacking Fix - removing one curse no longer removes effects of remaining stacks",
+            "🚫 Magic Void now cleanly disables all magic abilities and visuals until it expires",
+            "✨ Magic damage multipliers now apply consistently to all magic abilities",
+            "🛡️ Magic Void curse now properly tracks multiple stacks",
+            "🔧 Debug Panel improvements - Start Game and Game Over buttons now properly close modals",
+            "⚡ Shop reliability improved with better click handling",
+            "🐛 Fixed various edge cases with shop item purchases",
+            "🌊 Now the first 10 waves have no cursed waves instead of the first 5 for a smoother early game experience",
+            "📖 Updated Help screen with new shop and card collection info"
+        ]
+    },
+    {
         version: "1.9.0",
         title: "Audio & Music Update",
         date: "January 12, 2026",
@@ -1106,7 +1156,7 @@ const PATCH_NOTES = [
             "⚡ Mythic upgrades have unique powerful effects (double magic damage, death explosions, etc.)",
             "🃏 Card deck expanded to 6 slots (was 5)",
             "🔄 New card swap system - when deck is full, swap with existing cards or discard",
-            "🛡️ Early game protection - no cursed waves or mystery box debuffs for first 5 waves",
+            "🛡️ Early game protection - no cursed waves or mystery box debuffs for first 10 waves",
             "🎯 Attack range system - castle now has limited shooting range, Long Bow upgrades increase it!",
             "⚔️ Castle Power system - new HUD display shows your overall strength",
             "📈 Dynamic difficulty scaling - enemies now scale based on your power AND wave number",
@@ -1280,7 +1330,40 @@ const DEVASTATING_DEBUFFS = {
     weakened_arms: { id: 'weakened_arms', name: 'Weakened Arms', icon: '😫', desc: '-50% arrow damage (3 waves)', severity: 'devastating', waveDuration: 3, statKey: 'damageDebuffMult', statValue: 0.5, effect: () => { gameState.stats.damageDebuffMult = (gameState.stats.damageDebuffMult || 1) * 0.5; } },
     broken_bow: { id: 'broken_bow', name: 'Broken Bow', icon: '🏹', desc: '-45% attack speed (3 waves)', severity: 'devastating', waveDuration: 3, statKey: 'attackSpeedDebuffMult', statValue: 0.55, effect: () => { gameState.stats.attackSpeedDebuffMult = (gameState.stats.attackSpeedDebuffMult || 1) * 0.55; } },
     enemy_fury: { id: 'enemy_fury', name: 'Enemy Fury', icon: '😡', desc: 'Enemies deal +40% damage (3 waves)', severity: 'devastating', waveDuration: 3, statKey: 'enemyDamageDebuff', statValue: 1.4, effect: () => { gameState.stats.enemyDamageDebuff = (gameState.stats.enemyDamageDebuff || 1) * 1.4; } },
-    doom_curse: { id: 'doom_curse', name: 'Doom Curse', icon: '☠️', desc: 'Take 70 damage immediately', severity: 'devastating', isInstant: true, effect: () => { gameState.castle.health = Math.max(1, gameState.castle.health - 70); updateHealthBar(); } }
+    doom_curse: { id: 'doom_curse', name: 'Doom Curse', icon: '☠️', desc: 'Take 70 damage immediately', severity: 'devastating', isInstant: true, effect: () => { gameState.castle.health = Math.max(1, gameState.castle.health - 70); updateHealthBar(); } },
+    
+    // Golden Box exclusive devastating debuffs
+    shattered_dreams: { id: 'shattered_dreams', name: 'Shattered Dreams', icon: '💔', desc: 'Half of your upgrades are destroyed!', severity: 'devastating', isInstant: true, isGoldenBox: true, effect: () => {
+        const upgradeCount = gameState.earnedUpgrades.length;
+        const toRemove = Math.floor(upgradeCount / 2);
+        for (let i = 0; i < toRemove; i++) {
+            if (gameState.earnedUpgrades.length === 0) break;
+            const randomIndex = Math.floor(Math.random() * gameState.earnedUpgrades.length);
+            const removedId = gameState.earnedUpgrades[randomIndex];
+            // Reverse the upgrade's effect before removing
+            removeUpgradeEffect(removedId);
+            gameState.earnedUpgrades.splice(randomIndex, 1);
+            // Handle garrison sync if needed
+            if (removedId === 'garrison_e') {
+                syncGarrisons();
+            }
+        }
+    } },
+    deaths_touch: { id: 'deaths_touch', name: "Death's Touch", icon: '☠️', desc: 'Your health drops to 1!', severity: 'devastating', isInstant: true, isGoldenBox: true, effect: () => {
+        gameState.castle.health = 1;
+        updateHealthBar();
+    } },
+    gold_plague: { id: 'gold_plague', name: 'Gold Plague', icon: '🦠', desc: 'Lose ALL gold and -50% gold gain (5 waves)!', severity: 'devastating', waveDuration: 5, isGoldenBox: true, statKey: 'goldMultiplierDebuff', statValue: 0.5, effect: () => {
+        gameState.gold = 0;
+        updateGoldDisplay();
+        gameState.stats.goldMultiplierDebuff = (gameState.stats.goldMultiplierDebuff || 1) * 0.5;
+    } },
+    curse_of_fragility: { id: 'curse_of_fragility', name: 'Curse of Fragility', icon: '🩻', desc: 'Max health -75%!', severity: 'devastating', isInstant: true, isGoldenBox: true, effect: () => {
+        gameState.stats.maxHealth = Math.max(50, Math.floor(gameState.stats.maxHealth / 4));
+        gameState.castle.health = Math.min(gameState.castle.health, gameState.stats.maxHealth);
+        updateHealthBar();
+    } },
+    magic_void: { id: 'magic_void', name: 'Magic Void', icon: '🕳️', desc: 'All magic abilities disabled (5 waves)!', severity: 'devastating', waveDuration: 5, isGoldenBox: true, statKey: 'magicDisabled', statValue: true, effect: () => { gameState.stats.magicDisabled = true; updateMagicVisuals(); } }
 };
 
 // ===== UPGRADE DEFINITIONS =====
@@ -1305,7 +1388,7 @@ const UPGRADES = {
     armor_u: { id: 'armor_u', name: 'Iron Plates', icon: '🛡️', type: 'defense', rarity: 'uncommon', desc: '-12% damage taken', effect: () => { gameState.stats.armor += 0.12; }, repeatable: true },
     regen_u: { id: 'regen_u', name: 'Healing Moss', icon: '🌿', type: 'defense', rarity: 'uncommon', desc: 'Regenerate 0.8 HP/sec', effect: () => { gameState.stats.regen += 0.8; }, repeatable: true },
     // Magic - Uncommon
-    ricochet_u: { id: 'ricochet_u', name: 'Ricochet', icon: '💠', type: 'magic', rarity: 'uncommon', desc: 'Arrows bounce to +1 enemy', effect: () => { gameState.stats.ricochet = (gameState.stats.ricochet || 0) + 1; }, repeatable: true },
+    // (Ricochet moved to Rare)
 
     // === RARE UPGRADES ===
     // Weapon - Rare
@@ -1320,6 +1403,7 @@ const UPGRADES = {
     regen_r: { id: 'regen_r', name: 'Healing Aura', icon: '💚', type: 'defense', rarity: 'rare', desc: 'Regenerate 1.5 HP/sec', effect: () => { gameState.stats.regen += 1.5; }, repeatable: true },
     thorns_r: { id: 'thorns_r', name: 'Thorns', icon: '🌹', type: 'defense', rarity: 'rare', desc: 'Deal 20 damage when hit', effect: () => { gameState.stats.thorns += 20; }, repeatable: true },
     // Magic - Rare
+    ricochet_r: { id: 'ricochet_r', name: 'Ricochet', icon: '💠', type: 'magic', rarity: 'rare', desc: 'Arrows bounce to +1 enemy', effect: () => { gameState.stats.ricochet = (gameState.stats.ricochet || 0) + 1; }, repeatable: true },
     fireball_r: { id: 'fireball_r', name: 'Fireball', icon: '🔥', type: 'magic', rarity: 'rare', desc: 'Unlock explosive fireballs', effect: () => { gameState.stats.hasFireball = true; } },
     freeze_r: { id: 'freeze_r', name: 'Frost Nova', icon: '❄️', type: 'magic', rarity: 'rare', desc: '35% chance to slow enemies', effect: () => { gameState.stats.freezeChance = Math.min(0.7, gameState.stats.freezeChance + 0.35); } },
 
@@ -1344,7 +1428,7 @@ const UPGRADES = {
     health_l: { id: 'health_l', name: 'Eternal Fortress', icon: '🌌', type: 'defense', rarity: 'legendary', desc: '+200 max health', effect: () => { gameState.stats.maxHealth += 200; } },
     // Magic - Legendary
     meteor_l: { id: 'meteor_l', name: 'Meteor Strike', icon: '☄️', type: 'magic', rarity: 'legendary', desc: 'Meteors rain on enemies', effect: () => { gameState.stats.hasMeteor = true; } },
-    vortex_l: { id: 'vortex_l', name: 'Void Vortex', icon: '🌀', type: 'magic', rarity: 'legendary', desc: 'Pull enemies together', effect: () => { gameState.stats.hasVortex = true; } },
+    vortex_l: { id: 'vortex_l', name: 'Void Vortex', icon: '🌀', type: 'magic', rarity: 'legendary', desc: 'Pull enemies together', effect: () => { gameState.stats.vortexCount = (gameState.stats.vortexCount || 0) + 1; }, repeatable: true },
     
     // === NEW UPGRADES ===
     // Common - new
@@ -1410,6 +1494,157 @@ function pickRarity(wave) {
         if (random <= 0) return rarity;
     }
     return 'common';
+}
+
+// Function to reverse an upgrade's effect when it's removed
+// This ensures castle power and actual stats stay in sync
+function removeUpgradeEffect(upgradeId) {
+    const upgrade = UPGRADES[upgradeId];
+    if (!upgrade) return;
+    
+    const stats = gameState.stats;
+    
+    // Reverse effects based on upgrade ID patterns
+    switch(upgradeId) {
+        // Damage multipliers
+        case 'damage_c': stats.damage /= 1.15; break;
+        case 'damage_u': stats.damage /= 1.25; break;
+        case 'damage_r': stats.damage /= 1.45; break;
+        case 'damage_e': stats.damage /= 1.65; break;
+        case 'damage_l': stats.damage /= 2.25; break;
+        
+        // Attack speed multipliers
+        case 'attackSpeed_c': stats.attackSpeed /= 1.12; break;
+        case 'attackSpeed_u': stats.attackSpeed /= 1.20; break;
+        case 'attackSpeed_r': stats.attackSpeed /= 1.30; break;
+        
+        // Health additions
+        case 'health_c': stats.maxHealth = Math.max(50, stats.maxHealth - 20); break;
+        case 'health_u': stats.maxHealth = Math.max(50, stats.maxHealth - 40); break;
+        case 'health_r': stats.maxHealth = Math.max(50, stats.maxHealth - 65); break;
+        case 'health_e': stats.maxHealth = Math.max(50, stats.maxHealth - 100); break;
+        case 'health_l': stats.maxHealth = Math.max(50, stats.maxHealth - 200); break;
+        
+        // Armor additions
+        case 'armor_c': stats.armor = Math.max(0, stats.armor - 0.08); break;
+        case 'armor_u': stats.armor = Math.max(0, stats.armor - 0.12); break;
+        case 'armor_r': stats.armor = Math.max(0, stats.armor - 0.18); break;
+        
+        // Crit chance additions
+        case 'critChance_u': stats.critChance = Math.max(0.05, stats.critChance - 0.08); break;
+        case 'critChance_r': stats.critChance = Math.max(0.05, stats.critChance - 0.12); break;
+        case 'critChance_e': stats.critChance = Math.max(0.05, stats.critChance - 0.18); break;
+        
+        // Crit damage additions
+        case 'critDamage_r': stats.critDamage = Math.max(1.5, stats.critDamage - 0.5); break;
+        case 'critDamage_e': stats.critDamage = Math.max(1.5, stats.critDamage - 1.0); break;
+        
+        // Regen additions
+        case 'regen_u': stats.regen = Math.max(0, stats.regen - 0.8); break;
+        case 'regen_r': stats.regen = Math.max(0, stats.regen - 1.5); break;
+        
+        // Projectile additions
+        case 'multishot_r': stats.projectiles = Math.max(1, stats.projectiles - 1); break;
+        case 'multishot_l': stats.projectiles = Math.max(1, stats.projectiles - 4); break;
+        
+        // Thorns
+        case 'thorns_r': stats.thorns = Math.max(0, stats.thorns - 20); break;
+        
+        // Freeze chance
+        case 'slow_c': stats.freezeChance = Math.max(0, stats.freezeChance - 0.15); break;
+        case 'freeze_r': stats.freezeChance = Math.max(0, stats.freezeChance - 0.35); break;
+        
+        // Boolean abilities
+        case 'fireball_r': stats.hasFireball = false; break;
+        case 'lightning_e': stats.hasLightning = false; break;
+        case 'meteor_l': stats.hasMeteor = false; break;
+        case 'explosion_e': stats.explosiveArrows = false; break;
+        case 'vortex_l': 
+            stats.vortexCount = Math.max(0, (stats.vortexCount || 0) - 1);
+            // Remove one vortex from the array
+            if (gameState.vortexes && gameState.vortexes.length > 0) {
+                const removedVortex = gameState.vortexes.pop();
+                if (removedVortex && removedVortex.element) {
+                    removedVortex.element.remove();
+                }
+            }
+            break;
+        case 'berserker_e': stats.hasBerserker = false; break;
+        case 'guardian_e': stats.hasGuardian = false; break;
+        case 'infinity_l': stats.hasInfinity = false; break;
+        case 'phoenix_l': stats.hasPhoenix = false; break;
+        case 'world_ender_m': stats.deathExplosion = false; break;
+        
+        // Ricochet
+        case 'ricochet_r': stats.ricochet = Math.max(0, (stats.ricochet || 0) - 1); break;
+        
+        // Gold multipliers
+        case 'gold_find_c': stats.goldMultiplier = (stats.goldMultiplier || 1) / 1.15; break;
+        case 'gold_find_u': stats.goldMultiplier = (stats.goldMultiplier || 1) / 1.25; break;
+        case 'gold_rush_e': stats.goldMultiplier = (stats.goldMultiplier || 1) / 1.65; break;
+        
+        // Range multipliers
+        case 'range_c': stats.attackRange = (stats.attackRange || 1) / 1.20; break;
+        
+        // Poison damage
+        case 'poison_u': stats.poisonDamage = Math.max(0, (stats.poisonDamage || 0) - 8); break;
+        
+        // Dodge chance
+        case 'dodge_u': stats.dodgeChance = Math.max(0, (stats.dodgeChance || 0) - 0.08); break;
+        
+        // Splash damage
+        case 'splash_r': stats.splashDamage = Math.max(0, (stats.splashDamage || 0) - 0.4); break;
+        
+        // Execute damage
+        case 'execute_r': stats.executeDamage = Math.max(0, (stats.executeDamage || 0) - 0.75); break;
+        
+        // Reflect damage
+        case 'reflect_r': stats.reflectDamage = Math.max(0, (stats.reflectDamage || 0) - 0.3); break;
+        
+        // Life steal
+        case 'lifeSteal_e': stats.lifeSteal = Math.max(0, (stats.lifeSteal || 0) - 0.08); break;
+        
+        // Block chance
+        case 'invincible_l': stats.blockChance = Math.max(0, (stats.blockChance || 0) - 0.25); break;
+        
+        // Time Lord slow aura
+        case 'time_lord_l': stats.enemySlowAura = (stats.enemySlowAura || 0.65) / 0.65; break;
+        
+        // Garrison (handled specially elsewhere)
+        case 'garrison_e': 
+            stats.garrisonCount = Math.max(0, (stats.garrisonCount || 0) - 1);
+            break;
+        
+        // Mythic upgrades
+        case 'godslayer_m': 
+            stats.damage /= 3.5; 
+            stats.critChance = Math.max(0.05, stats.critChance - 0.6); 
+            break;
+        case 'immortal_m': 
+            stats.maxHealth = Math.max(50, stats.maxHealth - 400); 
+            stats.regen = Math.max(0, stats.regen - 8); 
+            break;
+        case 'archmage_m': 
+            stats.magicDamageMultiplier = (stats.magicDamageMultiplier || 1) / 2.5; 
+            break;
+        case 'golden_god_m': 
+            stats.goldMultiplier = (stats.goldMultiplier || 1) / 2.5; 
+            stats.bonusGoldOnKill = Math.max(0, (stats.bonusGoldOnKill || 0) - 15); 
+            break;
+        case 'omega_m': 
+            stats.projectiles = Math.max(1, stats.projectiles - 6); 
+            stats.attackSpeed /= 2.5; 
+            break;
+    }
+    
+    // Ensure health doesn't exceed new max
+    if (gameState.castle.health > stats.maxHealth) {
+        gameState.castle.health = stats.maxHealth;
+    }
+    
+    // Update displays
+    updateHealthBar();
+    updatePowerDisplay();
 }
 
 // ===== ENEMY DEFINITIONS =====
@@ -1733,20 +1968,28 @@ let gameState = {
         hasFireball: false,
         hasLightning: false,
         hasMeteor: false,
+        vortexCount: 0,
+        magicDisabled: false,
         freezeChance: 0,
+        poisonDamage: 0,
         explosiveArrows: false,
         invincible: false,
         damageMultiplier: 1
     },
     enemies: [],
     projectiles: [],
+    vortexes: [], // Array of vortex objects: { x, y, orbitAngle, element }
     lastAttackTime: 0,
     lastFireballTime: 0,
     lastLightningTime: 0,
     lastMeteorTime: 0,
+    lastVortexTime: 0,
     earnedUpgrades: [],
     actionCards: [], // Card deck for consumable action cards (max 6)
     pendingActionCard: null, // For card swap when deck is full
+    // Track all cards ever collected (doesn't decrease when cards are used/lost)
+    collectedUpgrades: [], // Set of unique upgrade IDs ever obtained
+    collectedActions: [], // Set of unique action card IDs ever obtained
     waveStarted: false,
     expectedEnemies: 0,
     waveKills: 0,
@@ -1761,6 +2004,9 @@ let gameState = {
 
 // ===== WAVE RECORD (Persists until page refresh) =====
 let waveRecord = 0;
+
+// ===== SHOP STATE =====
+let currentShopTab = 'lootboxes'; // 'lootboxes', 'repairs', 'cards'
 
 // ===== DOM ELEMENTS =====
 let loadingScreen, homeScreen, gameScreen;
@@ -2071,7 +2317,10 @@ function actuallyStartGame() {
             hasFireball: false,
             hasLightning: false,
             hasMeteor: false,
+            vortexCount: 0,
+            magicDisabled: false,
             freezeChance: 0,
+            poisonDamage: 0,
             explosiveArrows: false,
             invincible: false,
             damageMultiplier: 1,
@@ -2082,6 +2331,7 @@ function actuallyStartGame() {
         },
         enemies: [],
         projectiles: [],
+        vortexes: [], // Array of vortex objects
         lastAttackTime: 0,
         lastFireballTime: 0,
         lastLightningTime: 0,
@@ -2091,6 +2341,8 @@ function actuallyStartGame() {
         activeDebuffs: [], // Debuffs with remaining wave duration: { id, remainingWaves, debuffData }
         actionCards: [],
         pendingActionCard: null,
+        collectedUpgrades: [], // Track all upgrades ever obtained (for shop Cards tab)
+        collectedActions: [], // Track all action cards ever obtained (for shop Cards tab)
         waveStarted: false,
         expectedEnemies: 0,
         waveKills: 0,
@@ -2426,8 +2678,8 @@ function update() {
     
     const now = Date.now();
     
-    // Castle regeneration
-    if (gameState.stats.regen > 0) {
+    // Castle regeneration (magic ability - disabled by Magic Void)
+    if (gameState.stats.regen > 0 && !gameState.stats.magicDisabled) {
         gameState.castle.health = Math.min(
             gameState.stats.maxHealth,
             gameState.castle.health + gameState.stats.regen / 60
@@ -2440,6 +2692,9 @@ function update() {
     
     // Update projectiles
     updateProjectiles();
+    
+    // Update vortex (if active)
+    updateVortex(now);
     
     // Castle attacks
     castleAttack(now);
@@ -2618,6 +2873,7 @@ function updateHealthBar() {
         castleHealthText.innerHTML = '<span class="debug-infinity">∞</span>';
         castleHealthFill.classList.remove('low', 'critical');
         updateCastleVisuals();
+        refreshShopIfOpen(); // Update repair availability
         return;
     }
     
@@ -2632,6 +2888,9 @@ function updateHealthBar() {
     
     // Update castle visual state (damage effects)
     updateCastleVisuals();
+    
+    // Refresh shop to update repair availability
+    refreshShopIfOpen();
 }
 
 // ===== COMBAT SYSTEM =====
@@ -2652,8 +2911,8 @@ function castleAttack(now) {
         fireProjectile(target, 'arrow');
     });
     
-    // Fireball (every 3 seconds)
-    if (gameState.stats.hasFireball && now - gameState.lastFireballTime > 3000) {
+    // Fireball (every 3 seconds) - magic ability, disabled by Magic Void
+    if (gameState.stats.hasFireball && !gameState.stats.magicDisabled && now - gameState.lastFireballTime > 3000) {
         const target = findNearestEnemies(1)[0];
         if (target) {
             fireProjectile(target, 'fireball');
@@ -2661,8 +2920,8 @@ function castleAttack(now) {
         }
     }
     
-    // Lightning (every 4 seconds)
-    if (gameState.stats.hasLightning && now - gameState.lastLightningTime > 4000) {
+    // Lightning (every 4 seconds) - magic ability, disabled by Magic Void
+    if (gameState.stats.hasLightning && !gameState.stats.magicDisabled && now - gameState.lastLightningTime > 4000) {
         const target = findNearestEnemies(1)[0];
         if (target) {
             chainLightning(target);
@@ -2670,13 +2929,27 @@ function castleAttack(now) {
         }
     }
     
-    // Meteor Strike (every 5 seconds)
-    if (gameState.stats.hasMeteor && now - gameState.lastMeteorTime > 5000) {
+    // Meteor Strike (every 5 seconds) - magic ability, disabled by Magic Void
+    if (gameState.stats.hasMeteor && !gameState.stats.magicDisabled && now - gameState.lastMeteorTime > 5000) {
         const targets = findNearestEnemies(3);
         if (targets.length > 0) {
             fireMeteor(targets);
             gameState.lastMeteorTime = now;
         }
+    }
+    
+    // Void Vortex - spawn/maintain vortexes based on vortexCount
+    const vortexCount = gameState.stats.vortexCount || 0;
+    if (vortexCount > 0 && !gameState.stats.magicDisabled) {
+        // Spawn more vortexes if we don't have enough
+        while (gameState.vortexes.length < vortexCount) {
+            spawnVortex();
+        }
+        // Redistribute vortexes evenly when count changes
+        redistributeVortexAngles();
+    } else if (gameState.stats.magicDisabled && gameState.vortexes.length > 0) {
+        // Magic is disabled, remove all vortexes
+        clearAllVortexes();
     }
 }
 
@@ -2843,6 +3116,9 @@ function chainLightning(target) {
     
     playSound('lightning');
     
+    // Apply magic damage multiplier to lightning
+    const magicMult = gameState.stats.magicDamageMultiplier || 1;
+    
     // Draw lightning from castle to first target
     createVisualEffect(castleX, castleY, 'lightning-chain', { 
         targetX: targets[0].x, 
@@ -2852,7 +3128,7 @@ function chainLightning(target) {
     // Damage all targets with chain visual
     targets.forEach((t, i) => {
         setTimeout(() => {
-            const damage = gameState.stats.damage * (1 - i * 0.2);
+            const damage = gameState.stats.damage * (1 - i * 0.2) * magicMult;
             damageEnemy(t, damage);
             
             // Draw chain to next target
@@ -2880,7 +3156,8 @@ function fireMeteor(targets) {
     playSound('explosion');
     
     const arenaRect = gameArena.getBoundingClientRect();
-    const meteorDamage = gameState.stats.damage * 3;
+    const magicMult = gameState.stats.magicDamageMultiplier || 1;
+    const meteorDamage = gameState.stats.damage * 3 * magicMult;
     
     targets.forEach((target, i) => {
         setTimeout(() => {
@@ -2916,6 +3193,141 @@ function fireMeteor(targets) {
                 }
             }, 600);
         }, i * 200);
+    });
+}
+
+// ===== VOID VORTEX SYSTEM =====
+// Shared rotation angle for all vortexes (they orbit together, evenly spaced)
+let vortexSharedRotation = 0;
+
+function spawnVortex() {
+    const arenaRect = gameArena.getBoundingClientRect();
+    const centerX = arenaRect.width / 2;
+    const centerY = arenaRect.height / 2;
+    
+    // Calculate orbit radius (like the buff indicators around castle)
+    const margin = 100;
+    const orbitRadius = Math.min(arenaRect.width, arenaRect.height) / 2 - margin;
+    
+    // Create vortex element
+    const vortexEl = document.createElement('div');
+    vortexEl.className = 'void-vortex';
+    vortexEl.innerHTML = `
+        <div class="vortex-core">🌀</div>
+        <div class="vortex-ring ring-1"></div>
+        <div class="vortex-ring ring-2"></div>
+        <div class="vortex-ring ring-3"></div>
+    `;
+    // Position will be set by redistributeVortexAngles
+    vortexEl.style.left = centerX + 'px';
+    vortexEl.style.top = centerY + 'px';
+    gameArena.appendChild(vortexEl);
+    
+    if (gameState.vortexes.length === 0) playSound('magic'); // Only play sound for first vortex
+    
+    const vortex = {
+        x: centerX,
+        y: centerY,
+        indexOffset: 0, // Will be set by redistributeVortexAngles
+        element: vortexEl,
+        pullRadius: 150, // How far the pull effect reaches
+        orbitRadius: orbitRadius // Distance from center for orbiting
+    };
+    
+    gameState.vortexes.push(vortex);
+}
+
+// Recalculate angle offsets for all vortexes to keep them evenly spaced
+function redistributeVortexAngles() {
+    const count = gameState.vortexes.length;
+    if (count === 0) return;
+    
+    gameState.vortexes.forEach((vortex, index) => {
+        // Each vortex gets an even portion of the circle
+        vortex.indexOffset = (index / count) * Math.PI * 2;
+    });
+}
+
+function updateVortex(now) {
+    if (!gameState.vortexes || gameState.vortexes.length === 0) return;
+    
+    const arenaRect = gameArena.getBoundingClientRect();
+    const centerX = arenaRect.width / 2;
+    const centerY = arenaRect.height / 2;
+    const magicMult = gameState.stats.magicDamageMultiplier || 1;
+    
+    // Update shared rotation (all vortexes orbit together)
+    vortexSharedRotation += 0.008;
+    
+    // Update each vortex
+    gameState.vortexes.forEach((vortex, index) => {
+        if (!vortex || !vortex.element) return;
+        
+        // Calculate position using shared rotation + individual offset
+        const angle = vortexSharedRotation + vortex.indexOffset;
+        vortex.x = centerX + Math.cos(angle) * vortex.orbitRadius;
+        vortex.y = centerY + Math.sin(angle) * vortex.orbitRadius;
+        
+        // Update visual position
+        vortex.element.style.left = vortex.x + 'px';
+        vortex.element.style.top = vortex.y + 'px';
+    });
+    
+    // Pull and spin enemies caught in any vortex
+    const pullStrength = 0.3 * magicMult;
+    const spinSpeed = 0.05 * magicMult;
+    
+    gameState.enemies.forEach(enemy => {
+        if (!enemy.element || enemy.health <= 0) return;
+        
+        let isBeingPulled = false;
+        
+        // Check each vortex for pull effect
+        gameState.vortexes.forEach(vortex => {
+            if (!vortex) return;
+            
+            const dx = vortex.x - enemy.x;
+            const dy = vortex.y - enemy.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            
+            if (dist < vortex.pullRadius && dist > 20) {
+                isBeingPulled = true;
+                
+                // Calculate pull force (stronger when closer)
+                const pullFactor = 1 - (dist / vortex.pullRadius);
+                const pull = pullStrength * pullFactor;
+                
+                // Pull toward vortex center
+                enemy.x += (dx / dist) * pull * 2;
+                enemy.y += (dy / dist) * pull * 2;
+                
+                // Add spinning motion (perpendicular to pull direction)
+                const perpX = -dy / dist;
+                const perpY = dx / dist;
+                enemy.x += perpX * spinSpeed * 30 * pullFactor;
+                enemy.y += perpY * spinSpeed * 30 * pullFactor;
+                
+                // Update enemy position
+                enemy.element.style.left = enemy.x + 'px';
+                enemy.element.style.top = enemy.y + 'px';
+                
+                // Small damage over time to enemies in vortex
+                if (Math.random() < 0.02) {
+                    damageEnemy(enemy, 1 * magicMult);
+                }
+            }
+        });
+        
+        // Add/remove visual effect based on pull state
+        if (isBeingPulled) {
+            if (!enemy.element.classList.contains('vortex-pulled')) {
+                enemy.element.classList.add('vortex-pulled');
+            }
+        } else {
+            if (enemy.element.classList.contains('vortex-pulled')) {
+                enemy.element.classList.remove('vortex-pulled');
+            }
+        }
     });
 }
 
@@ -2997,14 +3409,28 @@ function updateProjectiles() {
             
             damageEnemy(target, damage, isCrit);
             
-            // Explosive arrows
-            if (gameState.stats.explosiveArrows && proj.type === 'arrow') {
+            // Splash damage (water splashing) - magic ability, disabled by Magic Void
+            if (gameState.stats.splashDamage && gameState.stats.splashDamage > 0 && proj.type === 'arrow' && !gameState.stats.magicDisabled) {
+                const magicMult = gameState.stats.magicDamageMultiplier || 1;
+                const splashDmg = damage * gameState.stats.splashDamage * magicMult;
+                createVisualEffect(hitX, hitY, 'splash');
+                gameState.enemies.forEach(e => {
+                    if (e.id !== hitId && e.health > 0) {
+                        const d = Math.sqrt((e.x - hitX) ** 2 + (e.y - hitY) ** 2);
+                        if (d < 60) damageEnemy(e, splashDmg);
+                    }
+                });
+            }
+            
+            // Explosive arrows - magic ability, disabled by Magic Void
+            if (gameState.stats.explosiveArrows && proj.type === 'arrow' && !gameState.stats.magicDisabled) {
                 // Add explosion visual
                 createVisualEffect(hitX, hitY, 'meteor-impact');
+                const magicMult = gameState.stats.magicDamageMultiplier || 1;
                 gameState.enemies.forEach(e => {
                     if (e.id !== hitId) {
                         const d = Math.sqrt((e.x - hitX) ** 2 + (e.y - hitY) ** 2);
-                        if (d < 80) damageEnemy(e, damage * 0.5);
+                        if (d < 80) damageEnemy(e, damage * 0.5 * magicMult);
                     }
                 });
             }
@@ -3019,16 +3445,45 @@ function updateProjectiles() {
                 });
             }
             
-            // Freeze chance
-            if (gameState.stats.freezeChance > 0 && Math.random() < gameState.stats.freezeChance) {
+            // Freeze chance - magic ability, disabled by Magic Void
+            if (gameState.stats.freezeChance > 0 && !gameState.stats.magicDisabled && Math.random() < gameState.stats.freezeChance) {
                 target.slowed = true;
                 // Add freeze visual
                 createVisualEffect(hitX, hitY, 'freeze');
-                setTimeout(() => { if (target) target.slowed = false; }, 2000);
+                // Slow duration scales with magic damage multiplier (base 2s)
+                const magicMult = gameState.stats.magicDamageMultiplier || 1;
+                const slowDuration = 2000 * magicMult;
+                setTimeout(() => { if (target) target.slowed = false; }, slowDuration);
             }
             
-            // Ricochet: bounce arrow to another enemy (closest to castle)
-            if (proj.type === 'arrow' && gameState.stats.ricochet > 0) {
+            // Poison damage from arrows - magic ability, disabled by Magic Void
+            if (gameState.stats.poisonDamage > 0 && proj.type === 'arrow' && !gameState.stats.magicDisabled) {
+                const magicMult = gameState.stats.magicDamageMultiplier || 1;
+                const totalPoison = gameState.stats.poisonDamage * magicMult;
+                const poisonTicks = 6; // 6 ticks over 3 seconds
+                const poisonPerTick = totalPoison / poisonTicks;
+                let tickCount = 0;
+                const poisonInterval = setInterval(() => {
+                    if (target && target.health > 0 && !target.isDead) {
+                        damageEnemy(target, poisonPerTick);
+                        // Small poison visual
+                        if (target.element) {
+                            const particle = document.createElement('div');
+                            particle.className = 'poison-particle';
+                            particle.textContent = '☠️';
+                            particle.style.left = target.x + 'px';
+                            particle.style.top = target.y + 'px';
+                            gameArena.appendChild(particle);
+                            setTimeout(() => particle.remove(), 500);
+                        }
+                    }
+                    tickCount++;
+                    if (tickCount >= poisonTicks) clearInterval(poisonInterval);
+                }, 500);
+            }
+            
+            // Ricochet: bounce arrow to another enemy (closest to castle) - magic ability, disabled by Magic Void
+            if (proj.type === 'arrow' && gameState.stats.ricochet > 0 && !gameState.stats.magicDisabled) {
                 const maxBounces = gameState.stats.ricochet;
                 const currentBounces = proj.bounces || 0;
                 
@@ -3161,6 +3616,11 @@ function killEnemy(enemy) {
         goldEarned = Math.round(goldEarned * gameState.stats.goldMultiplier);
     }
     
+    // Apply gold multiplier debuff (from curses like Gold Plague)
+    if (gameState.stats.goldMultiplierDebuff && gameState.stats.goldMultiplierDebuff < 1) {
+        goldEarned = Math.round(goldEarned * gameState.stats.goldMultiplierDebuff);
+    }
+    
     // Bonus gold on kill (Golden God mythic)
     if (gameState.stats.bonusGoldOnKill) {
         goldEarned += gameState.stats.bonusGoldOnKill;
@@ -3240,10 +3700,19 @@ function updateGoldDisplay() {
     if (debugState.infiniteGold) {
         if (goldCount) goldCount.innerHTML = '<span class="debug-infinity">∞</span>';
         if (shopGoldDisplay) shopGoldDisplay.innerHTML = '<span class="debug-infinity">∞</span>';
-        return;
+    } else {
+        if (goldCount) goldCount.textContent = gameState.gold;
+        if (shopGoldDisplay) shopGoldDisplay.textContent = gameState.gold;
     }
-    if (goldCount) goldCount.textContent = gameState.gold;
-    if (shopGoldDisplay) shopGoldDisplay.textContent = gameState.gold;
+    // Refresh shop to update disabled states
+    refreshShopIfOpen();
+}
+
+// Helper to refresh shop when it's visible (for real-time updates)
+function refreshShopIfOpen() {
+    if (upgradeModal && !upgradeModal.classList.contains('hidden')) {
+        renderShop();
+    }
 }
 
 function updatePowerDisplay() {
@@ -3319,7 +3788,15 @@ function tickDownDebuffs() {
 function removeDebuffEffect(debuff) {
     const stats = gameState.stats;
     
+    // Count how many OTHER instances of this same debuff are still active
+    // (excluding the one being removed)
+    const remainingInstances = gameState.activeDebuffs.filter(d => 
+        d.id === debuff.id && d !== debuff
+    ).length;
+    
     // Reverse the debuff effect based on stat key
+    // For boolean stats (like magicDisabled), only remove if no other instances remain
+    // For stackable stats, always reverse this instance's contribution
     switch(debuff.statKey) {
         case 'damageDebuffMult':
             stats.damageDebuffMult = (stats.damageDebuffMult || 1) / debuff.statValue;
@@ -3342,6 +3819,17 @@ function removeDebuffEffect(debuff) {
         case 'enemyDamageDebuff':
             stats.enemyDamageDebuff = (stats.enemyDamageDebuff || 1) / debuff.statValue;
             if (Math.abs(stats.enemyDamageDebuff - 1) < 0.01) stats.enemyDamageDebuff = 1;
+            break;
+        case 'goldMultiplierDebuff':
+            stats.goldMultiplierDebuff = (stats.goldMultiplierDebuff || 1) / debuff.statValue;
+            if (Math.abs(stats.goldMultiplierDebuff - 1) < 0.01) stats.goldMultiplierDebuff = 1;
+            break;
+        case 'magicDisabled':
+            // Only remove magic disabled if no other Magic Void instances remain
+            if (remainingInstances === 0) {
+                stats.magicDisabled = false;
+                updateMagicVisuals();
+            }
             break;
     }
 }
@@ -3373,11 +3861,14 @@ function applyDebuffWithTracking(debuffId) {
 function showUpgradeSelection() {
     const wave = gameState.wave;
     
+    // Reset shop tab to lootboxes when opening
+    currentShopTab = 'lootboxes';
+    
     // 15% chance to get debuff selection instead of upgrades
     // BUT never on golden box waves (waves divisible by 5)
-    // AND never in the first 5 waves (to make early game easier)
+    // AND never in the first 10 waves (to make early game easier)
     const isGoldenBoxWave = wave % 5 === 0;
-    const isEarlyGame = wave <= 5;
+    const isEarlyGame = wave <= 10;
     if (!isGoldenBoxWave && !isEarlyGame && Math.random() < 0.15) {
         showDebuffSelection();
         return;
@@ -3500,75 +3991,381 @@ function showUpgradeSelection() {
     // Render shop items
     renderShop();
     
+    // Add tab click handlers
+    document.querySelectorAll('.shop-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+            // Don't switch to disabled tab
+            if (tab.classList.contains('disabled') || tab.disabled) {
+                playSound('error');
+                return;
+            }
+            currentShopTab = tab.dataset.tab;
+            renderShop();
+            // No sound for tab switching - too loud and frequent
+        });
+    });
+    
     upgradeModal.classList.remove('hidden');
 }
 
 function renderShop() {
-    updateGoldDisplay();
+    // Update gold display directly (don't call updateGoldDisplay which would cause recursion)
+    if (debugState.infiniteGold) {
+        if (goldCount) goldCount.innerHTML = '<span class="debug-infinity">∞</span>';
+        if (shopGoldDisplay) shopGoldDisplay.innerHTML = '<span class="debug-infinity">∞</span>';
+    } else {
+        if (goldCount) goldCount.textContent = gameState.gold;
+        if (shopGoldDisplay) shopGoldDisplay.textContent = gameState.gold;
+    }
     
-    const isHealthFull = gameState.castle.health >= gameState.stats.maxHealth;
     const priceMultiplier = getShopPriceMultiplier(gameState.wave);
     const boxPriceMultiplier = getBoxPriceMultiplier(gameState.wave);
+    
+    // Check if any cards are available for purchase
+    const hasCardsAvailable = checkCardsAvailable();
+    
+    // If Cards tab is selected but no cards available, switch to lootboxes
+    if (currentShopTab === 'cards' && !hasCardsAvailable) {
+        currentShopTab = 'lootboxes';
+    }
+    
+    // Update tab button states
+    document.querySelectorAll('.shop-tab').forEach(tab => {
+        tab.classList.toggle('active', tab.dataset.tab === currentShopTab);
+        // Disable cards tab if no cards available
+        if (tab.dataset.tab === 'cards') {
+            tab.classList.toggle('disabled', !hasCardsAvailable);
+            tab.disabled = !hasCardsAvailable;
+        }
+    });
+    
+    // Render based on current tab
+    let content = '';
+    
+    if (currentShopTab === 'lootboxes') {
+        content = renderLootBoxesTab(boxPriceMultiplier);
+    } else if (currentShopTab === 'repairs') {
+        content = renderRepairsTab(priceMultiplier);
+    } else if (currentShopTab === 'cards') {
+        content = renderCardsTab(boxPriceMultiplier);
+    }
+    
+    shopItems.innerHTML = content;
+    
+    // Add click handlers for all shop items using event delegation
+    // Remove old handler first to prevent duplicates
+    shopItems.onclick = (e) => {
+        const item = e.target.closest('.shop-item');
+        if (!item || item.classList.contains('disabled')) return;
+        
+        const itemId = item.dataset.shop;
+        const price = parseInt(item.dataset.price);
+        const itemType = item.dataset.type;
+        
+        if (itemType === 'upgrade-card' || itemType === 'action-card') {
+            purchaseCard(itemId, price, itemType);
+        } else {
+            purchaseShopItem(itemId, price);
+        }
+    };
+}
+
+// Check if there are any purchasable cards available
+function checkCardsAvailable() {
+    // Use collected history - cards that have ever been obtained
+    const collectedUpgradeIds = gameState.collectedUpgrades || [];
+    const collectedActionIds = gameState.collectedActions || [];
+    
+    // Check for any common/uncommon repeatable upgrades ever collected
+    const hasUpgrades = Object.values(UPGRADES).some(card => 
+        collectedUpgradeIds.includes(card.id) && 
+        (card.rarity === 'common' || card.rarity === 'uncommon') &&
+        card.repeatable
+    );
+    
+    // Check for any common/uncommon action cards ever collected
+    const hasActions = Object.values(ACTION_CARDS).some(card => 
+        collectedActionIds.includes(card.id) && 
+        (card.rarity === 'common' || card.rarity === 'uncommon')
+    );
+    
+    return hasUpgrades || hasActions;
+}
+
+function renderLootBoxesTab(boxPriceMultiplier) {
     const mysteryBoxesRemaining = 3 - gameState.mysteryBoxesBought;
     const isGoldenBoxWave = gameState.wave % 5 === 0 || debugState.forceGoldenBox;
     
-    shopItems.innerHTML = Object.values(SHOP_ITEMS).map(item => {
-        // Skip golden box on non-eligible waves (unless debug forces it)
-        if (item.id === 'goldenBox' && !isGoldenBoxWave) {
-            return '';
-        }
-        
-        // Calculate dynamic price based on item type
-        let dynamicPrice;
-        if (item.id === 'goldenBox') {
-            // Golden box scales with box multiplier (wave + power)
-            dynamicPrice = Math.round(item.price * boxPriceMultiplier);
-        } else if (item.id === 'mysteryUpgrade') {
-            // Mystery box also scales with box multiplier
-            dynamicPrice = Math.round(item.price * boxPriceMultiplier);
-        } else {
-            // Repairs scale with standard wave multiplier only
-            dynamicPrice = Math.round(item.price * priceMultiplier);
-        }
-        
-        const canAfford = gameState.gold >= dynamicPrice || debugState.infiniteGold;
-        const isRepairDisabled = item.type === 'repair' && isHealthFull;
-        const isMysteryBoxMaxed = item.id === 'mysteryUpgrade' && gameState.mysteryBoxesBought >= 3;
-        const isGoldenBoxBought = item.id === 'goldenBox' && gameState.goldenBoxBought;
-        
-        let typeClass = item.type === 'repair' ? 'repair' : 'upgrade';
-        if (item.id === 'goldenBox') typeClass = 'golden';
-        
-        const disabled = !canAfford || isRepairDisabled || isMysteryBoxMaxed || isGoldenBoxBought;
-        
-        // Custom description for mystery box showing remaining
-        let desc = item.desc;
-        if (item.id === 'mysteryUpgrade') {
-            desc = isMysteryBoxMaxed ? 'Max reached this wave!' : `${item.desc} (${mysteryBoxesRemaining} left)`;
-        } else if (item.id === 'goldenBox') {
-            desc = isGoldenBoxBought ? 'Already purchased!' : item.desc;
-        } else if (isRepairDisabled) {
-            desc = 'Health is full!';
-        }
-        
-        return `
-        <div class="shop-item ${typeClass} ${disabled ? 'disabled' : ''}" data-shop="${item.id}" data-price="${dynamicPrice}" ${isRepairDisabled ? 'data-full="true"' : ''} ${isMysteryBoxMaxed ? 'data-maxed="true"' : ''} ${isGoldenBoxBought ? 'data-bought="true"' : ''}>
-            <div class="shop-item-icon">${item.icon}</div>
-            <div class="shop-item-name">${item.name}</div>
-            <div class="shop-item-desc">${desc}</div>
-            <div class="shop-item-price">🪙 ${dynamicPrice}</div>
-        </div>
-        `;
-    }).join('');
+    let html = '<div class="shop-items lootbox-items">';
     
-    // Add click handlers for shop items
-    shopItems.querySelectorAll('.shop-item:not(.disabled)').forEach(item => {
-        item.addEventListener('click', () => {
-            const itemId = item.dataset.shop;
-            const price = parseInt(item.dataset.price);
-            purchaseShopItem(itemId, price);
-        });
+    // Mystery Box
+    const mysteryItem = SHOP_ITEMS.mysteryUpgrade;
+    const mysteryPrice = Math.round(mysteryItem.price * boxPriceMultiplier);
+    const isMysteryMaxed = gameState.mysteryBoxesBought >= 3;
+    const canAffordMystery = gameState.gold >= mysteryPrice || debugState.infiniteGold;
+    const mysteryDisabled = !canAffordMystery || isMysteryMaxed;
+    const mysteryDesc = isMysteryMaxed ? 'Max reached this wave!' : `${mysteryItem.desc} (${mysteryBoxesRemaining} left)`;
+    
+    html += `
+        <div class="shop-item lootbox upgrade ${mysteryDisabled ? 'disabled' : ''}" data-shop="mysteryUpgrade" data-price="${mysteryPrice}" data-type="lootbox">
+            <div class="shop-item-icon">${mysteryItem.icon}</div>
+            <div class="shop-item-name">${mysteryItem.name}</div>
+            <div class="shop-item-desc">${mysteryDesc}</div>
+            <div class="shop-item-price">🪙 ${mysteryPrice}</div>
+        </div>
+    `;
+    
+    // Golden Box (only on boss waves)
+    if (isGoldenBoxWave) {
+        const goldenItem = SHOP_ITEMS.goldenBox;
+        const goldenPrice = Math.round(goldenItem.price * boxPriceMultiplier);
+        const isGoldenBought = gameState.goldenBoxBought;
+        const canAffordGolden = gameState.gold >= goldenPrice || debugState.infiniteGold;
+        const goldenDisabled = !canAffordGolden || isGoldenBought;
+        const goldenDesc = isGoldenBought ? 'Already purchased!' : goldenItem.desc;
+        
+        html += `
+            <div class="shop-item lootbox golden ${goldenDisabled ? 'disabled' : ''}" data-shop="goldenBox" data-price="${goldenPrice}" data-type="lootbox">
+                <div class="shop-item-icon">${goldenItem.icon}</div>
+                <div class="shop-item-name">${goldenItem.name}</div>
+                <div class="shop-item-desc">${goldenDesc}</div>
+                <div class="shop-item-price">🪙 ${goldenPrice}</div>
+            </div>
+        `;
+    } else {
+        // Show placeholder for golden box with info about when it appears
+        html += `
+            <div class="shop-item lootbox golden-placeholder disabled">
+                <div class="shop-item-icon">✨</div>
+                <div class="shop-item-name">Golden Box</div>
+                <div class="shop-item-desc">Available on boss waves (5, 10, 15...)</div>
+                <div class="shop-item-price">🔒</div>
+            </div>
+        `;
+    }
+    
+    html += '</div>';
+    return html;
+}
+
+function renderRepairsTab(priceMultiplier) {
+    const isHealthFull = gameState.castle.health >= gameState.stats.maxHealth;
+    const repairItems = Object.values(SHOP_ITEMS).filter(item => item.type === 'repair');
+    
+    let html = '<div class="shop-items repair-items">';
+    
+    repairItems.forEach(item => {
+        const dynamicPrice = Math.round(item.price * priceMultiplier);
+        const canAfford = gameState.gold >= dynamicPrice || debugState.infiniteGold;
+        const disabled = !canAfford || isHealthFull;
+        const desc = isHealthFull ? 'Health is full!' : item.desc;
+        
+        html += `
+            <div class="shop-item repair ${disabled ? 'disabled' : ''}" data-shop="${item.id}" data-price="${dynamicPrice}" data-type="repair">
+                <div class="shop-item-icon">${item.icon}</div>
+                <div class="shop-item-name">${item.name}</div>
+                <div class="shop-item-desc">${desc}</div>
+                <div class="shop-item-price">🪙 ${dynamicPrice}</div>
+            </div>
+        `;
     });
+    
+    html += '</div>';
+    return html;
+}
+
+function renderCardsTab(priceMultiplier) {
+    // Get cards the player currently owns
+    // Use collected history for what cards to show (persist even if cards are used/lost)
+    const collectedUpgradeIds = gameState.collectedUpgrades || [];
+    const collectedActionIds = gameState.collectedActions || [];
+    
+    // Count how many of each upgrade the player currently has (for display)
+    const upgradeCount = {};
+    (gameState.earnedUpgrades || []).forEach(id => {
+        upgradeCount[id] = (upgradeCount[id] || 0) + 1;
+    });
+    
+    // Count how many of each action card the player currently has in deck (for display)
+    const actionCount = {};
+    (gameState.actionCards || []).forEach(id => {
+        actionCount[id] = (actionCount[id] || 0) + 1;
+    });
+    
+    // Get cards that have ever been collected (common/uncommon and repeatable for upgrades)
+    const ownedUpgrades = Object.values(UPGRADES).filter(card => 
+        collectedUpgradeIds.includes(card.id) && 
+        (card.rarity === 'common' || card.rarity === 'uncommon') &&
+        card.repeatable
+    );
+    
+    // Get action cards that have ever been collected (common/uncommon)
+    const ownedActions = Object.values(ACTION_CARDS).filter(card => 
+        collectedActionIds.includes(card.id) && 
+        (card.rarity === 'common' || card.rarity === 'uncommon')
+    );
+    
+    // Base prices for cards (scales like mystery boxes)
+    const commonPrice = Math.round(40 * priceMultiplier);
+    const uncommonPrice = Math.round(70 * priceMultiplier);
+    
+    let html = '<div class="shop-cards-container">';
+    
+    // Upgrade Cards Section
+    html += '<div class="shop-card-section">';
+    html += '<h4 class="shop-card-header">📜 Upgrade Cards</h4>';
+    
+    // Common Upgrades
+    const commonUpgrades = ownedUpgrades.filter(c => c.rarity === 'common');
+    if (commonUpgrades.length > 0) {
+        html += '<div class="shop-card-rarity-label common">Common</div>';
+        html += '<div class="shop-items card-items">';
+        commonUpgrades.forEach(card => {
+            const canAfford = gameState.gold >= commonPrice || debugState.infiniteGold;
+            html += `
+                <div class="shop-item card-purchase common ${!canAfford ? 'disabled' : ''}" data-shop="${card.id}" data-price="${commonPrice}" data-type="upgrade-card">
+                    <div class="shop-item-icon">${card.icon}</div>
+                    <div class="shop-item-name">${card.name}</div>
+                    <div class="shop-item-desc">${card.desc}</div>
+                    <div class="shop-item-owned">Owned: ${upgradeCount[card.id]}</div>
+                    <div class="shop-item-price">🪙 ${commonPrice}</div>
+                </div>
+            `;
+        });
+        html += '</div>';
+    }
+    
+    // Uncommon Upgrades
+    const uncommonUpgrades = ownedUpgrades.filter(c => c.rarity === 'uncommon');
+    if (uncommonUpgrades.length > 0) {
+        html += '<div class="shop-card-rarity-label uncommon">Uncommon</div>';
+        html += '<div class="shop-items card-items">';
+        uncommonUpgrades.forEach(card => {
+            const canAfford = gameState.gold >= uncommonPrice || debugState.infiniteGold;
+            html += `
+                <div class="shop-item card-purchase uncommon ${!canAfford ? 'disabled' : ''}" data-shop="${card.id}" data-price="${uncommonPrice}" data-type="upgrade-card">
+                    <div class="shop-item-icon">${card.icon}</div>
+                    <div class="shop-item-name">${card.name}</div>
+                    <div class="shop-item-desc">${card.desc}</div>
+                    <div class="shop-item-owned">Owned: ${upgradeCount[card.id]}</div>
+                    <div class="shop-item-price">🪙 ${uncommonPrice}</div>
+                </div>
+            `;
+        });
+        html += '</div>';
+    }
+    
+    if (commonUpgrades.length === 0 && uncommonUpgrades.length === 0) {
+        html += '<div class="shop-empty-message">Get common/uncommon upgrades first to buy more here!</div>';
+    }
+    
+    html += '</div>'; // End upgrade section
+    
+    // Action Cards Section
+    html += '<div class="shop-card-section">';
+    html += '<h4 class="shop-card-header">🃏 Action Cards</h4>';
+    
+    // Common Actions
+    const commonActions = ownedActions.filter(c => c.rarity === 'common');
+    if (commonActions.length > 0) {
+        html += '<div class="shop-card-rarity-label common">Common</div>';
+        html += '<div class="shop-items card-items">';
+        commonActions.forEach(card => {
+            const canAfford = gameState.gold >= commonPrice || debugState.infiniteGold;
+            const deckFull = gameState.actionCards.length >= 6;
+            const disabled = !canAfford || deckFull;
+            html += `
+                <div class="shop-item card-purchase common ${disabled ? 'disabled' : ''}" data-shop="${card.id}" data-price="${commonPrice}" data-type="action-card" ${deckFull ? 'title="Deck is full (6 cards max)"' : ''}>
+                    <div class="shop-item-icon">${card.icon}</div>
+                    <div class="shop-item-name">${card.name}</div>
+                    <div class="shop-item-desc">${card.desc}</div>
+                    <div class="shop-item-owned">In deck: ${actionCount[card.id]}</div>
+                    <div class="shop-item-price">🪙 ${commonPrice}</div>
+                </div>
+            `;
+        });
+        html += '</div>';
+    }
+    
+    // Uncommon Actions
+    const uncommonActions = ownedActions.filter(c => c.rarity === 'uncommon');
+    if (uncommonActions.length > 0) {
+        html += '<div class="shop-card-rarity-label uncommon">Uncommon</div>';
+        html += '<div class="shop-items card-items">';
+        uncommonActions.forEach(card => {
+            const canAfford = gameState.gold >= uncommonPrice || debugState.infiniteGold;
+            const deckFull = gameState.actionCards.length >= 6;
+            const disabled = !canAfford || deckFull;
+            html += `
+                <div class="shop-item card-purchase uncommon ${disabled ? 'disabled' : ''}" data-shop="${card.id}" data-price="${uncommonPrice}" data-type="action-card" ${deckFull ? 'title="Deck is full (6 cards max)"' : ''}>
+                    <div class="shop-item-icon">${card.icon}</div>
+                    <div class="shop-item-name">${card.name}</div>
+                    <div class="shop-item-desc">${card.desc}</div>
+                    <div class="shop-item-owned">In deck: ${actionCount[card.id]}</div>
+                    <div class="shop-item-price">🪙 ${uncommonPrice}</div>
+                </div>
+            `;
+        });
+        html += '</div>';
+    }
+    
+    if (commonActions.length === 0 && uncommonActions.length === 0) {
+        html += '<div class="shop-empty-message">Get common/uncommon action cards first to buy more here!</div>';
+    }
+    
+    html += '</div>'; // End action section
+    html += '</div>'; // End cards container
+    
+    return html;
+}
+
+function purchaseCard(cardId, price, cardType) {
+    if (gameState.gold < price && !debugState.infiniteGold) {
+        playSound('error');
+        return;
+    }
+    
+    // Deduct gold
+    if (!debugState.infiniteGold) {
+        gameState.gold -= price;
+    }
+    
+    playSound('purchase');
+    
+    if (cardType === 'upgrade-card') {
+        // Apply the upgrade
+        const card = UPGRADES[cardId];
+        if (card && card.effect) {
+            card.effect();
+            gameState.earnedUpgrades.push(cardId);
+            // Track this upgrade as collected (already tracked when first obtained)
+            updateCastleVisuals();
+            showDamageNumber(gameState.castle.x, gameState.castle.y - 30, `+${card.icon} ${card.name}!`, false, '#88FF88');
+        }
+    } else if (cardType === 'action-card') {
+        // Check deck limit
+        if (gameState.actionCards.length >= 6) {
+            playSound('error');
+            showShopMessage('Action card deck is full!');
+            // Refund
+            if (!debugState.infiniteGold) {
+                gameState.gold += price;
+            }
+            return;
+        }
+        
+        // Add to action card deck
+        gameState.actionCards.push(cardId);
+        renderCardDeck();
+        
+        const card = ACTION_CARDS[cardId];
+        if (card) {
+            showDamageNumber(gameState.castle.x, gameState.castle.y - 30, `+${card.icon} ${card.name}!`, false, '#88FFFF');
+        }
+    }
+    
+    updateGoldDisplay();
+    renderShop();
 }
 
 function purchaseShopItem(itemId, dynamicPrice) {
@@ -3655,8 +4452,8 @@ function openMysteryBox() {
     // Play opening sound
     playSound('mysteryBoxOpen');
     
-    // 5% chance to get a devastating debuff from mystery box (but not in first 5 waves)
-    const isDebuff = gameState.wave > 5 && Math.random() < 0.05;
+    // 5% chance to get a devastating debuff from mystery box (but not in first 10 waves)
+    const isDebuff = gameState.wave > 10 && Math.random() < 0.05;
     
     if (isDebuff) {
         openMysteryBoxDebuff();
@@ -3751,6 +4548,13 @@ function openMysteryBox() {
             } else {
                 reward.effect();
                 gameState.earnedUpgrades.push(reward.id);
+                // Track this upgrade as collected
+                if (!gameState.collectedUpgrades.includes(reward.id)) {
+                    gameState.collectedUpgrades.push(reward.id);
+                }
+                updateCastleVisuals();
+                updateHealthBar();
+                updatePowerDisplay();
             }
         }, 300);
     }, 1500);
@@ -3890,11 +4694,13 @@ function openGoldenBox() {
             );
             reward = legendaryUpgrades[Math.floor(Math.random() * legendaryUpgrades.length)];
         } else {
-            // Fallback to epic if no legendary available
-            const epicUpgrades = Object.values(UPGRADES).filter(u => 
-                u.rarity === 'epic' && (u.repeatable || !gameState.earnedUpgrades.includes(u.id))
+            // Fallback to mythic if no legendary available (golden box always gives legendary+)
+            const mythicUpgrades = Object.values(UPGRADES).filter(u => 
+                u.rarity === 'mythic' && (u.repeatable || !gameState.earnedUpgrades.includes(u.id))
             );
-            reward = epicUpgrades[Math.floor(Math.random() * epicUpgrades.length)];
+            if (mythicUpgrades.length > 0) {
+                reward = mythicUpgrades[Math.floor(Math.random() * mythicUpgrades.length)];
+            }
         }
     }
     
@@ -3980,8 +4786,13 @@ function openGoldenBox() {
             } else {
                 reward.effect();
                 gameState.earnedUpgrades.push(reward.id);
+                // Track this upgrade as collected
+                if (!gameState.collectedUpgrades.includes(reward.id)) {
+                    gameState.collectedUpgrades.push(reward.id);
+                }
                 updateCastleVisuals();
                 updateHealthBar();
+                updatePowerDisplay();
             }
         }, 300);
     }, 1500);
@@ -4000,14 +4811,16 @@ function openGoldenBox() {
 
 // ===== GOLDEN BOX DEVASTATING DEBUFF =====
 function openGoldenBoxDevastating() {
-    // Two possible devastating effects:
-    // 1. Wipe half of all upgrades
-    // 2. Set HP to 1 immediately
-    const effect = Math.random() < 0.5 ? 'wipeUpgrades' : 'instantDeath';
+    // Pick a random golden box exclusive devastating debuff
+    const goldenBoxDebuffs = Object.values(DEVASTATING_DEBUFFS).filter(d => d.isGoldenBox);
+    const selectedDebuff = goldenBoxDebuffs[Math.floor(Math.random() * goldenBoxDebuffs.length)];
     
-    const debuffInfo = effect === 'wipeUpgrades' 
-        ? { icon: '💔', name: 'Shattered Dreams', desc: 'Half of your upgrades have been destroyed!' }
-        : { icon: '☠️', name: 'Death\'s Touch', desc: 'Your health drops to 1!' };
+    const debuffInfo = {
+        icon: selectedDebuff.icon,
+        name: selectedDebuff.name,
+        desc: selectedDebuff.desc,
+        id: selectedDebuff.id
+    };
     
     // Create devastating overlay
     const overlay = document.createElement('div');
@@ -4075,31 +4888,8 @@ function openGoldenBoxDevastating() {
             // Play more devastating sounds
             playSound('castleHit');
             
-            // Apply the devastating effect
-            if (effect === 'wipeUpgrades') {
-                // Remove half of upgrades
-                const upgradeCount = gameState.earnedUpgrades.length;
-                const toRemove = Math.floor(upgradeCount / 2);
-                let garrisonRemoved = 0;
-                for (let i = 0; i < toRemove; i++) {
-                    const randomIndex = Math.floor(Math.random() * gameState.earnedUpgrades.length);
-                    const removedId = gameState.earnedUpgrades[randomIndex];
-                    // Track if a garrison was removed
-                    if (removedId === 'garrison_e') {
-                        garrisonRemoved++;
-                    }
-                    gameState.earnedUpgrades.splice(randomIndex, 1);
-                }
-                // Sync garrisons if any were removed
-                if (garrisonRemoved > 0) {
-                    gameState.stats.garrisonCount = Math.max(0, (gameState.stats.garrisonCount || 0) - garrisonRemoved);
-                    syncGarrisons();
-                }
-            } else {
-                // Set HP to 1
-                gameState.castle.health = 1;
-                updateHealthBar();
-            }
+            // Apply the devastating effect using the debuff system
+            applyDebuffWithTracking(debuffInfo.id);
         }, 400);
     }, 2000);
     
@@ -4138,12 +4928,19 @@ function selectUpgrade(upgradeId, isActionCard = false) {
             }
             upgrade.effect();
             gameState.earnedUpgrades.push(upgradeId);
+            // Track this upgrade as collected
+            if (!gameState.collectedUpgrades.includes(upgradeId)) {
+                gameState.collectedUpgrades.push(upgradeId);
+            }
             
             // Update castle visuals to reflect new upgrades
             updateCastleVisuals();
             
             // Update health bar immediately (for max health upgrades)
             updateHealthBar();
+            
+            // Update power display immediately
+            updatePowerDisplay();
         }
     }
     
@@ -4265,6 +5062,9 @@ function endGame() {
     // Stop background music
     stopBackgroundMusic();
     
+    // Hide upgrade/shop modal if open
+    upgradeModal.classList.add('hidden');
+    
     // Update wave record
     if (gameState.wave > waveRecord) {
         waveRecord = gameState.wave;
@@ -4284,8 +5084,22 @@ function clearEntities() {
     gameState.enemies = [];
     gameState.projectiles = [];
     
+    // Clear all vortexes
+    clearAllVortexes();
+    
     // Clear garrisons
     clearGarrisons();
+}
+
+function clearAllVortexes() {
+    if (gameState.vortexes) {
+        gameState.vortexes.forEach(v => {
+            if (v && v.element) v.element.remove();
+        });
+        gameState.vortexes = [];
+    }
+    // Also remove any orphaned vortex elements from DOM
+    document.querySelectorAll('.void-vortex').forEach(el => el.remove());
 }
 
 function returnToMenu() {
@@ -4765,14 +5579,23 @@ function useInvincibility(duration) {
 }
 
 function useTimeWarp(duration) {
+    // Magic ability - disabled by Magic Void
+    if (gameState.stats.magicDisabled) {
+        playSound('error');
+        return;
+    }
+    
     playSound('freeze');
     
     // Time warp screen effect
     createVisualEffect(0, 0, 'time-warp', { duration: duration });
     
+    const magicMult = gameState.stats.magicDamageMultiplier || 1;
+    const slowAmount = 0.2 / magicMult; // More magic = slower enemies
+    
     gameState.enemies.forEach(enemy => {
         const originalSpeed = enemy.speed;
-        enemy.speed *= 0.2;
+        enemy.speed *= slowAmount;
         if (enemy.element) enemy.element.classList.add('time-warped');
         
         setTimeout(() => {
@@ -4780,7 +5603,7 @@ function useTimeWarp(duration) {
                 enemy.speed = originalSpeed;
                 if (enemy.element) enemy.element.classList.remove('time-warped');
             }
-        }, duration);
+        }, duration * magicMult); // Duration scales with magic
     });
 }
 
@@ -4861,6 +5684,12 @@ function useBattleCry(duration, multiplier) {
 }
 
 function usePoisonCloud(damagePerTick, duration) {
+    // Magic ability - disabled by Magic Void
+    if (gameState.stats.magicDisabled) {
+        playSound('error');
+        return;
+    }
+    
     playSound('magic');
     const magicMult = gameState.stats.magicDamageMultiplier || 1;
     
@@ -5209,6 +6038,11 @@ function useActionCard(index) {
 }
 
 function addActionCard(cardId, context = 'direct') {
+    // Track this card as collected (for shop Cards tab)
+    if (!gameState.collectedActions.includes(cardId)) {
+        gameState.collectedActions.push(cardId);
+    }
+    
     // Max 6 cards in deck
     if (gameState.actionCards.length >= 6) {
         // Store pending card info and show swap modal
@@ -5667,6 +6501,7 @@ function initDebugPanel() {
     // Toggle handlers
     document.getElementById('debugInfiniteGold')?.addEventListener('change', (e) => {
         debugState.infiniteGold = e.target.checked;
+        updateGoldDisplay(); // This also refreshes shop if open
         updateDebugHUD();
         updateDebugIndicator();
     });
@@ -5699,6 +6534,7 @@ function initDebugPanel() {
     
     // Screen navigation
     document.getElementById('debugShowUpgrade')?.addEventListener('click', () => {
+        debugState.forceGoldenBox = false; // Reset golden box flag
         if (!gameScreen || gameScreen.classList.contains('hidden')) {
             debugStartGame();
             setTimeout(() => showUpgradeSelection(), 500);
@@ -5768,6 +6604,9 @@ function initDebugPanel() {
     
     document.getElementById('debugResetStats')?.addEventListener('click', () => {
         if (gameState) {
+            // Clear all vortexes
+            clearAllVortexes();
+            
             gameState.stats = {
                 damage: 25,
                 attackSpeed: 1.3,
@@ -5779,11 +6618,14 @@ function initDebugPanel() {
                 regen: 0,
                 thorns: 0,
                 freezeChance: 0,
+                poisonDamage: 0,
                 goldMultiplier: 1,
                 damageMultiplier: 1,
                 hasFireball: false,
                 hasLightning: false,
                 hasMeteor: false,
+                vortexCount: 0,
+                magicDisabled: false,
                 explosiveArrows: false,
                 ricochet: 0,
                 invincible: false,
@@ -5831,7 +6673,14 @@ function initDebugPanel() {
             const upgrade = UPGRADES[upgradeId];
             upgrade.effect();
             gameState.earnedUpgrades.push(upgradeId);
+            // Track as collected
+            if (!gameState.collectedUpgrades.includes(upgradeId)) {
+                gameState.collectedUpgrades.push(upgradeId);
+            }
             updateDebugStatsDisplay();
+            updatePowerDisplay();
+            updateCastleVisuals();
+            updateMagicVisuals();
             // Update pause menu if open
             if (gameState.isPaused) renderPauseMenu();
             playSound('upgrade');
@@ -5845,13 +6694,17 @@ function initDebugPanel() {
         if (upgradeId && UPGRADES[upgradeId] && gameState) {
             const idx = gameState.earnedUpgrades.indexOf(upgradeId);
             if (idx > -1) {
+                // Reverse the upgrade's effect before removing
+                removeUpgradeEffect(upgradeId);
                 gameState.earnedUpgrades.splice(idx, 1);
-                // Handle garrison removal specially
+                // Handle garrison sync if needed
                 if (upgradeId === 'garrison_e') {
-                    gameState.stats.garrisonCount = Math.max(0, (gameState.stats.garrisonCount || 0) - 1);
                     syncGarrisons();
                 }
                 updateDebugStatsDisplay();
+                updatePowerDisplay();
+                updateCastleVisuals();
+                updateMagicVisuals();
                 // Update pause menu if open
                 if (gameState.isPaused) renderPauseMenu();
                 playSound('click');
@@ -5865,8 +6718,15 @@ function initDebugPanel() {
             Object.entries(UPGRADES).forEach(([id, upgrade]) => {
                 upgrade.effect();
                 gameState.earnedUpgrades.push(id);
+                // Track as collected
+                if (!gameState.collectedUpgrades.includes(id)) {
+                    gameState.collectedUpgrades.push(id);
+                }
             });
             updateDebugStatsDisplay();
+            updatePowerDisplay();
+            updateCastleVisuals();
+            updateMagicVisuals();
             // Update pause menu if open
             if (gameState.isPaused) renderPauseMenu();
             playSound('legendaryUpgrade');
@@ -5879,6 +6739,8 @@ function initDebugPanel() {
             gameState.earnedUpgrades = [];
             // Clear all garrisons first
             clearGarrisons();
+            // Clear all vortexes
+            clearAllVortexes();
             // Reset to base stats including all special properties
             gameState.stats = {
                 damage: 25,
@@ -5891,11 +6753,14 @@ function initDebugPanel() {
                 regen: 0,
                 thorns: 0,
                 freezeChance: 0,
+                poisonDamage: 0,
                 goldMultiplier: 1,
                 damageMultiplier: 1,
                 hasFireball: false,
                 hasLightning: false,
                 hasMeteor: false,
+                vortexCount: 0,
+                magicDisabled: false,
                 explosiveArrows: false,
                 ricochet: 0,
                 invincible: false,
@@ -5906,6 +6771,9 @@ function initDebugPanel() {
             gameState.castle.health = Math.min(gameState.castle.health, gameState.stats.maxHealth);
             updateHealthBar();
             updateDebugStatsDisplay();
+            updatePowerDisplay();
+            updateCastleVisuals();
+            updateMagicVisuals();
             // Update pause menu if open
             if (gameState.isPaused) renderPauseMenu();
             playSound('click');
@@ -5920,6 +6788,7 @@ function initDebugPanel() {
         if (debuffId && allDebuffs[debuffId] && gameState) {
             applyDebuffWithTracking(debuffId);
             updateDebugStatsDisplay();
+            updateMagicVisuals();
             // Update pause menu if open
             if (gameState.isPaused) renderPauseMenu();
             playSound('debuff');
@@ -5948,6 +6817,7 @@ function initDebugPanel() {
                 }
             }
             updateDebugStatsDisplay();
+            updateMagicVisuals();
             // Update pause menu if open
             if (gameState.isPaused) renderPauseMenu();
             playSound('click');
@@ -5962,6 +6832,7 @@ function initDebugPanel() {
                 applyDebuffWithTracking(id);
             });
             updateDebugStatsDisplay();
+            updateMagicVisuals();
             // Update pause menu if open
             if (gameState.isPaused) renderPauseMenu();
             playSound('debuff');
@@ -5987,6 +6858,7 @@ function initDebugPanel() {
             gameState.stats.enemySpeedDebuff = 1;
             gameState.stats.enemyDamageDebuff = 1;
             updateDebugStatsDisplay();
+            updateMagicVisuals();
             // Update pause menu if open
             if (gameState.isPaused) renderPauseMenu();
             playSound('click');
@@ -6001,6 +6873,10 @@ function initDebugPanel() {
         if (cardId && ACTION_CARDS[cardId] && gameState) {
             if (gameState.actionCards.length < 6) {
                 gameState.actionCards.push(cardId); // Push ID string, not object
+                // Track as collected
+                if (!gameState.collectedActions.includes(cardId)) {
+                    gameState.collectedActions.push(cardId);
+                }
                 renderCardDeck();
                 playSound('upgrade');
             } else {
@@ -6031,6 +6907,10 @@ function initDebugPanel() {
             for (let i = 0; i < 6; i++) {
                 const randomCard = cardKeys[Math.floor(Math.random() * cardKeys.length)];
                 gameState.actionCards.push(randomCard);
+                // Track as collected
+                if (!gameState.collectedActions.includes(randomCard)) {
+                    gameState.collectedActions.push(randomCard);
+                }
             }
             renderCardDeck();
             playSound('legendaryUpgrade');
@@ -6156,7 +7036,8 @@ function populateDebugPanel() {
         Object.entries(DEVASTATING_DEBUFFS).forEach(([id, debuff]) => {
             const option = document.createElement('option');
             option.value = id;
-            option.textContent = `[Devastating] ${debuff.icon} ${debuff.name}`;
+            const label = debuff.isGoldenBox ? '[Golden Box]' : '[Devastating]';
+            option.textContent = `${label} ${debuff.icon} ${debuff.name}`;
             debuffSelect.appendChild(option);
         });
     }
@@ -6258,6 +7139,8 @@ function debugStartGame() {
         gameDifficulty = parseFloat(difficultySlider.value);
     }
     homeScreen.classList.add('hidden');
+    upgradeModal.classList.add('hidden'); // Hide upgrade/shop modal
+    gameOver.classList.add('hidden'); // Hide game over screen
     actuallyStartGame();
     
     // Show end wave button if needed

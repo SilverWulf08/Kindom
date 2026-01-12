@@ -1993,6 +1993,80 @@ body::after {
     border: 1px solid var(--aged-gold);
 }
 
+/* Shop Tabs */
+.shop-tabs {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 20px;
+    position: relative;
+    z-index: 1; /* Lower z-index so hovered cards can appear above */
+}
+
+.shop-tab {
+    background: linear-gradient(180deg, var(--rustic-dark) 0%, var(--rustic-darker) 100%);
+    border: 2px solid var(--rustic-wood);
+    border-radius: 8px;
+    padding: 10px 20px;
+    font-family: 'Fondamento', cursive;
+    font-size: 0.95rem;
+    color: var(--tarnished-silver);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.shop-tab:hover {
+    border-color: var(--aged-gold);
+    color: var(--bone-white);
+}
+
+.shop-tab.active {
+    background: linear-gradient(180deg, var(--rustic-brown) 0%, var(--rustic-dark) 100%);
+    border-color: var(--aged-gold);
+    color: var(--aged-gold);
+    box-shadow: 0 0 10px rgba(201, 162, 39, 0.3);
+}
+
+.shop-tab.disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    color: var(--tarnished-silver);
+}
+
+.shop-tab.disabled:hover {
+    border-color: var(--rustic-wood);
+    color: var(--tarnished-silver);
+}
+
+/* Shop Content Area */
+.shop-content {
+    max-height: 300px;
+    overflow-y: auto;
+    overflow-x: visible;
+    padding-right: 5px;
+    padding-top: 10px; /* Extra space for cards to pop up */
+    position: relative;
+    z-index: 2; /* Higher than tabs so hovered items appear above */
+}
+
+.shop-content::-webkit-scrollbar {
+    width: 8px;
+}
+
+.shop-content::-webkit-scrollbar-track {
+    background: var(--rustic-darker);
+    border-radius: 4px;
+}
+
+.shop-content::-webkit-scrollbar-thumb {
+    background: var(--rustic-wood);
+    border-radius: 4px;
+}
+
+.shop-content::-webkit-scrollbar-thumb:hover {
+    background: var(--aged-gold);
+}
+
 .shop-items {
     display: flex;
     gap: 15px;
@@ -2015,6 +2089,8 @@ body::after {
     transform: translateY(-5px);
     border-color: var(--aged-gold);
     box-shadow: 0 5px 20px rgba(0, 0, 0, 0.4), 0 0 15px rgba(201, 162, 39, 0.3);
+    z-index: 10; /* Appear above other elements when hovered */
+    position: relative;
 }
 
 .shop-item.disabled {
@@ -2052,6 +2128,124 @@ body::after {
 
 .shop-item.repair { border-top: 3px solid #4a9e4a; }
 .shop-item.upgrade { border-top: 3px solid #a855f7; }
+
+/* Lootbox Tab - Large Buttons */
+.lootbox-items {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+}
+
+.lootbox-items .shop-item.lootbox {
+    width: 180px;
+    padding: 20px;
+}
+
+.lootbox-items .shop-item.lootbox .shop-item-icon {
+    font-size: 3rem;
+    margin-bottom: 12px;
+}
+
+.shop-item.lootbox.upgrade {
+    border-top: 3px solid #a855f7;
+}
+
+.shop-item.lootbox.golden {
+    border-top: 3px solid #ffd700;
+    background: linear-gradient(180deg, rgba(255, 215, 0, 0.1) 0%, var(--rustic-darker) 100%);
+}
+
+.shop-item.golden-placeholder {
+    border-top: 3px solid #666;
+    opacity: 0.6;
+}
+
+/* Cards Tab Styles */
+.shop-cards-container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.shop-card-section {
+    border: 1px solid var(--rustic-wood);
+    border-radius: 10px;
+    padding: 15px;
+    background: rgba(0, 0, 0, 0.2);
+}
+
+.shop-card-header {
+    font-family: 'Cinzel Decorative', cursive;
+    font-size: 1.1rem;
+    color: var(--bone-white);
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+.shop-card-rarity-label {
+    font-family: 'Fondamento', cursive;
+    font-size: 0.85rem;
+    padding: 4px 12px;
+    border-radius: 12px;
+    display: inline-block;
+    margin-bottom: 10px;
+}
+
+.shop-card-rarity-label.common {
+    background: rgba(156, 163, 175, 0.3);
+    color: #9ca3af;
+    border: 1px solid #9ca3af;
+}
+
+.shop-card-rarity-label.uncommon {
+    background: rgba(34, 197, 94, 0.2);
+    color: #22c55e;
+    border: 1px solid #22c55e;
+}
+
+.card-items {
+    margin-bottom: 15px;
+}
+
+.card-items .shop-item.card-purchase {
+    width: 120px;
+    padding: 12px;
+}
+
+.card-items .shop-item.card-purchase .shop-item-icon {
+    font-size: 1.8rem;
+}
+
+.card-items .shop-item.card-purchase .shop-item-name {
+    font-size: 0.8rem;
+}
+
+.card-items .shop-item.card-purchase .shop-item-desc {
+    font-size: 0.65rem;
+    margin-bottom: 4px;
+}
+
+.shop-item-owned {
+    font-size: 0.7rem;
+    color: var(--aged-gold);
+    margin-bottom: 6px;
+}
+
+.shop-item.card-purchase.common {
+    border-top: 3px solid #9ca3af;
+}
+
+.shop-item.card-purchase.uncommon {
+    border-top: 3px solid #22c55e;
+}
+
+.shop-empty-message {
+    text-align: center;
+    color: var(--tarnished-silver);
+    font-style: italic;
+    padding: 20px;
+    font-size: 0.9rem;
+}
 
 /* Shop Message */
 .shop-message {
@@ -2820,6 +3014,44 @@ body::after {
         font-size: 0.75rem;
     }
     
+    /* Shop tabs responsive */
+    .shop-tabs {
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+    
+    .shop-tab {
+        padding: 8px 12px;
+        font-size: 0.8rem;
+    }
+    
+    .shop-content {
+        max-height: 200px;
+    }
+    
+    .lootbox-items .shop-item.lootbox {
+        width: calc(50% - 10px);
+        min-width: 130px;
+        padding: 15px;
+    }
+    
+    .lootbox-items .shop-item.lootbox .shop-item-icon {
+        font-size: 2.2rem;
+    }
+    
+    .card-items .shop-item.card-purchase {
+        width: calc(50% - 8px);
+        min-width: 90px;
+    }
+    
+    .shop-card-header {
+        font-size: 0.95rem;
+    }
+    
+    .shop-card-section {
+        padding: 10px;
+    }
+
     .upgrade-modal-content {
         width: 95%;
         max-width: 100%;
@@ -5991,4 +6223,141 @@ body::after {
 @keyframes infinityGlow {
     0%, 100% { text-shadow: 0 0 10px rgba(255, 215, 0, 0.8); }
     50% { text-shadow: 0 0 20px rgba(255, 215, 0, 1); }
+}
+
+/* ========================================
+   VOID VORTEX EFFECT
+   ======================================== */
+
+.void-vortex {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    width: 120px;
+    height: 120px;
+    pointer-events: none;
+    z-index: 25;
+}
+
+.vortex-core {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 3rem;
+    animation: vortexCoreSpin 1s linear infinite;
+    filter: drop-shadow(0 0 20px rgba(138, 43, 226, 0.8))
+            drop-shadow(0 0 40px rgba(75, 0, 130, 0.6));
+    z-index: 3;
+}
+
+@keyframes vortexCoreSpin {
+    from { transform: translate(-50%, -50%) rotate(0deg); }
+    to { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+.vortex-ring {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    border-radius: 50%;
+    border: 3px solid transparent;
+    pointer-events: none;
+}
+
+.vortex-ring.ring-1 {
+    width: 80px;
+    height: 80px;
+    margin-top: -40px;
+    margin-left: -40px;
+    border-color: rgba(138, 43, 226, 0.6);
+    border-top-color: transparent;
+    border-bottom-color: transparent;
+    animation: vortexRingSpin1 0.8s linear infinite;
+}
+
+.vortex-ring.ring-2 {
+    width: 110px;
+    height: 110px;
+    margin-top: -55px;
+    margin-left: -55px;
+    border-color: rgba(75, 0, 130, 0.4);
+    border-left-color: transparent;
+    border-right-color: transparent;
+    animation: vortexRingSpin2 1.2s linear infinite reverse;
+}
+
+.vortex-ring.ring-3 {
+    width: 140px;
+    height: 140px;
+    margin-top: -70px;
+    margin-left: -70px;
+    border-color: rgba(148, 0, 211, 0.3);
+    border-top-color: transparent;
+    animation: vortexRingSpin3 1.5s linear infinite;
+    box-shadow: 0 0 30px rgba(138, 43, 226, 0.3),
+                inset 0 0 20px rgba(75, 0, 130, 0.2);
+}
+
+@keyframes vortexRingSpin1 {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+@keyframes vortexRingSpin2 {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+@keyframes vortexRingSpin3 {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* Enemy being pulled by vortex */
+.enemy.vortex-pulled {
+    filter: drop-shadow(0 0 10px rgba(138, 43, 226, 0.7)) brightness(0.9);
+    animation: vortexPull 0.3s ease-in-out infinite;
+}
+
+@keyframes vortexPull {
+    0%, 100% { 
+        transform: scale(1); 
+        filter: drop-shadow(0 0 10px rgba(138, 43, 226, 0.7)) brightness(0.9);
+    }
+    50% { 
+        transform: scale(0.95); 
+        filter: drop-shadow(0 0 15px rgba(138, 43, 226, 0.9)) brightness(0.8);
+    }
+}
+
+/* ========================================
+   MAGIC DISABLED STATE (Magic Void curse)
+   ======================================== */
+
+/* Gray out floating orbs when magic is disabled */
+#castleOrbs.magic-disabled .floating-orb {
+    filter: grayscale(100%) brightness(0.5);
+    opacity: 0.4;
+    animation: none !important;
+}
+
+/* Gray out castle magic glow when disabled */
+#castle.magic-disabled {
+    filter: brightness(0.8);
+}
+
+#castle.magic-disabled::after {
+    filter: grayscale(100%) brightness(0.5);
+    opacity: 0.3;
+}
+
+/* Gray out void vortexes when magic is disabled */
+.void-vortex.magic-disabled {
+    filter: grayscale(100%) brightness(0.5);
+    opacity: 0.4;
+}
+
+.void-vortex.magic-disabled .vortex-core,
+.void-vortex.magic-disabled .vortex-ring {
+    animation: none !important;
 }
