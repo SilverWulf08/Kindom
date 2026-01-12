@@ -2350,7 +2350,8 @@ function actuallyStartGame() {
         pendingSpawns: [],
         manualTarget: null,
         mysteryBoxesBought: 0,
-        goldenBoxBought: false
+        goldenBoxBought: false,
+        cardsBoughtThisWave: 0
     };
     
     // Switch to game screen
@@ -4210,7 +4211,15 @@ function renderCardsTab(priceMultiplier) {
     const commonPrice = Math.round(40 * priceMultiplier);
     const uncommonPrice = Math.round(70 * priceMultiplier);
     
+    // Card purchase limit
+    const cardsBought = gameState.cardsBoughtThisWave || 0;
+    const cardsRemaining = 2 - cardsBought;
+    const cardLimitReached = cardsRemaining <= 0;
+    
     let html = '<div class="shop-cards-container">';
+    
+    // Card purchase limit indicator
+    html += `<div class="shop-card-limit-info">${cardLimitReached ? '❌ Max cards bought this wave!' : `🃏 Cards remaining: ${cardsRemaining}/2`}</div>`;
     
     // Upgrade Cards Section
     html += '<div class="shop-card-section">';
@@ -4223,8 +4232,9 @@ function renderCardsTab(priceMultiplier) {
         html += '<div class="shop-items card-items">';
         commonUpgrades.forEach(card => {
             const canAfford = gameState.gold >= commonPrice || debugState.infiniteGold;
+            const disabled = !canAfford || cardLimitReached;
             html += `
-                <div class="shop-item card-purchase common ${!canAfford ? 'disabled' : ''}" data-shop="${card.id}" data-price="${commonPrice}" data-type="upgrade-card">
+                <div class="shop-item card-purchase common ${disabled ? 'disabled' : ''}" data-shop="${card.id}" data-price="${commonPrice}" data-type="upgrade-card" ${cardLimitReached ? 'title="Max 2 cards per wave"' : ''}>
                     <div class="shop-item-icon">${card.icon}</div>
                     <div class="shop-item-name">${card.name}</div>
                     <div class="shop-item-desc">${card.desc}</div>
@@ -4243,8 +4253,9 @@ function renderCardsTab(priceMultiplier) {
         html += '<div class="shop-items card-items">';
         uncommonUpgrades.forEach(card => {
             const canAfford = gameState.gold >= uncommonPrice || debugState.infiniteGold;
+            const disabled = !canAfford || cardLimitReached;
             html += `
-                <div class="shop-item card-purchase uncommon ${!canAfford ? 'disabled' : ''}" data-shop="${card.id}" data-price="${uncommonPrice}" data-type="upgrade-card">
+                <div class="shop-item card-purchase uncommon ${disabled ? 'disabled' : ''}" data-shop="${card.id}" data-price="${uncommonPrice}" data-type="upgrade-card" ${cardLimitReached ? 'title="Max 2 cards per wave"' : ''}>
                     <div class="shop-item-icon">${card.icon}</div>
                     <div class="shop-item-name">${card.name}</div>
                     <div class="shop-item-desc">${card.desc}</div>
@@ -4274,9 +4285,10 @@ function renderCardsTab(priceMultiplier) {
         commonActions.forEach(card => {
             const canAfford = gameState.gold >= commonPrice || debugState.infiniteGold;
             const deckFull = gameState.actionCards.length >= 6;
-            const disabled = !canAfford || deckFull;
+            const disabled = !canAfford || deckFull || cardLimitReached;
+            const disabledReason = cardLimitReached ? 'Max 2 cards per wave' : (deckFull ? 'Deck is full (6 cards max)' : '');
             html += `
-                <div class="shop-item card-purchase common ${disabled ? 'disabled' : ''}" data-shop="${card.id}" data-price="${commonPrice}" data-type="action-card" ${deckFull ? 'title="Deck is full (6 cards max)"' : ''}>
+                <div class="shop-item card-purchase common ${disabled ? 'disabled' : ''}" data-shop="${card.id}" data-price="${commonPrice}" data-type="action-card" ${disabledReason ? `title="${disabledReason}"` : ''}>
                     <div class="shop-item-icon">${card.icon}</div>
                     <div class="shop-item-name">${card.name}</div>
                     <div class="shop-item-desc">${card.desc}</div>
@@ -4296,9 +4308,10 @@ function renderCardsTab(priceMultiplier) {
         uncommonActions.forEach(card => {
             const canAfford = gameState.gold >= uncommonPrice || debugState.infiniteGold;
             const deckFull = gameState.actionCards.length >= 6;
-            const disabled = !canAfford || deckFull;
+            const disabled = !canAfford || deckFull || cardLimitReached;
+            const disabledReason = cardLimitReached ? 'Max 2 cards per wave' : (deckFull ? 'Deck is full (6 cards max)' : '');
             html += `
-                <div class="shop-item card-purchase uncommon ${disabled ? 'disabled' : ''}" data-shop="${card.id}" data-price="${uncommonPrice}" data-type="action-card" ${deckFull ? 'title="Deck is full (6 cards max)"' : ''}>
+                <div class="shop-item card-purchase uncommon ${disabled ? 'disabled' : ''}" data-shop="${card.id}" data-price="${uncommonPrice}" data-type="action-card" ${disabledReason ? `title="${disabledReason}"` : ''}>
                     <div class="shop-item-icon">${card.icon}</div>
                     <div class="shop-item-name">${card.name}</div>
                     <div class="shop-item-desc">${card.desc}</div>
@@ -4321,6 +4334,13 @@ function renderCardsTab(priceMultiplier) {
 }
 
 function purchaseCard(cardId, price, cardType) {
+    // Check card purchase limit (max 2 per wave)
+    if (gameState.cardsBoughtThisWave >= 2) {
+        playSound('error');
+        showShopMessage('Max 2 cards per wave!');
+        return;
+    }
+    
     if (gameState.gold < price && !debugState.infiniteGold) {
         playSound('error');
         return;
@@ -4332,6 +4352,9 @@ function purchaseCard(cardId, price, cardType) {
     }
     
     playSound('purchase');
+    
+    // Increment cards bought counter
+    gameState.cardsBoughtThisWave++;
     
     if (cardType === 'upgrade-card') {
         // Apply the upgrade
@@ -4952,6 +4975,7 @@ function selectUpgrade(upgradeId, isActionCard = false) {
     gameState.waveKills = 0;
     gameState.mysteryBoxesBought = 0; // Reset mystery box limit for new wave
     gameState.goldenBoxBought = false; // Reset golden box for new wave
+    gameState.cardsBoughtThisWave = 0; // Reset card purchase limit for new wave
     debugState.forceGoldenBox = false; // Reset debug golden box force
     gameState.isRunning = true;
     updateWaveDisplay();
@@ -5045,6 +5069,7 @@ function selectDebuff(debuffId) {
     gameState.waveKills = 0;
     gameState.mysteryBoxesBought = 0;
     gameState.goldenBoxBought = false;
+    gameState.cardsBoughtThisWave = 0;
     gameState.isRunning = true;
     updateWaveDisplay();
     
@@ -6072,6 +6097,7 @@ function showCardSwapModal(newCardId, context = 'direct') {
             gameState.waveKills = 0;
             gameState.mysteryBoxesBought = 0;
             gameState.goldenBoxBought = false;
+            gameState.cardsBoughtThisWave = 0;
             gameState.isRunning = true;
             updateWaveDisplay();
             setTimeout(() => startWave(), 500);

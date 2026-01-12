@@ -2167,6 +2167,18 @@ body::after {
     gap: 20px;
 }
 
+.shop-card-limit-info {
+    text-align: center;
+    padding: 8px 16px;
+    font-family: 'Fondamento', cursive;
+    font-size: 0.95rem;
+    color: var(--bone-white);
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid var(--rustic-wood);
+    border-radius: 8px;
+    margin-bottom: 5px;
+}
+
 .shop-card-section {
     border: 1px solid var(--rustic-wood);
     border-radius: 10px;
