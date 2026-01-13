@@ -1054,6 +1054,20 @@ function createCardActivationEffect(card, castleX, castleY) {
 // ===== PATCH NOTES DATA =====
 const PATCH_NOTES = [
     {
+        version: "2.1.0",
+        title: "Performance Improvements",
+        date: "January 13, 2026",
+        changes: [
+            "⚡ Switched game loop to requestAnimationFrame for smoother animations",
+            "🎯 Added delta time compensation for consistent movement at any frame rate",
+            "🏰 Cached arena dimensions to reduce expensive DOM calculations",
+            "🚀 Optimized enemy, projectile, and vortex update loops",
+            "🖥️ Game now properly handles window resize during gameplay",
+            "🔄 Fixed frame timing issues that could cause lag spikes",
+            "🎮 Improved overall game responsiveness and reduced stuttering"
+        ]
+    },
+    {
         version: "2.0.0",
         title: "Shop Overhaul & Card Collection Update",
         date: "January 12, 2026",
@@ -2029,6 +2043,28 @@ let gameOver, finalWave, finalKills, finalGold, recordWave, playAgainBtn, mainMe
 let gameLoop = null;
 let waveTimeout = null;
 
+// Performance: Frame timing for smooth animation
+let lastFrameTime = 0;
+let deltaTime = 0;
+const TARGET_FPS = 60;
+const FRAME_TIME = 1000 / TARGET_FPS;
+
+// Performance: Cached arena dimensions (updated on resize and game start)
+let cachedArenaRect = { width: 0, height: 0, left: 0, top: 0 };
+let castleCenterX = 0;
+let castleCenterY = 0;
+
+function updateCachedArenaDimensions() {
+    if (!gameArena) return;
+    const rect = gameArena.getBoundingClientRect();
+    cachedArenaRect.width = rect.width;
+    cachedArenaRect.height = rect.height;
+    cachedArenaRect.left = rect.left;
+    cachedArenaRect.top = rect.top;
+    castleCenterX = rect.width / 2;
+    castleCenterY = rect.height / 2;
+}
+
 // ===== INITIALIZE DOM ELEMENTS =====
 function initDOMElements() {
     loadingScreen = document.getElementById('loadingScreen');
@@ -2365,10 +2401,12 @@ function actuallyStartGame() {
     // Clear any existing entities
     clearEntities();
     
+    // Initialize cached arena dimensions
+    updateCachedArenaDimensions();
+    
     // Position castle
-    const arenaRect = gameArena.getBoundingClientRect();
-    gameState.castle.x = arenaRect.width / 2;
-    gameState.castle.y = arenaRect.height / 2;
+    gameState.castle.x = castleCenterX;
+    gameState.castle.y = castleCenterY;
     
     // Update UI
     updateHealthBar();
@@ -2388,12 +2426,33 @@ function actuallyStartGame() {
     
     // Clear any existing game loop before starting new one
     if (gameLoop) {
-        clearInterval(gameLoop);
+        cancelAnimationFrame(gameLoop);
         gameLoop = null;
     }
     
-    // Start game loop
-    gameLoop = setInterval(update, 1000 / 60);
+    // Start game loop using requestAnimationFrame for smoother animation
+    lastFrameTime = performance.now();
+    gameLoop = requestAnimationFrame(gameLoopRAF);
+}
+
+// Performance: requestAnimationFrame-based game loop for smoother animation
+function gameLoopRAF(currentTime) {
+    // Calculate delta time for frame-rate independent movement
+    deltaTime = currentTime - lastFrameTime;
+    
+    // Cap delta time to prevent huge jumps after tab switching
+    if (deltaTime > 100) deltaTime = FRAME_TIME;
+    
+    lastFrameTime = currentTime;
+    
+    // Run update with delta time factor
+    if (gameState.isRunning) {
+        update(deltaTime / FRAME_TIME);
+        gameLoop = requestAnimationFrame(gameLoopRAF);
+    } else {
+        // Game stopped, clear loop reference so it can be restarted
+        gameLoop = null;
+    }
 }
 
 // ===== WAVE SYSTEM =====
@@ -2435,9 +2494,9 @@ function spawnWaveEnemies() {
     
     // Calculate spawn delay multiplier based on screen width
     // Narrower screens = enemies travel shorter distance = slower spawn rate
-    const arenaRect = gameArena.getBoundingClientRect();
+    // Use cached arena dimensions for performance
     const baseWidth = 1200; // Reference width for normal spawn rate
-    const currentWidth = arenaRect.width;
+    const currentWidth = cachedArenaRect.width;
     const spawnDelayMultiplier = Math.max(1, baseWidth / currentWidth);
     
     // Every 5 waves, waves get slightly longer and have more enemies
@@ -2602,7 +2661,9 @@ function spawnWaveEnemies() {
 
 function spawnEnemy(type) {
     const enemyDef = ENEMY_TYPES[type];
-    const arenaRect = gameArena.getBoundingClientRect();
+    // Use cached arena dimensions for performance (spawning can be frequent)
+    const arenaWidth = cachedArenaRect.width;
+    const arenaHeight = cachedArenaRect.height;
     const wave = gameState.wave;
     const diffMult = getDifficultyMultipliers(wave);
     
@@ -2627,10 +2688,10 @@ function spawnEnemy(type) {
     const margin = 50;
     
     switch(side) {
-        case 0: x = margin; y = Math.random() * arenaRect.height; break; // Left
-        case 1: x = arenaRect.width - margin; y = Math.random() * arenaRect.height; break; // Right
-        case 2: x = Math.random() * arenaRect.width; y = margin; break; // Top
-        case 3: x = Math.random() * arenaRect.width; y = arenaRect.height - margin; break; // Bottom
+        case 0: x = margin; y = Math.random() * arenaHeight; break; // Left
+        case 1: x = arenaWidth - margin; y = Math.random() * arenaHeight; break; // Right
+        case 2: x = Math.random() * arenaWidth; y = margin; break; // Top
+        case 3: x = Math.random() * arenaWidth; y = arenaHeight - margin; break; // Bottom
     }
     
     const enemy = {
@@ -2675,28 +2736,29 @@ function spawnEnemy(type) {
 }
 
 // ===== GAME UPDATE LOOP =====
-function update() {
+function update(dtFactor = 1) {
     if (!gameState.isRunning || gameState.isPaused) return;
     
     const now = Date.now();
     
     // Castle regeneration (magic ability - disabled by Magic Void)
+    // Apply delta time factor for consistent regen regardless of frame rate
     if (gameState.stats.regen > 0 && !gameState.stats.magicDisabled) {
         gameState.castle.health = Math.min(
             gameState.stats.maxHealth,
-            gameState.castle.health + gameState.stats.regen / 60
+            gameState.castle.health + (gameState.stats.regen / 60) * dtFactor
         );
         updateHealthBar();
     }
     
-    // Update enemies
-    updateEnemies(now);
+    // Update enemies with delta time factor
+    updateEnemies(now, dtFactor);
     
-    // Update projectiles
-    updateProjectiles();
+    // Update projectiles with delta time factor
+    updateProjectiles(dtFactor);
     
     // Update vortex (if active)
-    updateVortex(now);
+    updateVortex(now, dtFactor);
     
     // Castle attacks
     castleAttack(now);
@@ -2705,10 +2767,10 @@ function update() {
     checkWaveComplete();
 }
 
-function updateEnemies(now) {
-    const arenaRect = gameArena.getBoundingClientRect();
-    const castleX = arenaRect.width / 2;
-    const castleY = arenaRect.height / 2;
+function updateEnemies(now, dtFactor = 1) {
+    // Use cached arena dimensions for performance
+    const castleX = castleCenterX;
+    const castleY = castleCenterY;
     
     gameState.enemies.forEach(enemy => {
         if (!enemy.element) return;
@@ -2723,12 +2785,14 @@ function updateEnemies(now) {
         
         if (dist > attackRange) {
             // Move toward castle (apply enemy speed debuff - higher means faster enemies)
+            // Apply delta time factor for frame-rate independent movement
             let speed = enemy.slowed ? enemy.speed * 0.7 : enemy.speed;
             speed *= (gameState.stats.enemySpeedDebuff || 1);
+            speed *= dtFactor; // Scale by delta time
             enemy.x += (dx / dist) * speed;
             enemy.y += (dy / dist) * speed;
             
-            // Update position
+            // Update position using transform for better performance
             enemy.element.style.left = enemy.x + 'px';
             enemy.element.style.top = enemy.y + 'px';
         } else {
@@ -2813,9 +2877,9 @@ function fireEnemyProjectile(enemy, targetX, targetY) {
 }
 
 function attackCastle(enemy) {
-    const arenaRect = gameArena.getBoundingClientRect();
-    const castleX = arenaRect.width / 2;
-    const castleY = arenaRect.height / 2;
+    // Use cached arena dimensions for performance
+    const castleX = castleCenterX;
+    const castleY = castleCenterY;
     
     // Check for invincibility
     if (gameState.stats.invincible) {
@@ -2956,13 +3020,13 @@ function castleAttack(now) {
 }
 
 function findNearestEnemies(count) {
-    const arenaRect = gameArena.getBoundingClientRect();
-    const castleX = arenaRect.width / 2;
-    const castleY = arenaRect.height / 2;
+    // Use cached arena dimensions for performance
+    const castleX = castleCenterX;
+    const castleY = castleCenterY;
     
     // Calculate max attack range based on screen size and range stat
     // Base range is 60% of the smaller dimension (so castle can't shoot enemies at spawn)
-    const baseRange = Math.min(arenaRect.width, arenaRect.height) * 0.6;
+    const baseRange = Math.min(cachedArenaRect.width, cachedArenaRect.height) * 0.6;
     const maxRange = baseRange * (gameState.stats.attackRange || 1);
     
     // Get IDs of enemies that already have projectiles targeting them
@@ -3017,9 +3081,9 @@ function findNearestEnemies(count) {
 }
 
 function fireProjectile(target, type) {
-    const arenaRect = gameArena.getBoundingClientRect();
-    const startX = arenaRect.width / 2;
-    const startY = arenaRect.height / 2;
+    // Use cached arena dimensions for performance
+    const startX = castleCenterX;
+    const startY = castleCenterY;
     
     // Play projectile sound
     if (type === 'fireball') {
@@ -3099,9 +3163,9 @@ function fireRicochetArrow(startX, startY, target, damage, bounceCount, hitEnemi
 function chainLightning(target) {
     const targets = [target];
     let lastTarget = target;
-    const arenaRect = gameArena.getBoundingClientRect();
-    const castleX = arenaRect.width / 2;
-    const castleY = arenaRect.height / 2;
+    // Use cached arena dimensions for performance
+    const castleX = castleCenterX;
+    const castleY = castleCenterY;
     
     // Find up to 2 more nearby enemies
     for (let i = 0; i < 2; i++) {
@@ -3157,7 +3221,6 @@ function chainLightning(target) {
 function fireMeteor(targets) {
     playSound('explosion');
     
-    const arenaRect = gameArena.getBoundingClientRect();
     const magicMult = gameState.stats.magicDamageMultiplier || 1;
     const meteorDamage = gameState.stats.damage * 3 * magicMult;
     
@@ -3203,13 +3266,13 @@ function fireMeteor(targets) {
 let vortexSharedRotation = 0;
 
 function spawnVortex() {
-    const arenaRect = gameArena.getBoundingClientRect();
-    const centerX = arenaRect.width / 2;
-    const centerY = arenaRect.height / 2;
+    // Use cached arena dimensions for performance
+    const centerX = castleCenterX;
+    const centerY = castleCenterY;
     
     // Calculate orbit radius (like the buff indicators around castle)
     const margin = 100;
-    const orbitRadius = Math.min(arenaRect.width, arenaRect.height) / 2 - margin;
+    const orbitRadius = Math.min(cachedArenaRect.width, cachedArenaRect.height) / 2 - margin;
     
     // Create vortex element
     const vortexEl = document.createElement('div');
@@ -3250,16 +3313,16 @@ function redistributeVortexAngles() {
     });
 }
 
-function updateVortex(now) {
+function updateVortex(now, dtFactor = 1) {
     if (!gameState.vortexes || gameState.vortexes.length === 0) return;
     
-    const arenaRect = gameArena.getBoundingClientRect();
-    const centerX = arenaRect.width / 2;
-    const centerY = arenaRect.height / 2;
+    // Use cached arena dimensions for performance
+    const centerX = castleCenterX;
+    const centerY = castleCenterY;
     const magicMult = gameState.stats.magicDamageMultiplier || 1;
     
-    // Update shared rotation (all vortexes orbit together)
-    vortexSharedRotation += 0.008;
+    // Update shared rotation (all vortexes orbit together) - scale by delta time
+    vortexSharedRotation += 0.008 * dtFactor;
     
     // Update each vortex
     gameState.vortexes.forEach((vortex, index) => {
@@ -3275,9 +3338,9 @@ function updateVortex(now) {
         vortex.element.style.top = vortex.y + 'px';
     });
     
-    // Pull and spin enemies caught in any vortex
-    const pullStrength = 0.3 * magicMult;
-    const spinSpeed = 0.05 * magicMult;
+    // Pull and spin enemies caught in any vortex - scale by delta time
+    const pullStrength = 0.3 * magicMult * dtFactor;
+    const spinSpeed = 0.05 * magicMult * dtFactor;
     
     gameState.enemies.forEach(enemy => {
         if (!enemy.element || enemy.health <= 0) return;
@@ -3313,8 +3376,8 @@ function updateVortex(now) {
                 enemy.element.style.left = enemy.x + 'px';
                 enemy.element.style.top = enemy.y + 'px';
                 
-                // Small damage over time to enemies in vortex
-                if (Math.random() < 0.02) {
+                // Small damage over time to enemies in vortex (probability scales with dtFactor)
+                if (Math.random() < 0.02 * dtFactor) {
                     damageEnemy(enemy, 1 * magicMult);
                 }
             }
@@ -3333,10 +3396,14 @@ function updateVortex(now) {
     });
 }
 
-function updateProjectiles() {
+function updateProjectiles(dtFactor = 1) {
     // Track which enemies are being targeted by ricochet arrows THIS frame
     // This prevents multiple ricochets from targeting the same enemy
     const ricochetTargetsThisFrame = new Set();
+    
+    // Use cached castle position for performance
+    const castleX = castleCenterX;
+    const castleY = castleCenterY;
     
     gameState.projectiles = gameState.projectiles.filter(proj => {
         let target = gameState.enemies.find(e => e.id === proj.targetId);
@@ -3346,9 +3413,6 @@ function updateProjectiles() {
             // For ricochet arrows that lost their target, find next closest to castle
             if (proj.isRicochet || (proj.type === 'arrow' && proj.bounces > 0)) {
                 const hitEnemies = proj.hitEnemies || [];
-                const arenaRect = gameArena.getBoundingClientRect();
-                const castleX = arenaRect.width / 2;
-                const castleY = arenaRect.height / 2;
                 
                 // Get all enemies currently targeted by other projectiles
                 const alreadyTargeted = new Set();
@@ -3496,9 +3560,7 @@ function updateProjectiles() {
                     
                     // Find enemy closest to the CASTLE that hasn't been hit
                     // AND isn't already being targeted by another arrow
-                    const arenaRect = gameArena.getBoundingClientRect();
-                    const castleX = arenaRect.width / 2;
-                    const castleY = arenaRect.height / 2;
+                    // Use cached castle position (already defined at function scope)
                     
                     // Get list of enemies currently being targeted by existing projectiles
                     // AND enemies already claimed by other ricochets this frame
@@ -3547,9 +3609,10 @@ function updateProjectiles() {
             return false;
         }
         
-        // Update position
-        proj.x += (dx / dist) * proj.speed;
-        proj.y += (dy / dist) * proj.speed;
+        // Update position with delta time factor for smooth movement
+        const moveSpeed = proj.speed * dtFactor;
+        proj.x += (dx / dist) * moveSpeed;
+        proj.y += (dy / dist) * moveSpeed;
         
         if (proj.element) {
             proj.element.style.left = proj.x + 'px';
@@ -4980,6 +5043,12 @@ function selectUpgrade(upgradeId, isActionCard = false) {
     gameState.isRunning = true;
     updateWaveDisplay();
     
+    // Restart the game loop (was stopped during upgrade selection)
+    if (!gameLoop) {
+        lastFrameTime = performance.now();
+        gameLoop = requestAnimationFrame(gameLoopRAF);
+    }
+    
     setTimeout(() => startWave(), 500);
 }
 
@@ -5073,6 +5142,12 @@ function selectDebuff(debuffId) {
     gameState.isRunning = true;
     updateWaveDisplay();
     
+    // Restart the game loop (was stopped during upgrade selection)
+    if (!gameLoop) {
+        lastFrameTime = performance.now();
+        gameLoop = requestAnimationFrame(gameLoopRAF);
+    }
+    
     setTimeout(() => startWave(), 500);
 }
 
@@ -5081,7 +5156,7 @@ function endGame() {
     gameState.isRunning = false;
     
     if (gameLoop) {
-        clearInterval(gameLoop);
+        cancelAnimationFrame(gameLoop);
         gameLoop = null;
     }
     
@@ -5132,7 +5207,7 @@ function returnToMenu() {
     gameState.isRunning = false;
     
     if (gameLoop) {
-        clearInterval(gameLoop);
+        cancelAnimationFrame(gameLoop);
         gameLoop = null;
     }
     
@@ -6100,6 +6175,11 @@ function showCardSwapModal(newCardId, context = 'direct') {
             gameState.cardsBoughtThisWave = 0;
             gameState.isRunning = true;
             updateWaveDisplay();
+            // Restart the game loop (was stopped during upgrade selection)
+            if (!gameLoop) {
+                lastFrameTime = performance.now();
+                gameLoop = requestAnimationFrame(gameLoopRAF);
+            }
             setTimeout(() => startWave(), 500);
         }
     };
@@ -7191,4 +7271,14 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Show homescreen immediately with animations
     initHomeScreen();
+});
+
+// Performance: Update cached arena dimensions on window resize
+window.addEventListener('resize', () => {
+    if (gameArena && gameState && gameState.isRunning) {
+        updateCachedArenaDimensions();
+        // Update castle position to match new center
+        gameState.castle.x = castleCenterX;
+        gameState.castle.y = castleCenterY;
+    }
 });
