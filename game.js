@@ -778,10 +778,24 @@ function updateMagicVisuals() {
 
 // Create visual effects at position
 function createVisualEffect(x, y, type, options = {}) {
+    // Performance: Limit visual effects when many are active
+    if (activeVisualEffects >= MAX_VISUAL_EFFECTS && !options.important) {
+        return null; // Skip non-important effects when at limit
+    }
+    
     const effectsLayer = document.getElementById('effectsLayer') || gameArena;
     if (!effectsLayer) return null;
     
     const effect = document.createElement('div');
+    activeVisualEffects++;
+    
+    // Helper to remove effect and decrement counter
+    const removeEffect = (el, delay) => {
+        setTimeout(() => {
+            el.remove();
+            activeVisualEffects--;
+        }, delay);
+    };
     
     switch (type) {
         case 'lightning-strike':
@@ -791,7 +805,7 @@ function createVisualEffect(x, y, type, options = {}) {
             effect.style.height = y + 'px';
             playSound('lightning');
             effectsLayer.appendChild(effect);
-            setTimeout(() => effect.remove(), 500);
+            removeEffect(effect, 500);
             return effect;
             
         case 'lightning-chain':
@@ -809,7 +823,7 @@ function createVisualEffect(x, y, type, options = {}) {
             effect.style.width = length + 'px';
             effect.style.transform = `rotate(${angle}deg)`;
             effectsLayer.appendChild(effect);
-            setTimeout(() => effect.remove(), 400);
+            removeEffect(effect, 400);
             return effect;
             
         case 'meteor-impact':
@@ -818,7 +832,7 @@ function createVisualEffect(x, y, type, options = {}) {
             effect.style.top = y + 'px';
             playSound('explosion');
             effectsLayer.appendChild(effect);
-            setTimeout(() => effect.remove(), 700);
+            removeEffect(effect, 700);
             return effect;
             
         case 'heal':
@@ -836,7 +850,7 @@ function createVisualEffect(x, y, type, options = {}) {
                 setTimeout(() => particle.remove(), 1000);
             }
             effectsLayer.appendChild(effect);
-            setTimeout(() => effect.remove(), 1100);
+            removeEffect(effect, 1100);
             return effect;
             
         case 'divine-aura':
@@ -844,7 +858,7 @@ function createVisualEffect(x, y, type, options = {}) {
             effect.style.left = x + 'px';
             effect.style.top = y + 'px';
             effectsLayer.appendChild(effect);
-            setTimeout(() => effect.remove(), 2000);
+            removeEffect(effect, 2000);
             return effect;
             
         case 'freeze':
@@ -853,21 +867,21 @@ function createVisualEffect(x, y, type, options = {}) {
             effect.style.top = y + 'px';
             playSound('freeze');
             effectsLayer.appendChild(effect);
-            setTimeout(() => effect.remove(), 600);
+            removeEffect(effect, 600);
             return effect;
             
         case 'poison-cloud':
             effect.className = 'poison-cloud';
             effect.style.left = x + 'px';
             effect.style.top = y + 'px';
-            setTimeout(() => effect.remove(), options.duration || 3000);
+            removeEffect(effect, options.duration || 3000);
             effectsLayer.appendChild(effect);
             return effect; // Return for poison tick management
             
         case 'screen-flash':
             effect.className = `card-flash-screen ${options.color || 'fire'}`;
             document.body.appendChild(effect);
-            setTimeout(() => effect.remove(), 500);
+            removeEffect(effect, 500);
             return effect;
             
         case 'energy-ring':
@@ -875,7 +889,7 @@ function createVisualEffect(x, y, type, options = {}) {
             effect.style.left = x + 'px';
             effect.style.top = y + 'px';
             effectsLayer.appendChild(effect);
-            setTimeout(() => effect.remove(), 700);
+            removeEffect(effect, 700);
             return effect;
             
         case 'card-burst':
@@ -884,7 +898,7 @@ function createVisualEffect(x, y, type, options = {}) {
             effect.style.top = y + 'px';
             effect.setAttribute('data-icon', options.icon || '✨');
             effectsLayer.appendChild(effect);
-            setTimeout(() => effect.remove(), 900);
+            removeEffect(effect, 900);
             return effect;
             
         case 'dragon-breath':
@@ -893,26 +907,20 @@ function createVisualEffect(x, y, type, options = {}) {
             effect.style.top = y + 'px';
             effect.style.transform = `rotate(${options.angle || 0}deg)`;
             effectsLayer.appendChild(effect);
-            setTimeout(() => effect.remove(), 1100);
+            removeEffect(effect, 1100);
             return effect;
             
         case 'time-warp':
             effect.className = 'time-warp-effect';
             document.body.appendChild(effect);
-            setTimeout(() => effect.remove(), options.duration || 5000);
+            removeEffect(effect, options.duration || 5000);
             return effect;
             
         default:
+            // No matching effect type, decrement counter and return null
+            activeVisualEffects--;
             return null;
     }
-    
-    effectsLayer.appendChild(effect);
-    
-    // Auto-remove after animation
-    const duration = options.duration || 1000;
-    setTimeout(() => effect.remove(), duration);
-    
-    return effect;
 }
 
 // Create enemy attack visual effects
@@ -979,6 +987,89 @@ function createEnemyAttackEffect(enemy, castleX, castleY) {
             effect.className = 'enemy-attack-swift';
             effect.style.left = castleX + 'px';
             effect.style.top = castleY + 'px';
+            break;
+        
+        // NEW ENEMY ATTACK EFFECTS
+        case 'harpy':
+            // Harpy shoots feather projectile
+            createEnemyProjectile(enemy.x, enemy.y, castleX, castleY, 'feather');
+            return;
+            
+        case 'fireElemental':
+            effect.className = 'enemy-attack-fire-burst';
+            effect.style.left = castleX + 'px';
+            effect.style.top = castleY + 'px';
+            playSound('fireball');
+            break;
+            
+        case 'iceElemental':
+            effect.className = 'enemy-attack-ice';
+            effect.style.left = castleX + 'px';
+            effect.style.top = castleY + 'px';
+            break;
+            
+        case 'mimic':
+            effect.className = 'enemy-attack-chomp';
+            effect.style.left = castleX + 'px';
+            effect.style.top = castleY + 'px';
+            break;
+            
+        case 'plagueRat':
+            effect.className = 'enemy-attack-plague';
+            effect.style.left = castleX + 'px';
+            effect.style.top = castleY + 'px';
+            break;
+            
+        case 'darkKnight':
+            effect.className = 'enemy-attack-slash';
+            effect.style.left = castleX + 'px';
+            effect.style.top = castleY + 'px';
+            playSound('explosion');
+            break;
+            
+        case 'gargoyle':
+            effect.className = 'enemy-attack-claw';
+            effect.style.left = castleX + 'px';
+            effect.style.top = castleY + 'px';
+            break;
+            
+        case 'banshee':
+            // Banshee shoots a wail projectile
+            createEnemyProjectile(enemy.x, enemy.y, castleX, castleY, 'wail');
+            return;
+            
+        // BOSS ATTACK EFFECTS
+        case 'hydra':
+            effect.className = 'enemy-attack-hydra';
+            effect.style.left = castleX + 'px';
+            effect.style.top = castleY + 'px';
+            playSound('explosion');
+            break;
+            
+        case 'shadowKing':
+            createEnemyProjectile(enemy.x, enemy.y, castleX, castleY, 'shadow');
+            return;
+            
+        case 'chaosDragon':
+            effect.className = 'enemy-attack-chaos';
+            effect.style.left = castleX + 'px';
+            effect.style.top = castleY + 'px';
+            playSound('fireball');
+            break;
+            
+        // ARCH BOSS ATTACK EFFECTS
+        case 'moonLord':
+            effect.className = 'enemy-attack-moon';
+            effect.style.left = castleX + 'px';
+            effect.style.top = castleY + 'px';
+            playSound('explosion');
+            break;
+            
+        case 'sunQueen':
+            effect.className = 'enemy-attack-sun';
+            effect.style.left = castleX + 'px';
+            effect.style.top = castleY + 'px';
+            playSound('explosion');
             break;
             
         default:
@@ -1053,6 +1144,24 @@ function createCardActivationEffect(card, castleX, castleY) {
 
 // ===== PATCH NOTES DATA =====
 const PATCH_NOTES = [
+    {
+        version: "2.2.0",
+        title: "Arch Boss & Performance Update",
+        date: "January 14, 2026",
+        changes: [
+            "🌑 Moon Lord - New Arch Boss appearing at Wave 100!",
+            "☀️ Sun Queen - Final Arch Boss appearing at Wave 200!",
+            "👹 9 New Regular Enemies: Werewolf, Gargoyle, Phantom, Chimera, Wyvern, Basilisk, Naga, Minotaur, Hydra",
+            "👑 3 New Bosses: Lich Lord (Wave 50), Chaos Dragon (Wave 75), Shadow King (Wave 90)",
+            "🎮 Debug Panel: Added Arch Bosses tab for spawning ultimate enemies",
+            "⚡ Performance: Optimized damage number rendering with smart limits",
+            "⚡ Performance: Optimized visual effect creation with throttling",
+            "⚡ Performance: Optimized splash/explosive damage with spatial queries",
+            "⚡ Performance: Throttled hit sounds when many enemies are present",
+            "⚡ Performance: Optimized enemy update loop for better frame rates",
+            "🐛 Fixed enemies freezing when spawning large numbers of enemies"
+        ]
+    },
     {
         version: "2.1.0",
         title: "Performance Improvements",
@@ -1864,6 +1973,83 @@ const ENEMY_TYPES = {
         value: 3,
         class: 'snake'
     },
+    // NEW ENEMIES - More variety (continued)
+    harpy: {
+        name: 'Harpy',
+        emoji: '🦅',
+        baseHealth: 24,
+        baseDamage: 7,
+        speed: 2.3,
+        value: 4,
+        class: 'harpy',
+        ranged: true,
+        range: 160
+    },
+    fireElemental: {
+        name: 'Fire Elemental',
+        emoji: '🔥',
+        baseHealth: 45,
+        baseDamage: 11,
+        speed: 1.1,
+        value: 5,
+        class: 'fire-elemental'
+    },
+    iceElemental: {
+        name: 'Ice Elemental',
+        emoji: '❄️',
+        baseHealth: 45,
+        baseDamage: 9,
+        speed: 0.9,
+        value: 5,
+        class: 'ice-elemental'
+    },
+    mimic: {
+        name: 'Mimic',
+        emoji: '📦',
+        baseHealth: 55,
+        baseDamage: 15,
+        speed: 0.8,
+        value: 6,
+        class: 'mimic'
+    },
+    plagueRat: {
+        name: 'Plague Rat',
+        emoji: '🐀',
+        baseHealth: 10,
+        baseDamage: 3,
+        speed: 2.5,
+        value: 1,
+        class: 'plague-rat'
+    },
+    darkKnight: {
+        name: 'Dark Knight',
+        emoji: '⚔️',
+        baseHealth: 100,
+        baseDamage: 16,
+        speed: 0.5,
+        value: 6,
+        class: 'dark-knight'
+    },
+    gargoyle: {
+        name: 'Gargoyle',
+        emoji: '🗿',
+        baseHealth: 60,
+        baseDamage: 9,
+        speed: 1.4,
+        value: 4,
+        class: 'gargoyle'
+    },
+    banshee: {
+        name: 'Banshee',
+        emoji: '👻',
+        baseHealth: 28,
+        baseDamage: 8,
+        speed: 1.6,
+        value: 4,
+        class: 'banshee',
+        ranged: true,
+        range: 140
+    },
     // BOSS ENEMIES - Strong and bigger
     orcChampion: {
         name: 'Orc Champion',
@@ -1944,6 +2130,67 @@ const ENEMY_TYPES = {
         class: 'boss world-eater',
         isBoss: true,
         size: 3.5
+    },
+    // NEW BOSSES - More variety
+    hydra: {
+        name: 'Hydra',
+        emoji: '🐍',
+        baseHealth: 700,
+        baseDamage: 30,
+        speed: 0.4,
+        value: 45,
+        class: 'boss hydra',
+        isBoss: true,
+        size: 2.2
+    },
+    shadowKing: {
+        name: 'Shadow King',
+        emoji: '👤',
+        baseHealth: 550,
+        baseDamage: 35,
+        speed: 0.5,
+        value: 40,
+        class: 'boss shadow-king',
+        isBoss: true,
+        size: 2.0,
+        ranged: true,
+        range: 180
+    },
+    chaosDragon: {
+        name: 'Chaos Dragon',
+        emoji: '🐲',
+        baseHealth: 1200,
+        baseDamage: 55,
+        speed: 0.35,
+        value: 80,
+        class: 'boss chaos-dragon',
+        isBoss: true,
+        size: 2.8
+    },
+    // ARCH BOSSES - Ultimate challenges at high waves
+    moonLord: {
+        name: 'Moon Lord',
+        emoji: '🌚',
+        baseHealth: 50000,
+        baseDamage: 1200,
+        speed: 0.2,
+        value: 500,
+        class: 'boss arch-boss moon-lord',
+        isBoss: true,
+        isArchBoss: true,
+        size: 4.0
+    },
+    sunQueen: {
+        name: 'Sun Queen',
+        emoji: '🌞',
+        baseHealth: 150000,
+        baseDamage: 2000,
+        speed: 0.15,
+        value: 2000,
+        class: 'boss arch-boss sun-queen',
+        isBoss: true,
+        isArchBoss: true,
+        size: 5.0
     }
 };
 
@@ -2049,10 +2296,41 @@ let deltaTime = 0;
 const TARGET_FPS = 60;
 const FRAME_TIME = 1000 / TARGET_FPS;
 
+// Performance: Throttle expensive operations when many enemies exist
+let lastDamageNumberTime = 0;
+const DAMAGE_NUMBER_THROTTLE = 50; // ms between damage numbers when lots of enemies
+const MAX_DAMAGE_NUMBERS = 50; // Maximum damage numbers on screen at once
+const MAX_VISUAL_EFFECTS = 30; // Maximum visual effects on screen at once
+let activeDamageNumbers = 0;
+let activeVisualEffects = 0;
+let lastHitSoundTime = 0;
+const HIT_SOUND_THROTTLE = 30; // ms between hit sounds
+
 // Performance: Cached arena dimensions (updated on resize and game start)
 let cachedArenaRect = { width: 0, height: 0, left: 0, top: 0 };
 let castleCenterX = 0;
 let castleCenterY = 0;
+
+// Performance: Helper to get enemies within a radius (optimized with bounding box pre-check)
+function getEnemiesInRadius(x, y, radius, excludeId = null) {
+    const results = [];
+    const radiusSq = radius * radius;
+    for (let i = 0; i < gameState.enemies.length; i++) {
+        const e = gameState.enemies[i];
+        if (excludeId && e.id === excludeId) continue;
+        if (e.health <= 0 || e.isDead) continue;
+        // Bounding box pre-check (cheaper than sqrt)
+        const dx = e.x - x;
+        const dy = e.y - y;
+        if (Math.abs(dx) > radius || Math.abs(dy) > radius) continue;
+        // Actual distance check
+        const distSq = dx * dx + dy * dy;
+        if (distSq < radiusSq) {
+            results.push(e);
+        }
+    }
+    return results;
+}
 
 function updateCachedArenaDimensions() {
     if (!gameArena) return;
@@ -2458,28 +2736,56 @@ function gameLoopRAF(currentTime) {
 // ===== WAVE SYSTEM =====
 function startWave() {
     const isBossWave = gameState.wave % 5 === 0;
+    const isArchBossWave = gameState.wave === 100 || gameState.wave === 200;
     
     // Update end wave button visibility
     updateEndWaveButton();
     
     // Play wave start sound
-    if (isBossWave) {
+    if (isArchBossWave) {
+        playSound('bossWave');
+        // Play it again for extra drama
+        setTimeout(() => playSound('bossWave'), 500);
+    } else if (isBossWave) {
         playSound('bossWave');
     } else {
         playSound('waveStart');
     }
     
-    // Show wave announcement
-    waveAnnounceText.textContent = isBossWave ? `BOSS WAVE ${gameState.wave}` : `Wave ${gameState.wave}`;
-    waveAnnounceSubtext.textContent = isBossWave ? '💀 The Warlord approaches!' : 'Prepare yourself!';
+    // Show wave announcement with special messages for arch bosses
+    let announceText = `Wave ${gameState.wave}`;
+    let announceSubtext = 'Prepare yourself!';
+    
+    if (isArchBossWave) {
+        if (gameState.wave === 100) {
+            announceText = `⚠️ ARCH BOSS WAVE ${gameState.wave} ⚠️`;
+            announceSubtext = '🌑 THE MOON LORD AWAKENS! 🌑';
+        } else if (gameState.wave === 200) {
+            announceText = `💀 FINAL ARCH BOSS WAVE ${gameState.wave} 💀`;
+            announceSubtext = '☀️ THE SUN QUEEN DESCENDS! ☀️';
+        }
+    } else if (isBossWave) {
+        announceText = `BOSS WAVE ${gameState.wave}`;
+        announceSubtext = '💀 The Warlord approaches!';
+    }
+    
+    waveAnnounceText.textContent = announceText;
+    waveAnnounceSubtext.textContent = announceSubtext;
     waveOverlay.classList.remove('hidden');
-    if (isBossWave) waveOverlay.querySelector('.wave-announce').classList.add('boss');
-    else waveOverlay.querySelector('.wave-announce').classList.remove('boss');
+    
+    // Add special styling for arch boss waves
+    const waveAnnounce = waveOverlay.querySelector('.wave-announce');
+    waveAnnounce.classList.remove('boss', 'arch-boss');
+    if (isArchBossWave) {
+        waveAnnounce.classList.add('boss', 'arch-boss');
+    } else if (isBossWave) {
+        waveAnnounce.classList.add('boss');
+    }
     
     setTimeout(() => {
         waveOverlay.classList.add('hidden');
         spawnWaveEnemies();
-    }, 2000);
+    }, isArchBossWave ? 3000 : 2000);
 }
 
 function spawnWaveEnemies() {
@@ -2511,34 +2817,70 @@ function spawnWaveEnemies() {
     let enemies = [];
     
     if (isBossWave) {
-        // Progressive boss types based on wave
-        let bossType = 'boss';
-        if (wave >= 10) bossType = 'orcChampion';
-        if (wave >= 20) bossType = 'trollKing';
-        if (wave >= 30) bossType = 'elderDragon';
-        if (wave >= 40) bossType = 'lichLord';
-        if (wave >= 50) bossType = 'demonLord';
-        if (wave >= 75) bossType = 'titan';
-        if (wave >= 100) bossType = 'worldEater';
+        // Check for ARCH BOSSES first (special milestone waves)
+        const isArchBossWave = wave === 100 || wave === 200;
         
-        enemies.push({ type: bossType, delay: 0 });
-        
-        // Add extra bosses every 15 waves
-        const extraBosses = Math.floor(wave / 15);
-        for (let b = 0; b < extraBosses; b++) {
-            // Earlier boss types as adds
-            let addBoss = 'boss';
-            if (wave >= 30) addBoss = 'orcChampion';
-            if (wave >= 45) addBoss = 'trollKing';
-            enemies.push({ type: addBoss, delay: (1000 + b * 600) * spawnDelayMultiplier * waveDelayMultiplier });
+        if (isArchBossWave) {
+            // Spawn the appropriate Arch Boss
+            if (wave === 200) {
+                enemies.push({ type: 'sunQueen', delay: 0 });
+                // Sun Queen brings an army of doom
+                enemies.push({ type: 'moonLord', delay: 3000 * spawnDelayMultiplier });
+                enemies.push({ type: 'worldEater', delay: 5000 * spawnDelayMultiplier });
+                enemies.push({ type: 'titan', delay: 7000 * spawnDelayMultiplier });
+            } else if (wave === 100) {
+                enemies.push({ type: 'moonLord', delay: 0 });
+                // Moon Lord brings powerful minions
+                enemies.push({ type: 'chaosDragon', delay: 2000 * spawnDelayMultiplier });
+                enemies.push({ type: 'demonLord', delay: 4000 * spawnDelayMultiplier });
+            }
+        } else {
+            // Progressive boss types based on wave
+            let bossType = 'boss';
+            if (wave >= 10) bossType = 'orcChampion';
+            if (wave >= 20) bossType = 'trollKing';
+            if (wave >= 30) bossType = 'elderDragon';
+            if (wave >= 40) bossType = 'lichLord';
+            if (wave >= 50) bossType = 'demonLord';
+            if (wave >= 55) bossType = 'hydra';
+            if (wave >= 60) bossType = 'shadowKing';
+            if (wave >= 75) bossType = 'titan';
+            if (wave >= 80) bossType = 'chaosDragon';
+            if (wave >= 90) bossType = 'worldEater';
+            // Post-100 cycles through the most powerful bosses
+            if (wave > 100) {
+                const cycle = wave % 4;
+                if (cycle === 0) bossType = 'worldEater';
+                else if (cycle === 1) bossType = 'chaosDragon';
+                else if (cycle === 2) bossType = 'titan';
+                else bossType = 'hydra';
+            }
+            
+            enemies.push({ type: bossType, delay: 0 });
         }
         
-        // Add dragon/elder dragon on boss waves 15+
-        if (wave >= 15) {
-            const dragonCount = Math.floor(wave / 15);
-            for (let d = 0; d < dragonCount; d++) {
-                const dragonType = wave >= 40 ? 'elderDragon' : 'dragon';
-                enemies.push({ type: dragonType, delay: (1200 + d * 700) * spawnDelayMultiplier * waveDelayMultiplier });
+        // Add extra bosses every 15 waves (not on arch boss waves)
+        if (!isArchBossWave) {
+            const extraBosses = Math.floor(wave / 15);
+            for (let b = 0; b < extraBosses; b++) {
+                // Earlier boss types as adds
+                let addBoss = 'boss';
+                if (wave >= 30) addBoss = 'orcChampion';
+                if (wave >= 45) addBoss = 'trollKing';
+                if (wave >= 60) addBoss = 'shadowKing';
+                if (wave >= 75) addBoss = 'hydra';
+                enemies.push({ type: addBoss, delay: (1000 + b * 600) * spawnDelayMultiplier * waveDelayMultiplier });
+            }
+            
+            // Add dragon/elder dragon/chaos dragon on boss waves 15+
+            if (wave >= 15) {
+                const dragonCount = Math.floor(wave / 15);
+                for (let d = 0; d < dragonCount; d++) {
+                    let dragonType = 'dragon';
+                    if (wave >= 40) dragonType = 'elderDragon';
+                    if (wave >= 80) dragonType = 'chaosDragon';
+                    enemies.push({ type: dragonType, delay: (1200 + d * 700) * spawnDelayMultiplier * waveDelayMultiplier });
+                }
             }
         }
         
@@ -2579,6 +2921,11 @@ function spawnWaveEnemies() {
             if (wave >= 12 && roll > 0.88) type = 'dragon';
             if (wave >= 13 && roll > 0.79) type = 'snake';
             if (wave >= 14 && roll > 0.83) type = 'bear';
+            // New enemies unlock
+            if (wave >= 16 && roll > 0.81) type = 'harpy';
+            if (wave >= 17 && roll > 0.77) type = 'plagueRat';
+            if (wave >= 18 && roll > 0.86) type = 'fireElemental';
+            if (wave >= 19 && roll > 0.87) type = 'gargoyle';
             
             // Late game: more dangerous enemies become common
             if (wave >= 15) {
@@ -2594,19 +2941,35 @@ function spawnWaveEnemies() {
             if (wave >= 20) {
                 if (roll > 0.4) type = 'troll';
                 if (roll > 0.5) type = 'bear';
+                if (roll > 0.55) type = 'harpy';
                 if (roll > 0.6) type = 'ogre';
                 if (roll > 0.7) type = 'ghost';
                 if (roll > 0.75) type = 'demon';
                 if (roll > 0.8) type = 'golem';
+                if (roll > 0.85) type = 'iceElemental';
                 if (roll > 0.88) type = 'dragon';
             }
             
             if (wave >= 30) {
                 if (roll > 0.35) type = 'demon';
+                if (roll > 0.45) type = 'darkKnight';
                 if (roll > 0.5) type = 'golem';
+                if (roll > 0.55) type = 'banshee';
                 if (roll > 0.65) type = 'necromancer';
+                if (roll > 0.7) type = 'mimic';
                 if (roll > 0.8) type = 'dragon';
                 if (roll > 0.9) type = 'assassin';
+            }
+            
+            // Very late game - all dangerous enemies
+            if (wave >= 50) {
+                if (roll > 0.3) type = 'darkKnight';
+                if (roll > 0.4) type = 'golem';
+                if (roll > 0.5) type = 'demon';
+                if (roll > 0.6) type = 'gargoyle';
+                if (roll > 0.7) type = 'mimic';
+                if (roll > 0.8) type = 'assassin';
+                if (roll > 0.9) type = 'dragon';
             }
             
             // Faster spawn rate in later waves, but stretched by waveDelayMultiplier every 5 waves
@@ -2772,8 +3135,11 @@ function updateEnemies(now, dtFactor = 1) {
     const castleX = castleCenterX;
     const castleY = castleCenterY;
     
-    gameState.enemies.forEach(enemy => {
-        if (!enemy.element) return;
+    // Use for loop instead of forEach for better performance with many enemies
+    const enemies = gameState.enemies;
+    for (let i = 0; i < enemies.length; i++) {
+        const enemy = enemies[i];
+        if (!enemy.element) continue;
         
         // Calculate direction to castle
         const dx = castleX - enemy.x;
@@ -2792,7 +3158,7 @@ function updateEnemies(now, dtFactor = 1) {
             enemy.x += (dx / dist) * speed;
             enemy.y += (dy / dist) * speed;
             
-            // Update position using transform for better performance
+            // Update position
             enemy.element.style.left = enemy.x + 'px';
             enemy.element.style.top = enemy.y + 'px';
         } else {
@@ -2812,7 +3178,7 @@ function updateEnemies(now, dtFactor = 1) {
                 enemy.lastAttack = now;
             }
         }
-    });
+    }
 }
 
 function fireEnemyProjectile(enemy, targetX, targetY) {
@@ -2829,9 +3195,24 @@ function fireEnemyProjectile(enemy, targetX, targetY) {
     } else if (enemy.type === 'darkMage') {
         emoji = '🔮';
         projectileClass = 'magic';
-    } else if (enemy.type === 'dragon') {
+    } else if (enemy.type === 'dragon' || enemy.type === 'elderDragon' || enemy.type === 'chaosDragon') {
         emoji = '🔥';
-        projectileClass = 'magic';
+        projectileClass = 'magic fire';
+    } else if (enemy.type === 'witch') {
+        emoji = '💚';
+        projectileClass = 'magic poison';
+    } else if (enemy.type === 'necromancer' || enemy.type === 'lichLord') {
+        emoji = '💀';
+        projectileClass = 'magic dark';
+    } else if (enemy.type === 'harpy') {
+        emoji = '🪶';
+        projectileClass = 'feather';
+    } else if (enemy.type === 'banshee') {
+        emoji = '💨';
+        projectileClass = 'wail';
+    } else if (enemy.type === 'shadowKing') {
+        emoji = '🌑';
+        projectileClass = 'shadow';
     }
     
     projectile.classList.add(projectileClass);
@@ -3480,12 +3861,10 @@ function updateProjectiles(dtFactor = 1) {
                 const magicMult = gameState.stats.magicDamageMultiplier || 1;
                 const splashDmg = damage * gameState.stats.splashDamage * magicMult;
                 createVisualEffect(hitX, hitY, 'splash');
-                gameState.enemies.forEach(e => {
-                    if (e.id !== hitId && e.health > 0) {
-                        const d = Math.sqrt((e.x - hitX) ** 2 + (e.y - hitY) ** 2);
-                        if (d < 60) damageEnemy(e, splashDmg);
-                    }
-                });
+                const nearbyEnemies = getEnemiesInRadius(hitX, hitY, 60, hitId);
+                for (let i = 0; i < nearbyEnemies.length; i++) {
+                    damageEnemy(nearbyEnemies[i], splashDmg);
+                }
             }
             
             // Explosive arrows - magic ability, disabled by Magic Void
@@ -3493,22 +3872,20 @@ function updateProjectiles(dtFactor = 1) {
                 // Add explosion visual
                 createVisualEffect(hitX, hitY, 'meteor-impact');
                 const magicMult = gameState.stats.magicDamageMultiplier || 1;
-                gameState.enemies.forEach(e => {
-                    if (e.id !== hitId) {
-                        const d = Math.sqrt((e.x - hitX) ** 2 + (e.y - hitY) ** 2);
-                        if (d < 80) damageEnemy(e, damage * 0.5 * magicMult);
-                    }
-                });
+                const nearbyEnemies = getEnemiesInRadius(hitX, hitY, 80, hitId);
+                for (let i = 0; i < nearbyEnemies.length; i++) {
+                    damageEnemy(nearbyEnemies[i], damage * 0.5 * magicMult);
+                }
             }
             
             // Fireball explosion
             if (proj.type === 'fireball') {
                 // Add meteor impact visual
                 createVisualEffect(hitX, hitY, 'meteor-impact');
-                gameState.enemies.forEach(e => {
-                    const d = Math.sqrt((e.x - hitX) ** 2 + (e.y - hitY) ** 2);
-                    if (d < 100) damageEnemy(e, damage * 0.5);
-                });
+                const nearbyEnemies = getEnemiesInRadius(hitX, hitY, 100);
+                for (let i = 0; i < nearbyEnemies.length; i++) {
+                    damageEnemy(nearbyEnemies[i], damage * 0.5);
+                }
             }
             
             // Freeze chance - magic ability, disabled by Magic Void
@@ -3630,18 +4007,45 @@ function updateProjectiles(dtFactor = 1) {
 function damageEnemy(enemy, damage, isCrit = false) {
     enemy.health -= damage;
     
-    // Play hit sound
-    playSound('enemyHit');
+    // Play hit sound (throttled when many enemies)
+    const now = Date.now();
+    if (now - lastHitSoundTime >= HIT_SOUND_THROTTLE) {
+        playSound('enemyHit');
+        lastHitSoundTime = now;
+    }
     
     // Show damage number
     showDamageNumber(enemy.x, enemy.y - 20, Math.round(damage), isCrit);
     
-    // Hit animation
-    if (enemy.element) {
+    // Life steal - heal castle for a percentage of damage dealt (Vampiric Arrows)
+    if (gameState.stats.lifeSteal && gameState.stats.lifeSteal > 0) {
+        const healAmount = damage * gameState.stats.lifeSteal;
+        if (healAmount >= 1) {
+            gameState.castle.health = Math.min(gameState.stats.maxHealth, gameState.castle.health + healAmount);
+            updateHealthBar();
+            // Show small heal number at castle position (only for significant heals)
+            if (healAmount >= 2) {
+                showDamageNumber(castleCenterX, castleCenterY - 30, '+' + Math.round(healAmount), false, '#88FF88');
+            }
+        }
+    }
+    
+    // Hit animation (throttle when many enemies to prevent setTimeout buildup)
+    if (enemy.element && !enemy.hitAnimating) {
+        enemy.hitAnimating = true;
         enemy.element.classList.add('hit');
-        setTimeout(() => enemy.element.classList.remove('hit'), 150);
+        setTimeout(() => {
+            if (enemy.element) enemy.element.classList.remove('hit');
+            enemy.hitAnimating = false;
+        }, 150);
         
         // Update health bar
+        const healthFill = enemy.element.querySelector('.enemy-health-fill');
+        if (healthFill) {
+            healthFill.style.width = (enemy.health / enemy.maxHealth * 100) + '%';
+        }
+    } else if (enemy.element) {
+        // Still update health bar even if we skip the animation
         const healthFill = enemy.element.querySelector('.enemy-health-fill');
         if (healthFill) {
             healthFill.style.width = (enemy.health / enemy.maxHealth * 100) + '%';
@@ -3740,6 +4144,11 @@ function killEnemy(enemy) {
 }
 
 function showDamageNumber(x, y, damage, isCrit = false, isGold = false) {
+    // Performance: Limit damage numbers when many are active
+    if (activeDamageNumbers >= MAX_DAMAGE_NUMBERS && !isCrit) {
+        return; // Skip non-crit damage numbers when at limit
+    }
+    
     const el = document.createElement('div');
     el.className = `damage-number${isCrit ? ' crit' : ''}${isGold ? ' heal' : ''}`;
     el.textContent = damage;
@@ -3747,7 +4156,11 @@ function showDamageNumber(x, y, damage, isCrit = false, isGold = false) {
     el.style.top = y + 'px';
     gameArena.appendChild(el);
     
-    setTimeout(() => el.remove(), 800);
+    activeDamageNumbers++;
+    setTimeout(() => {
+        el.remove();
+        activeDamageNumbers--;
+    }, 800);
 }
 
 function updateEnemyCount() {
@@ -6679,12 +7092,91 @@ function initDebugPanel() {
     });
     
     // Quick actions
-    document.getElementById('debugAddGold')?.addEventListener('click', () => {
-        if (gameState) {
-            gameState.gold += 1000;
-            updateGoldDisplay();
-            playSound('goldEarn');
-            updateDebugStatsDisplay();
+    // Health modifier - Heal button
+    document.getElementById('debugHealHealth')?.addEventListener('click', () => {
+        if (gameState && gameScreen && !gameScreen.classList.contains('hidden')) {
+            // Don't do anything if infinite health is on
+            if (debugState.infiniteHealth) {
+                playSound('error');
+                return;
+            }
+            const amountInput = document.getElementById('debugHealthAmount');
+            const amount = parseInt(amountInput?.value) || 50;
+            if (amount > 0) {
+                const oldHealth = gameState.castle.health;
+                gameState.castle.health = Math.min(gameState.stats.maxHealth, gameState.castle.health + amount);
+                const actualHeal = gameState.castle.health - oldHealth;
+                if (actualHeal > 0) {
+                    updateHealthBar();
+                    showDamageNumber(castleCenterX, castleCenterY - 30, '+' + Math.round(actualHeal), false, '#88FF88');
+                    playSound('heal');
+                } else {
+                    playSound('error'); // Already at max health
+                }
+                updateDebugStatsDisplay();
+            }
+        }
+    });
+    
+    // Health modifier - Damage button
+    document.getElementById('debugDamageHealth')?.addEventListener('click', () => {
+        if (gameState && gameScreen && !gameScreen.classList.contains('hidden')) {
+            // Don't do anything if infinite health is on
+            if (debugState.infiniteHealth) {
+                playSound('error');
+                return;
+            }
+            const amountInput = document.getElementById('debugHealthAmount');
+            const amount = parseInt(amountInput?.value) || 50;
+            if (amount > 0) {
+                gameState.castle.health = Math.max(0, gameState.castle.health - amount);
+                updateHealthBar();
+                showDamageNumber(castleCenterX, castleCenterY - 30, '-' + amount, false, '#FF4444');
+                playSound('castleHit');
+                updateDebugStatsDisplay();
+                
+                // Check for game over
+                if (gameState.castle.health <= 0) {
+                    playSound('castleDestroyed');
+                    endGame();
+                }
+            }
+        }
+    });
+    
+    // Gold modifier - Add button
+    document.getElementById('debugAddGoldAmount')?.addEventListener('click', () => {
+        if (gameState && gameScreen && !gameScreen.classList.contains('hidden')) {
+            const amountInput = document.getElementById('debugGoldAmount');
+            const amount = parseInt(amountInput?.value) || 100;
+            if (amount > 0) {
+                gameState.gold += amount;
+                updateGoldDisplay();
+                showDamageNumber(castleCenterX, castleCenterY - 60, '+' + amount + '🪙', false, '#FFD700');
+                playSound('goldEarn');
+                updateDebugStatsDisplay();
+            }
+        }
+    });
+    
+    // Gold modifier - Remove button
+    document.getElementById('debugRemoveGoldAmount')?.addEventListener('click', () => {
+        if (gameState && gameScreen && !gameScreen.classList.contains('hidden')) {
+            const amountInput = document.getElementById('debugGoldAmount');
+            const amount = parseInt(amountInput?.value) || 100;
+            if (amount > 0) {
+                const oldGold = gameState.gold;
+                gameState.gold = Math.max(0, gameState.gold - amount);
+                const actualRemoved = oldGold - gameState.gold;
+                if (actualRemoved > 0) {
+                    updateGoldDisplay();
+                    showDamageNumber(castleCenterX, castleCenterY - 60, '-' + actualRemoved + '🪙', false, '#FF4444');
+                    playSound('purchase');
+                } else {
+                    playSound('error'); // Already at 0 gold
+                }
+                updateDebugStatsDisplay();
+            }
         }
     });
     
@@ -6784,6 +7276,7 @@ function initDebugPanel() {
             if (!gameState.collectedUpgrades.includes(upgradeId)) {
                 gameState.collectedUpgrades.push(upgradeId);
             }
+            updateHealthBar();
             updateDebugStatsDisplay();
             updatePowerDisplay();
             updateCastleVisuals();
@@ -6808,6 +7301,7 @@ function initDebugPanel() {
                 if (upgradeId === 'garrison_e') {
                     syncGarrisons();
                 }
+                updateHealthBar();
                 updateDebugStatsDisplay();
                 updatePowerDisplay();
                 updateCastleVisuals();
@@ -6830,6 +7324,7 @@ function initDebugPanel() {
                     gameState.collectedUpgrades.push(id);
                 }
             });
+            updateHealthBar();
             updateDebugStatsDisplay();
             updatePowerDisplay();
             updateCastleVisuals();
@@ -6894,6 +7389,7 @@ function initDebugPanel() {
         const allDebuffs = { ...DEBUFF_CARDS, ...DEVASTATING_DEBUFFS };
         if (debuffId && allDebuffs[debuffId] && gameState) {
             applyDebuffWithTracking(debuffId);
+            updateHealthBar();
             updateDebugStatsDisplay();
             updateMagicVisuals();
             // Update pause menu if open
@@ -6923,6 +7419,7 @@ function initDebugPanel() {
                     gameState.activeDebuffs.splice(activeIdx, 1);
                 }
             }
+            updateHealthBar();
             updateDebugStatsDisplay();
             updateMagicVisuals();
             // Update pause menu if open
@@ -6938,6 +7435,7 @@ function initDebugPanel() {
             Object.keys(allDebuffs).forEach(id => {
                 applyDebuffWithTracking(id);
             });
+            updateHealthBar();
             updateDebugStatsDisplay();
             updateMagicVisuals();
             // Update pause menu if open
@@ -6964,6 +7462,7 @@ function initDebugPanel() {
             gameState.stats.critChanceDebuff = 0;
             gameState.stats.enemySpeedDebuff = 1;
             gameState.stats.enemyDamageDebuff = 1;
+            updateHealthBar();
             updateDebugStatsDisplay();
             updateMagicVisuals();
             // Update pause menu if open
@@ -7065,8 +7564,11 @@ function forceEndWave() {
     }, 500);
 }
 
-// List of boss enemy types
-const BOSS_ENEMY_TYPES = ['boss', 'dragon', 'orcChampion', 'trollKing', 'elderDragon', 'lichLord', 'demonLord', 'titan', 'worldEater'];
+// List of boss enemy types (including new bosses and arch bosses)
+const BOSS_ENEMY_TYPES = ['boss', 'dragon', 'orcChampion', 'trollKing', 'elderDragon', 'lichLord', 'demonLord', 'titan', 'worldEater', 'hydra', 'shadowKing', 'chaosDragon', 'moonLord', 'sunQueen'];
+
+// List of arch boss types (for special handling)
+const ARCH_BOSS_TYPES = ['moonLord', 'sunQueen'];
 
 function populateDebugPanel() {
     // Populate regular enemy grid
@@ -7090,12 +7592,13 @@ function populateDebugPanel() {
         });
     }
     
-    // Populate boss grid
+    // Populate boss grid (excluding arch bosses)
     const bossGrid = document.getElementById('debugBossGrid');
     if (bossGrid && bossGrid.children.length === 0) {
         Object.entries(ENEMY_TYPES).forEach(([type, data]) => {
-            // Only bosses
+            // Only regular bosses (not arch bosses)
             if (!BOSS_ENEMY_TYPES.includes(type)) return;
+            if (ARCH_BOSS_TYPES.includes(type)) return;
             
             const btn = document.createElement('button');
             btn.className = 'debug-enemy-btn boss';
@@ -7108,6 +7611,29 @@ function populateDebugPanel() {
                 }
             });
             bossGrid.appendChild(btn);
+        });
+    }
+    
+    // Populate arch boss grid
+    const archBossGrid = document.getElementById('debugArchBossGrid');
+    if (archBossGrid && archBossGrid.children.length === 0) {
+        Object.entries(ENEMY_TYPES).forEach(([type, data]) => {
+            // Only arch bosses
+            if (!ARCH_BOSS_TYPES.includes(type)) return;
+            
+            const btn = document.createElement('button');
+            btn.className = 'debug-enemy-btn arch-boss';
+            btn.innerHTML = `<span class="emoji">${data.emoji}</span>${data.name}`;
+            btn.addEventListener('click', () => {
+                if (gameScreen && !gameScreen.classList.contains('hidden')) {
+                    spawnEnemy(type);
+                    gameState.waveEnemies++;
+                    playSound('bossSpawn');
+                    // Play extra sound for dramatic effect
+                    setTimeout(() => playSound('bossWave'), 200);
+                }
+            });
+            archBossGrid.appendChild(btn);
         });
     }
     

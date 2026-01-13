@@ -1509,6 +1509,175 @@ body::after {
     to { filter: drop-shadow(0 0 70px rgba(255, 100, 255, 1)) brightness(1.4); }
 }
 
+/* ===== NEW BOSS STYLES ===== */
+.enemy.hydra {
+    font-size: 5rem;
+    filter: drop-shadow(0 0 20px rgba(0, 200, 100, 0.8));
+    animation: hydraGlow 1s ease-in-out infinite alternate;
+}
+
+@keyframes hydraGlow {
+    from { filter: drop-shadow(0 0 20px rgba(0, 200, 100, 0.5)); }
+    to { filter: drop-shadow(0 0 40px rgba(0, 255, 150, 1)); }
+}
+
+.enemy.shadow-king {
+    font-size: 4.5rem;
+    filter: drop-shadow(0 0 25px rgba(50, 0, 100, 0.9));
+    animation: shadowKingGlow 1.2s ease-in-out infinite alternate;
+}
+
+@keyframes shadowKingGlow {
+    from { filter: drop-shadow(0 0 25px rgba(50, 0, 100, 0.5)) brightness(0.8); }
+    to { filter: drop-shadow(0 0 45px rgba(100, 0, 200, 1)) brightness(1); }
+}
+
+.enemy.chaos-dragon {
+    font-size: 6rem;
+    filter: drop-shadow(0 0 30px rgba(200, 0, 255, 0.9)) hue-rotate(280deg);
+    animation: chaosDragonGlow 0.6s ease-in-out infinite alternate;
+}
+
+@keyframes chaosDragonGlow {
+    from { filter: drop-shadow(0 0 30px rgba(200, 0, 255, 0.6)) hue-rotate(260deg) brightness(1); }
+    to { filter: drop-shadow(0 0 55px rgba(255, 0, 200, 1)) hue-rotate(300deg) brightness(1.3); }
+}
+
+/* ===== ARCH BOSS STYLES ===== */
+.enemy.moon-lord {
+    font-size: 9rem;
+    filter: drop-shadow(0 0 50px rgba(100, 100, 180, 0.95));
+    animation: moonLordGlow 1s ease-in-out infinite alternate;
+}
+
+@keyframes moonLordGlow {
+    from { filter: drop-shadow(0 0 50px rgba(100, 100, 180, 0.7)) brightness(0.9); }
+    to { filter: drop-shadow(0 0 80px rgba(150, 150, 220, 1)) brightness(1.2); }
+}
+
+.enemy.sun-queen {
+    font-size: 11rem;
+    filter: drop-shadow(0 0 60px rgba(255, 200, 50, 0.95));
+    animation: sunQueenGlow 0.5s ease-in-out infinite alternate;
+}
+
+@keyframes sunQueenGlow {
+    from { filter: drop-shadow(0 0 60px rgba(255, 200, 50, 0.7)) brightness(1.1); }
+    to { filter: drop-shadow(0 0 100px rgba(255, 150, 0, 1)) brightness(1.5); }
+}
+
+/* ===== SIMILAR ENEMY VISUAL DISTINCTIONS ===== */
+/* Demon - red fiery glow to distinguish from regular Orc */
+.enemy.demon {
+    font-size: 2.2rem;
+    filter: drop-shadow(0 0 8px rgba(255, 50, 0, 0.8));
+    animation: demonGlow 0.8s ease-in-out infinite alternate;
+}
+
+@keyframes demonGlow {
+    from { filter: drop-shadow(0 0 8px rgba(255, 50, 0, 0.5)); }
+    to { filter: drop-shadow(0 0 15px rgba(255, 100, 0, 1)); }
+}
+
+/* Banshee - ethereal blue glow to distinguish from Ghost */
+.enemy.banshee {
+    font-size: 1.8rem;
+    filter: drop-shadow(0 0 10px rgba(100, 150, 255, 0.9));
+    animation: bansheeGlow 1.5s ease-in-out infinite alternate;
+}
+
+@keyframes bansheeGlow {
+    from { filter: drop-shadow(0 0 10px rgba(100, 150, 255, 0.5)) brightness(1.1); }
+    to { filter: drop-shadow(0 0 20px rgba(150, 200, 255, 1)) brightness(1.3); }
+}
+
+/* Gargoyle - stone gray glow, slightly smaller than Golem */
+.enemy.gargoyle {
+    font-size: 1.6rem;
+    filter: drop-shadow(0 0 5px rgba(100, 100, 120, 0.8)) saturate(0.7);
+}
+
+/* Ghost/Wraith - more transparent and floaty */
+.enemy.ghost {
+    opacity: 0.85;
+    animation: ghostFloat 2s ease-in-out infinite;
+}
+
+@keyframes ghostFloat {
+    0%, 100% { transform: translate(-50%, -50%) translateY(0); }
+    50% { transform: translate(-50%, -50%) translateY(-5px); }
+}
+
+/* Dragon variants - distinct glows */
+.enemy.dragon {
+    font-size: 2.5rem;
+    filter: drop-shadow(0 0 8px rgba(255, 150, 0, 0.7));
+}
+
+/* Assassin - darker, stealthier look */
+.enemy.assassin {
+    font-size: 1.5rem;
+    filter: drop-shadow(0 0 5px rgba(30, 30, 50, 0.9)) brightness(0.85);
+}
+
+/* Harpy - wind effect */
+.enemy.harpy {
+    animation: harpyHover 0.5s ease-in-out infinite alternate;
+}
+
+@keyframes harpyHover {
+    from { transform: translate(-50%, -50%) translateY(0); }
+    to { transform: translate(-50%, -50%) translateY(-3px); }
+}
+
+/* Fire Elemental - intense fire glow */
+.enemy.fire-elemental {
+    font-size: 2rem;
+    filter: drop-shadow(0 0 12px rgba(255, 100, 0, 0.9));
+    animation: fireElementalGlow 0.4s ease-in-out infinite alternate;
+}
+
+@keyframes fireElementalGlow {
+    from { filter: drop-shadow(0 0 12px rgba(255, 100, 0, 0.6)); }
+    to { filter: drop-shadow(0 0 20px rgba(255, 200, 0, 1)); }
+}
+
+/* Ice Elemental - cold blue glow */
+.enemy.ice-elemental {
+    font-size: 2rem;
+    filter: drop-shadow(0 0 12px rgba(100, 200, 255, 0.9));
+    animation: iceElementalGlow 0.6s ease-in-out infinite alternate;
+}
+
+@keyframes iceElementalGlow {
+    from { filter: drop-shadow(0 0 12px rgba(100, 200, 255, 0.6)); }
+    to { filter: drop-shadow(0 0 20px rgba(150, 230, 255, 1)); }
+}
+
+/* Dark Knight - dark purple menacing glow */
+.enemy.dark-knight {
+    font-size: 2.2rem;
+    filter: drop-shadow(0 0 10px rgba(80, 0, 120, 0.8));
+}
+
+/* Plague Rat - sickly green glow */
+.enemy.plague-rat {
+    font-size: 1.3rem;
+    filter: drop-shadow(0 0 5px rgba(100, 180, 50, 0.7));
+}
+
+/* Mimic - golden shimmer to look like treasure */
+.enemy.mimic {
+    font-size: 1.9rem;
+    filter: drop-shadow(0 0 8px rgba(255, 200, 50, 0.8));
+    animation: mimicShimmer 1s ease-in-out infinite;
+}
+
+@keyframes mimicShimmer {
+    0%, 100% { filter: drop-shadow(0 0 8px rgba(255, 200, 50, 0.5)); }
+    50% { filter: drop-shadow(0 0 15px rgba(255, 220, 100, 1)); }
+}
+
 @keyframes bossGlow {
     from { filter: drop-shadow(0 0 15px rgba(139, 0, 0, 0.5)); }
     to { filter: drop-shadow(0 0 25px rgba(139, 0, 0, 1)); }
@@ -5185,6 +5354,485 @@ body::after {
     100% { opacity: 0; transform: translateX(20px); }
 }
 
+/* ===== NEW ENEMY ATTACK EFFECTS ===== */
+
+/* Fire Elemental burst attack */
+.enemy-attack-fire-burst {
+    position: absolute;
+    width: 90px;
+    height: 90px;
+    pointer-events: none;
+    z-index: 17;
+    animation: fireBurst 0.5s ease-out forwards;
+}
+
+.enemy-attack-fire-burst::before {
+    content: '🔥';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 2.5rem;
+}
+
+.enemy-attack-fire-burst::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255, 150, 0, 0.6) 0%, rgba(255, 50, 0, 0.3) 50%, transparent 70%);
+}
+
+@keyframes fireBurst {
+    0% { opacity: 0; transform: scale(0.3); }
+    40% { opacity: 1; transform: scale(1.4); }
+    100% { opacity: 0; transform: scale(1.6); }
+}
+
+/* Ice Elemental freeze attack */
+.enemy-attack-ice {
+    position: absolute;
+    width: 80px;
+    height: 80px;
+    pointer-events: none;
+    z-index: 17;
+    animation: iceAttack 0.5s ease-out forwards;
+}
+
+.enemy-attack-ice::before {
+    content: '❄️';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 2.5rem;
+}
+
+.enemy-attack-ice::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 120%;
+    height: 120%;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(150, 220, 255, 0.5) 0%, transparent 70%);
+}
+
+@keyframes iceAttack {
+    0% { opacity: 0; transform: scale(0.5) rotate(0deg); }
+    50% { opacity: 1; transform: scale(1.2) rotate(180deg); }
+    100% { opacity: 0; transform: scale(1) rotate(360deg); }
+}
+
+/* Mimic chomp attack */
+.enemy-attack-chomp {
+    position: absolute;
+    width: 70px;
+    height: 70px;
+    pointer-events: none;
+    z-index: 17;
+    animation: mimicChomp 0.4s ease-out forwards;
+}
+
+.enemy-attack-chomp::before {
+    content: '👄';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 2rem;
+}
+
+@keyframes mimicChomp {
+    0% { transform: scale(0.5); opacity: 0; }
+    30% { transform: scale(1.3); opacity: 1; }
+    50% { transform: scale(0.8); }
+    70% { transform: scale(1.2); }
+    100% { transform: scale(1); opacity: 0; }
+}
+
+/* Plague Rat poison attack */
+.enemy-attack-plague {
+    position: absolute;
+    width: 50px;
+    height: 50px;
+    pointer-events: none;
+    z-index: 17;
+    animation: plagueCloud 0.5s ease-out forwards;
+}
+
+.enemy-attack-plague::before {
+    content: '☠️';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 1.5rem;
+}
+
+.enemy-attack-plague::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 150%;
+    height: 150%;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(100, 180, 50, 0.5) 0%, transparent 70%);
+}
+
+@keyframes plagueCloud {
+    0% { opacity: 0; transform: scale(0.3); }
+    30% { opacity: 1; transform: scale(1); }
+    100% { opacity: 0; transform: scale(1.5); }
+}
+
+/* Dark Knight slash */
+.enemy-attack-slash {
+    position: absolute;
+    width: 100px;
+    height: 100px;
+    pointer-events: none;
+    z-index: 17;
+    animation: darkSlash 0.4s ease-out forwards;
+}
+
+.enemy-attack-slash::before {
+    content: '⚔️';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 2.5rem;
+    filter: drop-shadow(0 0 8px rgba(80, 0, 120, 0.8));
+}
+
+.enemy-attack-slash::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 30%;
+    width: 60px;
+    height: 4px;
+    background: linear-gradient(90deg, transparent, rgba(150, 100, 200, 0.8), transparent);
+    transform: rotate(-45deg);
+}
+
+@keyframes darkSlash {
+    0% { opacity: 0; transform: translateX(-30px) rotate(-30deg); }
+    50% { opacity: 1; transform: translateX(0) rotate(0deg); }
+    100% { opacity: 0; transform: translateX(30px) rotate(30deg); }
+}
+
+/* Gargoyle claw */
+.enemy-attack-claw {
+    position: absolute;
+    width: 70px;
+    height: 70px;
+    pointer-events: none;
+    z-index: 17;
+    animation: gargClaw 0.3s ease-out forwards;
+}
+
+.enemy-attack-claw::before {
+    content: '🦴';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 2rem;
+}
+
+@keyframes gargClaw {
+    0% { opacity: 0; transform: scale(0.5) rotate(-45deg); }
+    50% { opacity: 1; transform: scale(1.2) rotate(0deg); }
+    100% { opacity: 0; transform: scale(1) rotate(15deg); }
+}
+
+/* ===== BOSS ATTACK EFFECTS ===== */
+
+/* Hydra multi-strike */
+.enemy-attack-hydra {
+    position: absolute;
+    width: 150px;
+    height: 150px;
+    pointer-events: none;
+    z-index: 17;
+    animation: hydraStrike 0.6s ease-out forwards;
+}
+
+.enemy-attack-hydra::before {
+    content: '🐍🐍🐍';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 2rem;
+    letter-spacing: -8px;
+}
+
+.enemy-attack-hydra::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 100%;
+    height: 100%;
+    border: 3px solid rgba(0, 150, 100, 0.6);
+    border-radius: 50%;
+    animation: hydraWave 0.6s ease-out forwards;
+}
+
+@keyframes hydraStrike {
+    0% { opacity: 0; transform: scale(0.3); }
+    30% { opacity: 1; transform: scale(1.2); }
+    100% { opacity: 0; transform: scale(1); }
+}
+
+@keyframes hydraWave {
+    0% { transform: translate(-50%, -50%) scale(0.5); opacity: 1; }
+    100% { transform: translate(-50%, -50%) scale(2); opacity: 0; }
+}
+
+/* Chaos Dragon chaos flames */
+.enemy-attack-chaos {
+    position: absolute;
+    width: 180px;
+    height: 180px;
+    pointer-events: none;
+    z-index: 17;
+    animation: chaosFlame 0.7s ease-out forwards;
+}
+
+.enemy-attack-chaos::before {
+    content: '🔥';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 4rem;
+    filter: hue-rotate(280deg) saturate(1.5);
+}
+
+.enemy-attack-chaos::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(200, 0, 255, 0.4) 0%, rgba(100, 0, 150, 0.2) 50%, transparent 70%);
+}
+
+@keyframes chaosFlame {
+    0% { opacity: 0; transform: scale(0.4) rotate(0deg); }
+    50% { opacity: 1; transform: scale(1.3) rotate(90deg); }
+    100% { opacity: 0; transform: scale(1.5) rotate(180deg); }
+}
+
+/* ===== ARCH BOSS ATTACK EFFECTS ===== */
+
+/* Moon Lord attack */
+.enemy-attack-moon {
+    position: absolute;
+    width: 250px;
+    height: 250px;
+    pointer-events: none;
+    z-index: 17;
+    animation: moonBlast 0.8s ease-out forwards;
+}
+
+.enemy-attack-moon::before {
+    content: '🌚';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 5rem;
+    filter: drop-shadow(0 0 20px rgba(100, 100, 180, 0.9));
+}
+
+.enemy-attack-moon::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(80, 80, 150, 0.7) 0%, rgba(50, 50, 120, 0.3) 50%, transparent 70%);
+    animation: moonPulse 0.4s ease-in-out 2;
+}
+
+@keyframes moonBlast {
+    0% { opacity: 0; transform: scale(0.2); }
+    30% { opacity: 1; transform: scale(1.5); }
+    100% { opacity: 0; transform: scale(2); }
+}
+
+@keyframes moonPulse {
+    0%, 100% { transform: translate(-50%, -50%) scale(1); }
+    50% { transform: translate(-50%, -50%) scale(1.3); }
+}
+
+/* Sun Queen attack */
+.enemy-attack-sun {
+    position: absolute;
+    width: 300px;
+    height: 300px;
+    pointer-events: none;
+    z-index: 17;
+    animation: sunBlast 1s ease-out forwards;
+}
+
+.enemy-attack-sun::before {
+    content: '☀️';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 6rem;
+    filter: drop-shadow(0 0 30px rgba(255, 220, 100, 0.9));
+    animation: sunFlash 0.2s ease-in-out 3;
+}
+
+.enemy-attack-sun::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255, 200, 50, 0.5) 0%, rgba(255, 100, 0, 0.3) 40%, transparent 70%);
+    animation: sunWave 1s ease-out forwards;
+}
+
+@keyframes sunBlast {
+    0% { opacity: 0; transform: scale(0.3); }
+    20% { opacity: 1; transform: scale(1.8); }
+    100% { opacity: 0; transform: scale(2.5); }
+}
+
+@keyframes sunFlash {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+}
+
+@keyframes sunWave {
+    0% { transform: translate(-50%, -50%) scale(0.5); opacity: 1; border: 5px solid rgba(255, 200, 100, 0.8); }
+    100% { transform: translate(-50%, -50%) scale(3); opacity: 0; border: 2px solid rgba(255, 200, 100, 0.2); }
+}
+
+/* ===== NEW ENEMY PROJECTILE STYLES ===== */
+
+.enemy-projectile.feather {
+    color: #8B4513;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+    animation: featherFloat 0.5s ease-out;
+}
+
+.enemy-projectile.wail {
+    color: #AAAAFF;
+    text-shadow: 0 0 10px rgba(150, 150, 255, 0.8);
+    animation: wailPulse 0.3s ease-in-out infinite;
+}
+
+.enemy-projectile.shadow {
+    color: #2A0040;
+    text-shadow: 0 0 15px rgba(50, 0, 80, 0.9);
+    animation: shadowPulse 0.4s ease-in-out infinite;
+}
+
+.enemy-projectile.fire {
+    filter: drop-shadow(0 0 5px rgba(255, 100, 0, 0.8));
+}
+
+.enemy-projectile.poison {
+    filter: drop-shadow(0 0 5px rgba(100, 200, 50, 0.8));
+}
+
+.enemy-projectile.dark {
+    filter: drop-shadow(0 0 8px rgba(100, 0, 150, 0.8));
+}
+
+@keyframes featherFloat {
+    0%, 100% { transform: rotate(0deg) translateY(0); }
+    50% { transform: rotate(5deg) translateY(-3px); }
+}
+
+@keyframes wailPulse {
+    0%, 100% { opacity: 0.8; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.2); }
+}
+
+@keyframes shadowPulse {
+    0%, 100% { opacity: 0.9; }
+    50% { opacity: 0.5; }
+}
+
+/* ===== ARCH BOSS VISUAL STYLES ===== */
+
+.enemy.arch-boss {
+    filter: drop-shadow(0 0 20px rgba(200, 0, 255, 0.8)) drop-shadow(0 0 40px rgba(100, 0, 150, 0.5));
+}
+
+.enemy.void-lord span {
+    filter: drop-shadow(0 0 15px rgba(50, 0, 80, 0.9));
+}
+
+.enemy.primordial-titan span {
+    filter: drop-shadow(0 0 20px rgba(255, 200, 100, 0.9));
+    animation: titanGlow 1s ease-in-out infinite;
+}
+
+@keyframes titanGlow {
+    0%, 100% { filter: drop-shadow(0 0 20px rgba(255, 200, 100, 0.9)); }
+    50% { filter: drop-shadow(0 0 40px rgba(255, 150, 50, 1)); }
+}
+
+/* Arch boss wave announcement styling */
+.wave-announce.arch-boss {
+    animation: archBossAnnounce 3s ease-out forwards;
+}
+
+.wave-announce.arch-boss .wave-text {
+    color: #FF0066;
+    text-shadow: 0 0 20px rgba(255, 0, 100, 0.8), 0 0 40px rgba(200, 0, 150, 0.6);
+    animation: archBossText 0.5s ease-in-out infinite;
+}
+
+.wave-announce.arch-boss .wave-subtext {
+    color: #CC00FF;
+    text-shadow: 0 0 15px rgba(200, 0, 255, 0.8);
+}
+
+@keyframes archBossAnnounce {
+    0% { transform: scale(0.5); opacity: 0; }
+    20% { transform: scale(1.1); opacity: 1; }
+    40% { transform: scale(0.95); }
+    60% { transform: scale(1.05); }
+    80% { transform: scale(1); }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes archBossText {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
 /* ===== ACTION CARD DRAMATIC EFFECTS ===== */
 
 /* Full screen flash for powerful cards */
@@ -6086,6 +6734,49 @@ body::after {
     flex: 1;
 }
 
+.debug-health-control {
+    margin-top: 10px;
+    padding: 8px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 6px;
+}
+
+.debug-input {
+    width: 100%;
+    padding: 8px;
+    background: rgba(30, 30, 40, 0.8);
+    border: 1px solid #555;
+    color: #fff;
+    border-radius: 6px;
+    font-family: 'Cinzel', serif;
+    font-size: 0.9rem;
+    text-align: center;
+    margin-bottom: 6px;
+}
+
+.debug-input:focus {
+    outline: none;
+    border-color: #888;
+}
+
+.debug-btn.heal {
+    background: linear-gradient(135deg, #3a6a3a, #2a5a2a);
+    border-color: #393;
+}
+
+.debug-btn.heal:hover {
+    background: linear-gradient(135deg, #4a7a4a, #3a6a3a);
+}
+
+.debug-btn.gold {
+    background: linear-gradient(135deg, #6a5a2a, #5a4a1a);
+    border-color: #996;
+}
+
+.debug-btn.gold:hover {
+    background: linear-gradient(135deg, #7a6a3a, #6a5a2a);
+}
+
 .debug-enemy-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -6116,6 +6807,38 @@ body::after {
 
 .debug-enemy-btn.boss:hover {
     background: linear-gradient(135deg, #8a4a8a, #6a3a6a);
+}
+
+/* Arch Boss spawn buttons */
+.debug-enemy-btn.arch-boss {
+    background: linear-gradient(135deg, #2a0a3a, #1a0520);
+    border: 2px solid #ff0066;
+    box-shadow: 0 0 10px rgba(255, 0, 100, 0.5), inset 0 0 10px rgba(200, 0, 150, 0.3);
+    animation: archBossBtnGlow 1.5s ease-in-out infinite alternate;
+}
+
+.debug-enemy-btn.arch-boss:hover {
+    background: linear-gradient(135deg, #4a1a5a, #2a0a3a);
+    box-shadow: 0 0 20px rgba(255, 0, 100, 0.8), inset 0 0 15px rgba(200, 0, 150, 0.5);
+}
+
+@keyframes archBossBtnGlow {
+    from { box-shadow: 0 0 10px rgba(255, 0, 100, 0.5), inset 0 0 10px rgba(200, 0, 150, 0.3); }
+    to { box-shadow: 0 0 20px rgba(255, 0, 150, 0.8), inset 0 0 15px rgba(200, 0, 150, 0.5); }
+}
+
+/* Arch boss section label */
+.debug-subsection.arch-boss-label {
+    color: #ff0066;
+    text-shadow: 0 0 10px rgba(255, 0, 100, 0.5);
+}
+
+/* Arch boss grid styling */
+.debug-enemy-grid.arch-boss-grid {
+    background: rgba(50, 0, 80, 0.2);
+    border: 1px solid rgba(255, 0, 100, 0.3);
+    border-radius: 6px;
+    padding: 6px;
 }
 
 .debug-enemy-btn .emoji {

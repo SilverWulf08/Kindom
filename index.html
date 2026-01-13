@@ -144,6 +144,10 @@
                 <div class="debug-enemy-grid" id="debugBossGrid">
                     <!-- Populated by JS -->
                 </div>
+                <h4 class="debug-subsection arch-boss-label">⚠️ Arch Bosses</h4>
+                <div class="debug-enemy-grid arch-boss-grid" id="debugArchBossGrid">
+                    <!-- Populated by JS -->
+                </div>
             </div>
             
             <!-- Upgrade Manager -->
@@ -198,11 +202,26 @@
             <div class="debug-section">
                 <h3>🎮 Quick Actions</h3>
                 <div class="debug-buttons">
-                    <button class="debug-btn" id="debugAddGold">+1000 Gold</button>
                     <button class="debug-btn" id="debugNextWave">Skip to Next Wave</button>
                     <button class="debug-btn" id="debugKillAll">Kill All Enemies</button>
                     <button class="debug-btn" id="debugResetStats">Reset Stats</button>
                     <button class="debug-btn" id="debugMaxStats">Max All Stats</button>
+                </div>
+                <h4 class="debug-subsection">Health Modifier</h4>
+                <div class="debug-health-control">
+                    <input type="number" id="debugHealthAmount" class="debug-input" placeholder="Amount" value="50" min="1">
+                    <div class="debug-btn-row">
+                        <button class="debug-btn heal" id="debugHealHealth">+Heal</button>
+                        <button class="debug-btn danger" id="debugDamageHealth">-Damage</button>
+                    </div>
+                </div>
+                <h4 class="debug-subsection">Gold Modifier</h4>
+                <div class="debug-health-control">
+                    <input type="number" id="debugGoldAmount" class="debug-input" placeholder="Amount" value="100" min="1">
+                    <div class="debug-btn-row">
+                        <button class="debug-btn gold" id="debugAddGoldAmount">+Add</button>
+                        <button class="debug-btn danger" id="debugRemoveGoldAmount">-Remove</button>
+                    </div>
                 </div>
             </div>
             
