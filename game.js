@@ -1149,8 +1149,8 @@ const PATCH_NOTES = [
         title: "Arch Boss & Performance Update",
         date: "January 14, 2026",
         changes: [
-            "🌑 Moon Lord - New Arch Boss appearing at Wave 100!",
-            "☀️ Sun Queen - Final Arch Boss appearing at Wave 200!",
+            "🌑 New Arch Boss appearing at Wave 100!",
+            "☀️ Final Arch Boss appearing at Wave 200!",
             "👹 9 New Regular Enemies: Werewolf, Gargoyle, Phantom, Chimera, Wyvern, Basilisk, Naga, Minotaur, Hydra",
             "👑 3 New Bosses: Lich Lord (Wave 50), Chaos Dragon (Wave 75), Shadow King (Wave 90)",
             "🎮 Debug Panel: Added Arch Bosses tab for spawning ultimate enemies",
@@ -3215,7 +3215,7 @@ function fireEnemyProjectile(enemy, targetX, targetY) {
         projectileClass = 'shadow';
     }
     
-    projectile.classList.add(projectileClass);
+    projectileClass.split(' ').forEach(cls => projectile.classList.add(cls));
     projectile.textContent = emoji;
     projectile.style.left = enemy.x + 'px';
     projectile.style.top = enemy.y + 'px';
