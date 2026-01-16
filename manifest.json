@@ -1,0 +1,21 @@
+{
+  "name": "Kindom Game",
+  "short_name": "Kindom",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#4a90e2",
+  "description": "A fun little roguelike.",
+  "icons": [
+    {
+      "src": "Kindom app icon.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "Kindom app icon.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
